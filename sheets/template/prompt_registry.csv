@@ -1,0 +1,4 @@
+prompt_key,file_path,version,hash,active,notes
+lead_scoring,prompts/lead_scoring.md,crm-lead-scoring-v1.0.0,,true,B2B lead scoring and routing
+lead_summary,prompts/lead_summary.md,crm-lead-summary-v1.0.0,,true,Lead enrichment summary
+manual_review,prompts/manual_review.md,crm-manual-review-v1.0.0,,true,Manual review explanation

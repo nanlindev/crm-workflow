@@ -1,0 +1,502 @@
+{
+  "name": "B2B Lead CRM Sync Notification",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "04953dc6-ad2c-4fdd-9688-bdb192a30854",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst canSync = mode === 'production'\n  && item.review_status !== 'pending_review'\n  && ['crm_sync', 'notify_only'].includes(item.recommended_action);\nreturn {\n  ...item,\n  crm_gate_passed: canSync,\n  crm_status: canSync ? 'pending' : 'skipped_test_mode',\n  _metadata: { processing_stage: 'crm_gate' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        200
+      ],
+      "id": "5b883200-d9db-4f5e-9ecb-24ef8496f175",
+      "name": "CRM Gate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "735c919d-f6ad-4800-bc90-481a5c5717c1",
+              "leftValue": "={{ $json.crm_gate_passed }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        200
+      ],
+      "id": "60d24c44-9f34-41a7-8339-cae2d990d91f",
+      "name": "Should Sync CRM?"
+    },
+    {
+      "parameters": {
+        "resource": "contact",
+        "operation": "upsert",
+        "email": "={{ $json.contact_email }}",
+        "additionalFields": {
+          "firstName": "={{ ($json.contact_name || '').split(' ')[0] }}",
+          "lastName": "={{ ($json.contact_name || '').split(' ').slice(1).join(' ') }}",
+          "companyName": "={{ $json.company_name }}",
+          "jobTitle": "={{ $json.contact_role }}"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        100
+      ],
+      "id": "b256ca2e-0435-4e48-9fe1-a0cdffb3e743",
+      "name": "HubSpot Upsert Contact",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "HUBSPOT_CREDENTIAL_ID",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { ...($('CRM Gate').item.json), crm_status: 'failed', _metadata: { processing_stage: 'crm_failed', severity: 'high' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        260
+      ],
+      "id": "c034923d-1eb0-4cb1-91fd-e9b6202c5634",
+      "name": "Handle HubSpot Failure"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { ...($('CRM Gate').item.json), crm_status: 'synced', crm_contact_id: $input.item.json.id || '', processing_status: 'completed', _metadata: { processing_stage: 'crm_synced' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        100
+      ],
+      "id": "f19c913b-9e57-4965-b0e9-25bef3585fdb",
+      "name": "Mark CRM Synced"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { ...$input.item.json, crm_status: 'skipped_test_mode', _metadata: { processing_stage: 'crm_skipped' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "id": "5a5b358f-0973-405b-8b00-77bc53a702e2",
+      "name": "Skip CRM Test Mode"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        200
+      ],
+      "id": "b9f990aa-b09f-439c-bcda-86765a91e280",
+      "name": "Merge CRM Result"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst score = Number(item.score || 0);\nconst thresholds = (item.global_config || {}).score_thresholds || { high: 80 };\n\nlet event_type = 'high_score_lead';\nif (item.review_status === 'pending_review') event_type = 'review_required';\nif (item.recommended_action === 'reject') event_type = 'low_score';\n\nconst payload = {\n  event_type,\n  severity: event_type === 'review_required' ? 'warning' : 'info',\n  title: event_type === 'review_required' ? 'Lead needs manual review' : 'New high-score B2B lead',\n  message: `${item.company_name || 'Unknown'} \u2014 ${item.contact_name || ''} (${item.contact_email}) \u2014 Score: ${score}`,\n  lead_id: item.lead_id,\n  correlation_id: item.correlation_id,\n  channels: ['slack'],\n  metadata: {\n    score,\n    company_name: item.company_name,\n    recommended_action: item.recommended_action,\n    calendly_url: (item.global_config || {}).calendly_url || '',\n  },\n  notification_mode: mode,\n  _metadata: { processing_stage: 'notification_payload_built' },\n};\nreturn { ...item, notification: payload };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ],
+      "id": "fae3ced6-797b-480d-96f0-97b05257b2c5",
+      "name": "Build Notification Payload"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "5bb4868c-d406-4eb6-b787-4bfe1415935d",
+              "leftValue": "={{ $json.notification.notification_mode }}",
+              "rightValue": "production",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        200
+      ],
+      "id": "f950edc1-3807-4f7e-b717-1059da54d233",
+      "name": "Should Notify?"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "text": "=\ud83d\udccb {{ $json.notification.title }}\n{{ $json.notification.message }}\nAction: {{ $json.notification.metadata.recommended_action }}\nScore: {{ $json.notification.metadata.score }}\nCorrelation: {{ $json.correlation_id }}\n{{ $json.notification.metadata.calendly_url ? 'Book: ' + $json.notification.metadata.calendly_url : '' }}"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        100
+      ],
+      "id": "64acde44-64b5-4d63-862b-9b7aab42ca9b",
+      "name": "Slack Notify",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { ...$input.item.json, notification_status: 'sent', _metadata: { processing_stage: 'notification_sent' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        100
+      ],
+      "id": "b1ecee47-2f52-4f68-bbc5-a658d9139214",
+      "name": "Mark Notification Sent"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nreturn {\n  ...item,\n  notification_status: 'skipped_test_mode',\n  _metadata: { processing_stage: 'notification_skipped_test' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        300
+      ],
+      "id": "301ab2bd-373f-41a6-b9fc-e9518f1411a5",
+      "name": "Skip Notification Test"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { ...($('Build Notification Payload').item.json), notification_status: 'failed', _metadata: { processing_stage: 'notification_failed', severity: 'medium' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        260
+      ],
+      "id": "ad48c809-fab0-4295-8c8c-e647dec91940",
+      "name": "Log Slack Notify Error"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "crm_status": "={{ $json.crm_status }}",
+            "crm_contact_id": "={{ $json.crm_contact_id || '' }}",
+            "notification_status": "={{ $json.notification_status || 'pending' }}",
+            "processing_status": "={{ $json.processing_status || 'completed' }}",
+            "updated_at": "={{ new Date().toISOString() }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2200,
+        200
+      ],
+      "id": "e6c89c77-1535-469b-a530-b38abd27396f",
+      "name": "Update Final Status",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "CRM Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Gate": {
+      "main": [
+        [
+          {
+            "node": "Should Sync CRM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Sync CRM?": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip CRM Test Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "Mark CRM Synced",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle HubSpot Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark CRM Synced": {
+      "main": [
+        [
+          {
+            "node": "Merge CRM Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle HubSpot Failure": {
+      "main": [
+        [
+          {
+            "node": "Merge CRM Result",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Skip CRM Test Mode": {
+      "main": [
+        [
+          {
+            "node": "Merge CRM Result",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge CRM Result": {
+      "main": [
+        [
+          {
+            "node": "Build Notification Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Notification Payload": {
+      "main": [
+        [
+          {
+            "node": "Should Notify?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Notify?": {
+      "main": [
+        [
+          {
+            "node": "Slack Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Notification Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify": {
+      "main": [
+        [
+          {
+            "node": "Mark Notification Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Slack Notify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Notification Sent": {
+      "main": [
+        [
+          {
+            "node": "Update Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Notification Test": {
+      "main": [
+        [
+          {
+            "node": "Update Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Slack Notify Error": {
+      "main": [
+        [
+          {
+            "node": "Update Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
+  },
+  "versionId": "3a1c3a9e-38d0-4f4c-be9f-678aa3713e19",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "crm-workflow"
+    }
+  ]
+}

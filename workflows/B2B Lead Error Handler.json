@@ -1,0 +1,175 @@
+{
+  "name": "B2B Lead Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "eec51b04-b04f-4b6b-8755-5add979f59ef",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst err = $input.item.json;\nconst execution = err.execution || {};\nconst error = err.error || {};\nreturn {\n  workflow: err.workflow?.name || 'unknown',\n  execution_id: execution.id || '',\n  node: error.node?.name || 'unknown',\n  message: error.message || JSON.stringify(error),\n  stack: error.stack || '',\n  correlation_id: error.context?.correlation_id || execution.customData?.correlation_id || '',\n  retry_suggestion: 'manual',\n  timestamp: new Date().toISOString(),\n  _metadata: { processing_stage: 'global_error_logged', severity: 'critical' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "c9389771-0040-4183-9036-da8309952232",
+      "name": "Extract Error Details"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "error_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow": "={{ $json.workflow }}",
+            "execution_id": "={{ $json.execution_id }}",
+            "node": "={{ $json.node }}",
+            "message": "={{ $json.message }}",
+            "stack": "={{ $json.stack }}",
+            "correlation_id": "={{ $json.correlation_id }}",
+            "retry_suggestion": "={{ $json.retry_suggestion }}",
+            "timestamp": "={{ $json.timestamp }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        440,
+        0
+      ],
+      "id": "07ba5a13-7ce8-4147-a199-2a33bd5d2f03",
+      "name": "Write error_logs",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "text": "=\ud83d\udea8 CRM Workflow Error\nWorkflow: {{ $('Extract Error Details').item.json.workflow }}\nNode: {{ $('Extract Error Details').item.json.node }}\nMessage: {{ $('Extract Error Details').item.json.message }}\nCorrelation: {{ $('Extract Error Details').item.json.correlation_id }}"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "a68137f0-3ece-4e00-8b17-90f38d193f13",
+      "name": "Slack Error Alert",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { error_type: 'slack_notification_failed', _metadata: { processing_stage: 'slack_error_handled', severity: 'low' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        120
+      ],
+      "id": "25329dd5-74b2-47bc-8c85-1e2763561574",
+      "name": "Log Slack Error"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Error Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Error Details": {
+      "main": [
+        [
+          {
+            "node": "Write error_logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write error_logs": {
+      "main": [
+        [
+          {
+            "node": "Slack Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Error Alert": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Log Slack Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "eecbfe9a-74c6-469f-ba7f-cc7e1a3c97dc",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "crm-workflow"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+include:
+  - path: ../../platform-n8n/docker/templates/networks.yml
+
+services:
+  crm_python_ai:
+    extends:
+      file: ../../platform-n8n/docker/templates/python-sidecar.base.yml
+      service: python_sidecar_template
+    env_file:
+      - ../.env
+    build:
+      context: ..
+      dockerfile: python-service/Dockerfile
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+    image: ghcr.io/nanlindev/crm-workflow/python-ai-service:latest
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LANGFUSE_TRACING_ENVIRONMENT: ${ENVIRONMENT:-development}
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: n8n-crm-ai-service
+      OTEL_SERVICE_VERSION: v1.0
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=${ENVIRONMENT:-development},service.name=n8n-crm-ai-service,gen_ai.system=deepseek,tags=crm-workflow,langfuse.tags=crm-workflow
+    ports:
+      - "8002:8001"
+    volumes:
+      - ../prompts:/app/prompts:ro

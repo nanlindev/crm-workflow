@@ -1,0 +1,3 @@
+source_type,source_name,field_mapping_json,trust_level
+tally,Default Tally Form,"{""contact_name"":""data.fields[0].value"",""contact_email"":""data.fields[1].value"",""contact_role"":""data.fields[2].value"",""company_name"":""data.fields[3].value"",""raw_content"":""data.fields[4].value"",""source_url"":""data.formUrl""}",80
+google_forms,Default Google Form,"{""contact_name"":""name"",""contact_email"":""email"",""contact_role"":""role"",""company_name"":""company"",""raw_content"":""message"",""source_url"":""formUrl""}",70

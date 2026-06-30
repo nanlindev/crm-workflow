@@ -1,0 +1,628 @@
+{
+  "name": "B2B Lead Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "tally-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8a230dcc-6aba-494b-bf56-594201dc600e",
+      "name": "Tally Webhook",
+      "webhookId": "a8dee805-2469-4322-8dd5-9a15e6338941"
+    },
+    {
+      "parameters": {
+        "path": "google-forms-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "id": "b5a3b071-2525-4f18-ac8c-de4c7e32c5d3",
+      "name": "Google Forms Webhook",
+      "webhookId": "d81615aa-f7de-4c27-a1fe-6c2f8d77232a"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst body = $input.item.json.body || $input.item.json;\nconst data = body.data || body;\nconst fields = data.fields || [];\nconst fieldMap = {};\nfor (const f of fields) {\n  const key = (f.label || f.key || '').toLowerCase().replace(/\\s+/g, '_');\n  fieldMap[key] = f.value;\n}\nconst getField = (...keys) => {\n  for (const k of keys) {\n    if (fieldMap[k]) return fieldMap[k];\n  }\n  return '';\n};\nconst now = new Date().toISOString();\nreturn {\n  source_type: 'tally',\n  source_name: data.formName || 'Tally Form',\n  source_url: data.formUrl || body.formUrl || '',\n  source_trust_level: 80,\n  contact_name: getField('name', 'contact_name', 'full_name'),\n  contact_email: getField('email', 'contact_email').toLowerCase().trim(),\n  contact_role: getField('role', 'contact_role', 'job_title'),\n  company_name: getField('company', 'company_name'),\n  raw_content: getField('message', 'details', 'project_description', 'how_can_we_help'),\n  processing_status: 'intake',\n  created_at: now,\n  updated_at: now,\n  _metadata: { processing_stage: 'normalized_tally' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "3974b35c-4f9f-4e2b-8fd6-9f06cd522d6e",
+      "name": "Normalize Tally Payload"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst body = $input.item.json.body || $input.item.json;\nconst now = new Date().toISOString();\nreturn {\n  source_type: 'google_forms',\n  source_name: body.formName || 'Google Form',\n  source_url: body.formUrl || body.source_url || '',\n  source_trust_level: 70,\n  contact_name: body.name || body.contact_name || '',\n  contact_email: (body.email || body.contact_email || '').toLowerCase().trim(),\n  contact_role: body.role || body.contact_role || '',\n  company_name: body.company || body.company_name || '',\n  raw_content: body.message || body.raw_content || JSON.stringify(body),\n  processing_status: 'intake',\n  created_at: now,\n  updated_at: now,\n  _metadata: { processing_stage: 'normalized_google_forms' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        200
+      ],
+      "id": "bcd14284-d0e7-4c77-8fd0-bb334ba7e4a3",
+      "name": "Normalize Google Forms Payload"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        480,
+        100
+      ],
+      "id": "7f689dc0-e0c0-4746-934b-08758617cde4",
+      "name": "Merge Sources"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst crypto = require('crypto');\nconst item = $input.item.json;\nconst email = item.contact_email || '';\nconst domain = item.company_domain || (email.includes('@') ? email.split('@')[1] : '');\nconst sourceUrl = item.source_url || '';\nconst hashInput = `${email}|${domain}|${sourceUrl}`;\nconst lead_hash = crypto.createHash('sha256').update(hashInput).digest('hex').slice(0, 16);\nreturn {\n  ...item,\n  lead_id: crypto.randomUUID(),\n  correlation_id: crypto.randomUUID(),\n  lead_hash,\n  company_domain: domain,\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'ids_generated' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        100
+      ],
+      "id": "7bd4f506-a359-4b93-9179-6f9bd9d03929",
+      "name": "Generate Lead IDs"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst email = item.contact_email || '';\nconst emailOk = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\nif (!emailOk) {\n  return {\n    ...item,\n    validation_passed: false,\n    validation_error: 'invalid_email',\n    _metadata: { processing_stage: 'validation_failed', severity: 'low' },\n  };\n}\nreturn {\n  ...item,\n  validation_passed: true,\n  _metadata: { processing_stage: 'validation_passed' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        100
+      ],
+      "id": "f857b844-d486-40cc-82bd-c0deaf53337b",
+      "name": "Validate Lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "5079c4bf-0c97-4b72-9bf0-382b65756166",
+              "leftValue": "={{ $json.validation_passed }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1140,
+        100
+      ],
+      "id": "ac327237-9eb6-4509-b7ee-be43472c4872",
+      "name": "Validation Passed?"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1140,
+        300
+      ],
+      "id": "8db6c5f0-9c10-445c-a9a1-9dcf193d3006",
+      "name": "Read All Leads",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst existingRows = $('Read All Leads').all().map(r => r.json);\nconst findMatch = (rows, predicate) => rows.find(predicate);\n\nlet existing = null;\nif (item.contact_email) {\n  existing = findMatch(existingRows, r => (r.contact_email || '').toLowerCase() === item.contact_email);\n}\nif (!existing && item.company_domain) {\n  existing = findMatch(existingRows, r => r.company_domain === item.company_domain);\n}\nif (!existing && item.source_url) {\n  existing = findMatch(existingRows, r => r.source_url === item.source_url);\n}\nif (!existing && item.lead_hash) {\n  existing = findMatch(existingRows, r => r.lead_hash === item.lead_hash);\n}\n\nif (existing && existing.lead_id) {\n  return {\n    ...item,\n    lead_id: existing.lead_id,\n    correlation_id: item.correlation_id,\n    is_update: true,\n    updated_at: new Date().toISOString(),\n    _metadata: { processing_stage: 'dedup_update' },\n  };\n}\nreturn {\n  ...item,\n  is_update: false,\n  _metadata: { processing_stage: 'dedup_insert' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        100
+      ],
+      "id": "25fc416f-d082-447a-883c-1360fcdbe85a",
+      "name": "Dedup Lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "7e68364a-ce1d-4502-b583-9eed2c2a0349",
+              "leftValue": "={{ $json.is_update }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1580,
+        100
+      ],
+      "id": "56465c4d-c6f1-4ae3-bcaa-cedf5b793340",
+      "name": "Is Update?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "correlation_id": "={{ $json.correlation_id }}",
+            "lead_hash": "={{ $json.lead_hash }}",
+            "source_type": "={{ $json.source_type }}",
+            "source_name": "={{ $json.source_name }}",
+            "source_url": "={{ $json.source_url }}",
+            "source_trust_level": "={{ $json.source_trust_level }}",
+            "company_name": "={{ $json.company_name }}",
+            "company_domain": "={{ $json.company_domain }}",
+            "contact_name": "={{ $json.contact_name }}",
+            "contact_role": "={{ $json.contact_role }}",
+            "contact_email": "={{ $json.contact_email }}",
+            "raw_content": "={{ $json.raw_content }}",
+            "processing_status": "={{ $json.processing_status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          },
+          "matchingColumns": [
+            "lead_id"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1800,
+        0
+      ],
+      "id": "0f85a12e-4b70-40fe-bff3-507f9d337221",
+      "name": "Update Lead",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "correlation_id": "={{ $json.correlation_id }}",
+            "lead_hash": "={{ $json.lead_hash }}",
+            "source_type": "={{ $json.source_type }}",
+            "source_name": "={{ $json.source_name }}",
+            "source_url": "={{ $json.source_url }}",
+            "source_trust_level": "={{ $json.source_trust_level }}",
+            "company_name": "={{ $json.company_name }}",
+            "company_domain": "={{ $json.company_domain }}",
+            "contact_name": "={{ $json.contact_name }}",
+            "contact_role": "={{ $json.contact_role }}",
+            "contact_email": "={{ $json.contact_email }}",
+            "raw_content": "={{ $json.raw_content }}",
+            "processing_status": "={{ $json.processing_status }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1800,
+        200
+      ],
+      "id": "5745d870-0055-49ec-b2a1-400b5dc7c1b2",
+      "name": "Append Lead",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2020,
+        100
+      ],
+      "id": "6e4e842d-c9bf-4194-aaf6-f75eaaa2b8a3",
+      "name": "Merge Upsert Result"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "audit_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $('Dedup Lead').item.json.lead_id }}",
+            "correlation_id": "={{ $('Dedup Lead').item.json.correlation_id }}",
+            "event": "={{ $('Dedup Lead').item.json.is_update ? 'lead_updated' : 'lead_created' }}",
+            "old_value": "",
+            "new_value": "={{ $('Dedup Lead').item.json.processing_status }}",
+            "workflow": "B2B Lead Intake",
+            "timestamp": "={{ $('Dedup Lead').item.json.updated_at }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2240,
+        100
+      ],
+      "id": "c5cad708-2ff6-44d8-8ad2-866cff4398a2",
+      "name": "Write Audit Log",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return $('Dedup Lead').item.json;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2460,
+        100
+      ],
+      "id": "e084a082-50c1-485b-bab1-f4d7cbee6852",
+      "name": "Pass Lead To Enrichment"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "B2B Lead Enrichment Scoring"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2680,
+        100
+      ],
+      "id": "e40b52c7-0338-4d26-86f0-af1ea3c9800e",
+      "name": "Execute Enrichment Scoring"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        300
+      ],
+      "id": "ec58425d-5181-4982-ab1a-1d7249f4d385",
+      "name": "Validation Failed End"
+    }
+  ],
+  "connections": {
+    "Tally Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Tally Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Forms Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Google Forms Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Tally Payload": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Google Forms Payload": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Sources": {
+      "main": [
+        [
+          {
+            "node": "Generate Lead IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Lead IDs": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead": {
+      "main": [
+        [
+          {
+            "node": "Validation Passed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Passed?": {
+      "main": [
+        [
+          {
+            "node": "Read All Leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validation Failed End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Leads": {
+      "main": [
+        [
+          {
+            "node": "Dedup Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup Lead": {
+      "main": [
+        [
+          {
+            "node": "Is Update?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Update?": {
+      "main": [
+        [
+          {
+            "node": "Update Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead": {
+      "main": [
+        [
+          {
+            "node": "Merge Upsert Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Lead": {
+      "main": [
+        [
+          {
+            "node": "Merge Upsert Result",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Upsert Result": {
+      "main": [
+        [
+          {
+            "node": "Write Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Pass Lead To Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass Lead To Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Execute Enrichment Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
+  },
+  "versionId": "6d754ea5-0408-4a5e-9ab0-5a0705f449c3",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "crm-workflow"
+    }
+  ]
+}

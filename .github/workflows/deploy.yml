@@ -1,0 +1,20 @@
+name: Deploy CRM Workflow to Server
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: nanlindev/platform-n8n/.github/workflows/reusable-deploy-python.yml@main
+    with:
+      python_image_name: ghcr.io/nanlindev/crm-workflow/python-ai-service
+      deploy_path: /home/deploy/projects/crm-workflow
+      compose_file: docker/compose.yml
+      build_context: .
+      dockerfile: python-service/Dockerfile
+    secrets:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

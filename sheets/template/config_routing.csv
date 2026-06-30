@@ -1,0 +1,4 @@
+min_score,max_score,recommended_action,notify,crm_sync
+80,100,crm_sync,true,true
+40,79,manual_review,true,false
+0,39,reject,false,false

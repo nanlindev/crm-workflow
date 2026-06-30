@@ -1,0 +1,824 @@
+{
+  "name": "B2B Lead Enrichment Scoring",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "9f473758-7ddf-4eac-b964-c2549828838b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_main"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "180efd00-35e0-48ff-8fb4-c2547d8508d7",
+      "name": "Read config_main",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_routing"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        120
+      ],
+      "id": "f28667c9-2796-44e3-8c04-5239addb148c",
+      "name": "Read config_routing",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_notifications"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        240
+      ],
+      "id": "c5f3f3f7-d95e-4383-a62b-b57e22eb7bcf",
+      "name": "Read config_notifications",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_review"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        360
+      ],
+      "id": "df0ffd21-0839-4bd3-8c0a-f689795aa8cb",
+      "name": "Read config_review",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        220,
+        60
+      ],
+      "id": "df1245dd-820a-4440-927f-ec88c1f2f91d",
+      "name": "Merge Config 1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        440,
+        120
+      ],
+      "id": "309a51e5-dc45-4b80-90d9-9bab3276593c",
+      "name": "Merge Config 2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        660,
+        180
+      ],
+      "id": "17a00dc7-9f77-4612-b39a-974d28442cd5",
+      "name": "Merge Config 3"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst lead = $('When Executed by Another Workflow').item.json;\nconst mainRows = $('Read config_main').all().map(i => i.json);\nconst routingRows = $('Read config_routing').all().map(i => i.json);\nconst notificationRows = $('Read config_notifications').all().map(i => i.json);\nconst reviewRows = $('Read config_review').all().map(i => i.json);\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst scoreHigh = parseInt(kv.score_threshold_high || '80', 10);\nconst scoreLow = parseInt(kv.score_threshold_low || '40', 10);\nconst grayLow = parseInt(kv.score_gray_low || '40', 10);\nconst grayHigh = parseInt(kv.score_gray_high || '79', 10);\n\nconst global_config = {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_thresholds: { high: scoreHigh, low: scoreLow, gray_low: grayLow, gray_high: grayHigh },\n  calendly_url: kv.calendly_url || '',\n  source_trust_threshold: parseInt(kv.source_trust_threshold || '50', 10),\n  freemail_domains: (kv.freemail_domains || 'gmail.com,outlook.com,yahoo.com,hotmail.com,icloud.com').split(',').map(s => s.trim()),\n  routing_rules: routingRows.filter(r => r.min_score !== undefined),\n  notification_rules: notificationRows.filter(r => r.enabled === true || r.enabled === 'true'),\n  review_rules: reviewRows.filter(r => r.enabled === true || r.enabled === 'true'),\n  _metadata: { processing_stage: 'config_loaded', config_load_failed: false },\n};\n\nreturn { ...lead, global_config };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ],
+      "id": "ca933b59-a31b-4c6b-b37c-4b89b70dcf6b",
+      "name": "Build Global Config"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nreturn {\n  global_config: {\n    mode: 'test',\n    score_thresholds: { high: 80, low: 40, gray_low: 40, gray_high: 79 },\n    calendly_url: '',\n    source_trust_threshold: 50,\n    freemail_domains: ['gmail.com','outlook.com','yahoo.com','hotmail.com','icloud.com'],\n    routing_rules: [],\n    notification_rules: [],\n    review_rules: [],\n    _metadata: { processing_stage: 'config_load_failed', config_load_failed: true, severity: 'high' },\n  },\n  ...($input.item.json || {}),\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        400
+      ],
+      "id": "7d79deba-4ea2-4d2f-a575-f09bcc9ca10a",
+      "name": "Handle Config Load Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst config = item.global_config || {};\nconst freemail = config.freemail_domains || [];\nconst email = item.contact_email || '';\nlet domain = item.company_domain || '';\nif (!domain && email.includes('@')) domain = email.split('@')[1].toLowerCase();\nconst isFreemail = freemail.includes(domain);\nconst domain_type = isFreemail ? 'personal' : (domain ? 'corporate' : 'unknown');\nreturn {\n  ...item,\n  company_domain: domain,\n  domain_type,\n  enrichment_status: domain && !isFreemail ? 'partial' : 'limited',\n  processing_status: 'enriching',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'domain_enriched' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ],
+      "id": "b9bf738c-bbcb-478b-8c36-bf6ec838e561",
+      "name": "Domain Enrichment"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crm_python_ai:8001/enrich",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "lead_id",
+              "value": "={{ $json.lead_id }}"
+            },
+            {
+              "name": "correlation_id",
+              "value": "={{ $json.correlation_id }}"
+            },
+            {
+              "name": "source_type",
+              "value": "={{ $json.source_type }}"
+            },
+            {
+              "name": "source_name",
+              "value": "={{ $json.source_name }}"
+            },
+            {
+              "name": "contact_name",
+              "value": "={{ $json.contact_name }}"
+            },
+            {
+              "name": "contact_email",
+              "value": "={{ $json.contact_email }}"
+            },
+            {
+              "name": "contact_role",
+              "value": "={{ $json.contact_role }}"
+            },
+            {
+              "name": "company_name",
+              "value": "={{ $json.company_name }}"
+            },
+            {
+              "name": "company_domain",
+              "value": "={{ $json.company_domain }}"
+            },
+            {
+              "name": "domain_type",
+              "value": "={{ $json.domain_type }}"
+            },
+            {
+              "name": "raw_content",
+              "value": "={{ ($json.raw_content || '').substring(0, 3000) }}"
+            },
+            {
+              "name": "external_enrichment",
+              "value": "={{ $json.external_enrichment || '' }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1320,
+        200
+      ],
+      "id": "d43da7bb-0492-498e-aa41-541f5caab3e2",
+      "name": "HTTP Enrich Lead",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst lead = $('Domain Enrichment').item.json;\nconst aiData = $input.item.json;\nreturn {\n  ...lead,\n  content_summary: aiData.content_summary || lead.content_summary || '',\n  industry: aiData.industry || lead.industry || '',\n  company_size: aiData.company_size || lead.company_size || '',\n  intent_signals: JSON.stringify(aiData.intent_signals || []),\n  enrichment_summary: aiData.enrichment_summary || lead.enrichment_summary || '',\n  enrichment_status: aiData.content_summary ? 'complete' : (lead.enrichment_status || 'partial'),\n  processing_status: 'enriched',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'enrichment_merged' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        200
+      ],
+      "id": "1c32d13b-9dc8-44e4-bb87-ac80227c081d",
+      "name": "Merge Enrichment Result"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $('Domain Enrichment').item.json;\nreturn {\n  ...item,\n  content_summary: (item.raw_content || '').slice(0, 300),\n  enrichment_status: 'failed',\n  enrichment_summary: 'LLM enrichment failed; using raw content fallback',\n  processing_status: 'enriched',\n  _metadata: { processing_stage: 'enrichment_fallback', severity: 'medium' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        400
+      ],
+      "id": "3aff89de-f5bc-45d4-b6fd-dde6f1028d07",
+      "name": "Handle Enrichment Failure"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crm_python_ai:8001/score",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "lead_id",
+              "value": "={{ $json.lead_id }}"
+            },
+            {
+              "name": "correlation_id",
+              "value": "={{ $json.correlation_id }}"
+            },
+            {
+              "name": "source_type",
+              "value": "={{ $json.source_type }}"
+            },
+            {
+              "name": "source_name",
+              "value": "={{ $json.source_name }}"
+            },
+            {
+              "name": "source_trust_level",
+              "value": "={{ $json.source_trust_level }}"
+            },
+            {
+              "name": "contact_name",
+              "value": "={{ $json.contact_name }}"
+            },
+            {
+              "name": "contact_email",
+              "value": "={{ $json.contact_email }}"
+            },
+            {
+              "name": "contact_role",
+              "value": "={{ $json.contact_role }}"
+            },
+            {
+              "name": "company_name",
+              "value": "={{ $json.company_name }}"
+            },
+            {
+              "name": "company_domain",
+              "value": "={{ $json.company_domain }}"
+            },
+            {
+              "name": "industry",
+              "value": "={{ $json.industry }}"
+            },
+            {
+              "name": "company_size",
+              "value": "={{ $json.company_size }}"
+            },
+            {
+              "name": "content_summary",
+              "value": "={{ $json.content_summary }}"
+            },
+            {
+              "name": "intent_signals",
+              "value": "={{ typeof $json.intent_signals === 'string' ? JSON.parse($json.intent_signals || '[]') : ($json.intent_signals || []) }}"
+            },
+            {
+              "name": "enrichment_status",
+              "value": "={{ $json.enrichment_status }}"
+            },
+            {
+              "name": "enrichment_summary",
+              "value": "={{ $json.enrichment_summary }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1760,
+        200
+      ],
+      "id": "60a4bc23-e11c-4077-a4bd-103a24a9d0ae",
+      "name": "HTTP Score Lead",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst lead = $('Domain Enrichment').item.json;\nconst ai = $input.item.json;\nconst scoreData = ai.score !== undefined ? ai : ($('HTTP Score Lead').item?.json || {});\nreturn {\n  ...lead,\n  score: scoreData.score ?? 0,\n  score_reasoning: scoreData.score_reasoning || '',\n  confidence: scoreData.confidence || 'low',\n  recommended_action: scoreData.recommended_action || 'manual_review',\n  routing_decision: scoreData.routing_decision || '',\n  fallback_used: scoreData.fallback_used || false,\n  intent_signals: JSON.stringify(scoreData.intent_signals || []),\n  processing_status: 'scoring',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'scoring_merged' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        200
+      ],
+      "id": "97cef836-d14c-4a49-9c3a-952881ace6a2",
+      "name": "Merge Scoring Result"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $('Domain Enrichment').item.json;\nreturn {\n  ...item,\n  score: 0,\n  score_reasoning: 'AI scoring failed',\n  confidence: 'low',\n  recommended_action: 'manual_review',\n  routing_decision: 'fallback_manual_review',\n  fallback_used: true,\n  processing_status: 'scoring',\n  _metadata: { processing_stage: 'scoring_fallback', severity: 'high' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        400
+      ],
+      "id": "0420c0cc-b291-4f86-a16a-8dca1264dbff",
+      "name": "Handle Scoring Failure"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst config = item.global_config || {};\nconst thresholds = config.score_thresholds || { gray_low: 40, gray_high: 79 };\nconst triggers = [];\nconst score = Number(item.score || 0);\n\nif (score >= thresholds.gray_low && score <= thresholds.gray_high) triggers.push('gray_zone_score');\nif (item.enrichment_status !== 'complete') triggers.push('enrichment_incomplete');\nif (!item.contact_role) triggers.push('missing_role');\nif ((item.source_trust_level || 0) < (config.source_trust_threshold || 50)) triggers.push('low_trust_source');\n\nlet review_status = 'none';\nlet recommended_action = item.recommended_action;\n\nif (triggers.length > 0 || recommended_action === 'manual_review') {\n  review_status = 'pending_review';\n  recommended_action = 'manual_review';\n}\n\nreturn {\n  ...item,\n  review_status,\n  recommended_action,\n  review_triggers: triggers.join(','),\n  processing_status: review_status === 'pending_review' ? 'review_pending' : item.processing_status,\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'review_rules_applied' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        200
+      ],
+      "id": "7adac30b-75f9-4b1c-a487-59040c5cfbf3",
+      "name": "Apply Review Rules"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst rules = (item.global_config || {}).routing_rules || [];\nconst score = Number(item.score || 0);\nlet matched = null;\nfor (const rule of rules) {\n  const min = Number(rule.min_score || 0);\n  const max = Number(rule.max_score || 100);\n  if (score >= min && score <= max) { matched = rule; break; }\n}\nconst result = { ...item };\nif (matched && item.review_status !== 'pending_review') {\n  result.recommended_action = matched.recommended_action || item.recommended_action;\n  result.routing_decision = `matched_rule_${matched.min_score}_${matched.max_score}`;\n}\nreturn {\n  ...result,\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'routing_rules_applied' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        200
+      ],
+      "id": "f7e8725b-e404-475a-b948-27654e6310d1",
+      "name": "Apply Routing Rules"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "content_summary": "={{ $json.content_summary }}",
+            "industry": "={{ $json.industry }}",
+            "company_size": "={{ $json.company_size }}",
+            "intent_signals": "={{ $json.intent_signals }}",
+            "enrichment_status": "={{ $json.enrichment_status }}",
+            "enrichment_summary": "={{ $json.enrichment_summary }}",
+            "score": "={{ $json.score }}",
+            "score_reasoning": "={{ $json.score_reasoning }}",
+            "confidence": "={{ $json.confidence }}",
+            "recommended_action": "={{ $json.recommended_action }}",
+            "routing_decision": "={{ $json.routing_decision }}",
+            "fallback_used": "={{ $json.fallback_used }}",
+            "review_status": "={{ $json.review_status }}",
+            "processing_status": "={{ $json.processing_status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2640,
+        200
+      ],
+      "id": "b46c17f2-02e9-4713-bb8b-ba24b6211ffb",
+      "name": "Update Lead Scores",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "B2B Lead CRM Sync Notification"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2860,
+        200
+      ],
+      "id": "84f30c31-5bc6-4d7f-80a7-588bc3c2dcbe",
+      "name": "Execute CRM Sync"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Read config_main",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read config_routing",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read config_review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_main": {
+      "main": [
+        [
+          {
+            "node": "Merge Config 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_routing": {
+      "main": [
+        [
+          {
+            "node": "Merge Config 1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Config 1": {
+      "main": [
+        [
+          {
+            "node": "Merge Config 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Merge Config 2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Config 2": {
+      "main": [
+        [
+          {
+            "node": "Merge Config 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_review": {
+      "main": [
+        [
+          {
+            "node": "Merge Config 3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Config 3": {
+      "main": [
+        [
+          {
+            "node": "Build Global Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Global Config": {
+      "main": [
+        [
+          {
+            "node": "Domain Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Domain Enrichment": {
+      "main": [
+        [
+          {
+            "node": "HTTP Enrich Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Enrich Lead": {
+      "main": [
+        [
+          {
+            "node": "Merge Enrichment Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Enrichment Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Enrichment Failure": {
+      "main": [
+        [
+          {
+            "node": "HTTP Score Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Enrichment Result": {
+      "main": [
+        [
+          {
+            "node": "HTTP Score Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Score Lead": {
+      "main": [
+        [
+          {
+            "node": "Merge Scoring Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Scoring Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Scoring Failure": {
+      "main": [
+        [
+          {
+            "node": "Apply Review Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Scoring Result": {
+      "main": [
+        [
+          {
+            "node": "Apply Review Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Review Rules": {
+      "main": [
+        [
+          {
+            "node": "Apply Routing Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Routing Rules": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Scores": {
+      "main": [
+        [
+          {
+            "node": "Execute CRM Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
+  },
+  "versionId": "9c7503ce-2230-41f6-b83e-bc5c54d1df08",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "crm-workflow"
+    }
+  ]
+}

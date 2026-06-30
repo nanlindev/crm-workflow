@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://crm-workflow.local/schemas/lead.schema.json",
+  "title": "Lead",
+  "description": "Unified B2B lead schema for intake, enrichment, scoring, CRM sync, and notifications.",
+  "type": "object",
+  "required": [
+    "lead_id",
+    "correlation_id",
+    "source_type",
+    "contact_email",
+    "created_at"
+  ],
+  "properties": {
+    "lead_id": { "type": "string", "format": "uuid" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "lead_hash": { "type": "string", "maxLength": 16 },
+    "source_type": { "type": "string", "enum": ["tally", "google_forms", "manual", "other"] },
+    "source_name": { "type": "string" },
+    "source_url": { "type": "string" },
+    "source_trust_level": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "company_name": { "type": "string" },
+    "company_domain": { "type": "string" },
+    "domain_type": { "type": "string", "enum": ["corporate", "personal", "unknown"] },
+    "contact_name": { "type": "string" },
+    "contact_role": { "type": "string" },
+    "contact_email": { "type": "string", "format": "email" },
+    "content_summary": { "type": "string" },
+    "raw_content": { "type": "string" },
+    "company_size": { "type": "string" },
+    "industry": { "type": "string" },
+    "intent_signals": { "type": "array", "items": { "type": "string" } },
+    "enrichment_status": {
+      "type": "string",
+      "enum": ["pending", "complete", "partial", "limited", "failed"]
+    },
+    "enrichment_summary": { "type": "string" },
+    "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "score_reasoning": { "type": "string" },
+    "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+    "recommended_action": {
+      "type": "string",
+      "enum": ["crm_sync", "notify_only", "manual_review", "reject"]
+    },
+    "routing_decision": { "type": "string" },
+    "fallback_used": { "type": "boolean" },
+    "crm_status": {
+      "type": "string",
+      "enum": ["pending", "synced", "failed", "skipped", "skipped_test_mode"]
+    },
+    "crm_contact_id": { "type": "string" },
+    "crm_company_id": { "type": "string" },
+    "notification_status": {
+      "type": "string",
+      "enum": ["pending", "sent", "failed", "skipped", "skipped_test_mode"]
+    },
+    "review_status": {
+      "type": "string",
+      "enum": ["none", "pending_review", "approved", "rejected", "review_later"]
+    },
+    "review_notes": { "type": "string" },
+    "reviewer": { "type": "string" },
+    "reviewed_at": { "type": "string", "format": "date-time" },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "intake",
+        "enriching",
+        "enriched",
+        "scoring",
+        "review_pending",
+        "crm_syncing",
+        "completed",
+        "failed"
+      ]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

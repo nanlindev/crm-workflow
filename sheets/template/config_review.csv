@@ -1,0 +1,5 @@
+rule_key,condition,threshold,enabled
+gray_zone_score,score_between_gray,40-79,true
+enrichment_incomplete,enrichment_status_not_complete,,true
+missing_role,contact_role_empty,,true
+low_trust_source,source_trust_below,50,true
