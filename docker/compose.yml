@@ -1,3 +1,5 @@
+name: crm-workflow
+
 include:
   - path: ../../platform-n8n/docker/templates/networks.yml
 
