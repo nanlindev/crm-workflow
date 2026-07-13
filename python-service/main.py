@@ -14,8 +14,14 @@ from models import (
     EnrichmentResult,
     ManualReviewRequest,
     ManualReviewResult,
+    OutboundEmailRequest,
+    OutboundEmailResult,
+    SalesMemoRequest,
+    SalesMemoResult,
     ScoringRequest,
     ScoringResult,
+    WeeklyInsightsRequest,
+    WeeklyInsightsResult,
 )
 from observability import (
     LatencyTracker,
@@ -24,7 +30,10 @@ from observability import (
     build_crm_trace_input,
     build_enrichment_trace_output,
     build_failed_trace_output,
+    build_outbound_email_trace_output,
+    build_sales_memo_trace_output,
     build_scoring_trace_output,
+    build_weekly_insights_trace_output,
     build_trace_context_from_headers,
     classify_exception,
     content_hash,
@@ -104,6 +113,71 @@ def _fallback_scoring(reason: str) -> ScoringResult:
         recommended_action="manual_review",
         intent_signals=[],
         routing_decision="fallback_scoring",
+        fallback_used=True,
+    )
+
+
+def _fallback_sales_memo(content_summary: str) -> SalesMemoResult:
+    opener = preview(content_summary, 300) or "Review lead summary before outreach."
+    return SalesMemoResult(
+        company_background=[],
+        talking_points=[],
+        pain_hypotheses=[],
+        recommended_opener=opener,
+        fallback_used=True,
+    )
+
+
+def _fallback_weekly_insights(metrics: dict[str, Any]) -> WeeklyInsightsResult:
+    new_leads = metrics.get("new_leads", 0)
+    high_score = metrics.get("high_score_leads", 0)
+    booked = metrics.get("meetings_booked", 0)
+    week_start = metrics.get("week_start", "")
+    week_end = metrics.get("week_end", "")
+    summary = (
+        f"Week {week_start}–{week_end}: {new_leads} new leads, "
+        f"{high_score} high-score, {booked} meetings booked. "
+        "Metrics-only summary (AI unavailable)."
+    )
+    recommendations: list[str] = []
+    if high_score > booked:
+        recommendations.append("Follow up on high-score leads without bookings")
+    if metrics.get("review_pending", 0) > 0:
+        recommendations.append("Clear pending manual reviews")
+    return WeeklyInsightsResult(
+        executive_summary=summary,
+        key_trends=[],
+        recommendations=recommendations,
+        anomalies=[],
+        fallback_used=True,
+    )
+
+
+def _fallback_outbound_email(
+    *,
+    contact_name: str,
+    company_name: str,
+    content_summary: str,
+    sales_memo_raw: str,
+    calendly_url: str,
+) -> OutboundEmailResult:
+    opener = preview(content_summary, 300) or "I noticed your recent inquiry and wanted to reach out."
+    try:
+        memo = json.loads(sales_memo_raw) if sales_memo_raw else {}
+        if memo.get("recommended_opener"):
+            opener = memo["recommended_opener"]
+    except json.JSONDecodeError:
+        pass
+
+    company = company_name or "your team"
+    first_name = (contact_name or "").split()[0] or "there"
+    cta = f"\n\nWould you be open to a quick chat? {calendly_url}" if calendly_url else "\n\nWould you be open to a quick reply?"
+    body = f"Hi {first_name},\n\n{opener}\n\nI'd love to learn more about what {company} is working on and share how we might help.{cta}\n\nBest regards"
+
+    return OutboundEmailResult(
+        subject=f"Quick note for {company}"[:60],
+        body=body,
+        personalization_notes="Fallback draft from content summary / sales memo opener",
         fallback_used=True,
     )
 
@@ -205,6 +279,12 @@ async def _call_llm_json(
                         if result_model is ScoringResult
                         else build_enrichment_trace_output(result_json)
                         if result_model is EnrichmentResult
+                        else build_sales_memo_trace_output(result_json)
+                        if result_model is SalesMemoResult
+                        else build_outbound_email_trace_output(result_json)
+                        if result_model is OutboundEmailResult
+                        else build_weekly_insights_trace_output(result_json)
+                        if result_model is WeeklyInsightsResult
                         else result_json
                     )
                     parse_span.update(output=trace_output, metadata={"validation_status": "success"})
@@ -348,6 +428,137 @@ async def score_lead(item: ScoringRequest, request: Request):
         ),
         result_model=ScoringResult,
         fallback_factory=lambda: _fallback_scoring("LLM scoring failed; routed to manual review"),
+    )
+
+
+@app.post("/sales-memo", response_model=SalesMemoResult)
+async def sales_memo(item: SalesMemoRequest, request: Request):
+    prompt = load_prompt("sales_memo")
+    return await _call_llm_json(
+        prompt=prompt,
+        prompt_vars={
+            "contact_name": item.contact_name,
+            "contact_email": item.contact_email,
+            "contact_role": item.contact_role,
+            "company_name": item.company_name,
+            "company_domain": item.company_domain,
+            "industry": item.industry,
+            "company_size": item.company_size,
+            "source_type": item.source_type,
+            "source_name": item.source_name,
+            "content_summary": item.content_summary,
+            "intent_signals": ", ".join(item.intent_signals),
+            "enrichment_summary": item.enrichment_summary,
+            "score": str(item.score),
+            "score_reasoning": item.score_reasoning,
+            "recommended_action": item.recommended_action,
+        },
+        span_name="crm-sales-memo",
+        generation_name="deepseek-sales-memo",
+        request=request,
+        lead_id=item.lead_id,
+        correlation_id=item.correlation_id,
+        source_type=item.source_type,
+        company_name=item.company_name,
+        company_domain=item.company_domain,
+        contact_role=item.contact_role,
+        trace_input=build_crm_trace_input(
+            lead_id=item.lead_id,
+            correlation_id=item.correlation_id,
+            source_type=item.source_type,
+            contact_email=item.contact_email,
+            company_name=item.company_name,
+            raw_content=item.content_summary,
+        ),
+        result_model=SalesMemoResult,
+        fallback_factory=lambda: _fallback_sales_memo(item.content_summary),
+    )
+
+
+@app.post("/outbound-email", response_model=OutboundEmailResult)
+async def outbound_email(item: OutboundEmailRequest, request: Request):
+    prompt = load_prompt("outbound_email")
+    return await _call_llm_json(
+        prompt=prompt,
+        prompt_vars={
+            "contact_name": item.contact_name,
+            "contact_email": item.contact_email,
+            "contact_role": item.contact_role,
+            "company_name": item.company_name,
+            "company_domain": item.company_domain,
+            "industry": item.industry,
+            "company_size": item.company_size,
+            "source_type": item.source_type,
+            "source_name": item.source_name,
+            "content_summary": item.content_summary,
+            "intent_signals": ", ".join(item.intent_signals),
+            "enrichment_summary": item.enrichment_summary,
+            "score": str(item.score),
+            "score_reasoning": item.score_reasoning,
+            "recommended_action": item.recommended_action,
+            "sales_memo": item.sales_memo,
+            "sender_name": item.sender_name,
+            "calendly_url": item.calendly_url,
+        },
+        span_name="crm-outbound-email",
+        generation_name="deepseek-outbound-email",
+        request=request,
+        lead_id=item.lead_id,
+        correlation_id=item.correlation_id,
+        source_type=item.source_type,
+        company_name=item.company_name,
+        company_domain=item.company_domain,
+        contact_role=item.contact_role,
+        trace_input=build_crm_trace_input(
+            lead_id=item.lead_id,
+            correlation_id=item.correlation_id,
+            source_type=item.source_type,
+            contact_email=item.contact_email,
+            company_name=item.company_name,
+            raw_content=item.content_summary,
+        ),
+        result_model=OutboundEmailResult,
+        fallback_factory=lambda: _fallback_outbound_email(
+            contact_name=item.contact_name,
+            company_name=item.company_name,
+            content_summary=item.content_summary,
+            sales_memo_raw=item.sales_memo,
+            calendly_url=item.calendly_url,
+        ),
+    )
+
+
+@app.post("/weekly-insights", response_model=WeeklyInsightsResult)
+async def weekly_insights(item: WeeklyInsightsRequest, request: Request):
+    prompt = load_prompt("weekly_insights")
+    lead_id = f"weekly-{item.week_start}"
+    metrics_json = json.dumps(item.metrics, ensure_ascii=False, default=str)
+    prior_json = json.dumps(item.prior_week_metrics, ensure_ascii=False, default=str)
+    return await _call_llm_json(
+        prompt=prompt,
+        prompt_vars={
+            "week_start": item.week_start,
+            "week_end": item.week_end,
+            "metrics_json": metrics_json,
+            "prior_week_metrics": prior_json,
+        },
+        span_name="crm-weekly-insights",
+        generation_name="deepseek-weekly-insights",
+        request=request,
+        lead_id=lead_id,
+        correlation_id=item.correlation_id or lead_id,
+        source_type="weekly_report",
+        company_name="",
+        company_domain="",
+        contact_role="",
+        trace_input={
+            "week_start": item.week_start,
+            "week_end": item.week_end,
+            "metrics_preview": truncate_for_llm(metrics_json, 4000),
+            "prior_week_preview": truncate_for_llm(prior_json, 2000),
+        },
+        result_model=WeeklyInsightsResult,
+        fallback_factory=lambda: _fallback_weekly_insights(item.metrics),
     )
 
 

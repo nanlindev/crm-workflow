@@ -1,0 +1,976 @@
+{
+  "name": "B2B Lead Weekly Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                5
+              ],
+              "triggerAtHour": 17
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2416,
+        288
+      ],
+      "id": "213219c6-f5ca-403d-99d0-f0085a0d41c4",
+      "name": "Friday 5pm"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2192,
+        288
+      ],
+      "id": "afbb42b6-824b-4302-a9e1-00a971a28e4b",
+      "name": "Read Leads For Weekly",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "error_logs"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1968,
+        224
+      ],
+      "id": "e226aec7-916b-4b33-85cc-b472a7efede2",
+      "name": "Read Errors For Weekly",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "weekly_metrics"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1744,
+        144
+      ],
+      "id": "6de17f46-32d4-44e6-b6c1-b7d705617813",
+      "name": "Read Prior Weekly Metrics",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_main"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1520,
+        96
+      ],
+      "id": "a5749839-231b-404a-830c-313ad765823f",
+      "name": "Read config_main",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        0
+      ],
+      "id": "b20d42d3-0389-4dcc-9539-5d24d0c8941f",
+      "name": "Normalize config_main"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_main error';\n\nreturn {\n  config_table: 'config_main',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_main_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_main',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        192
+      ],
+      "id": "26b5378a-fcfd-4402-83af-a398823d4869",
+      "name": "Handle config_main Read Error"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_notifications"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1072,
+        96
+      ],
+      "id": "fc93540e-27ab-41c9-b966-9f4dc16284f2",
+      "name": "Read config_notifications",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_notifications',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        0
+      ],
+      "id": "bfc37743-0ccb-45cb-bc07-193acea98d5e",
+      "name": "Normalize config_notifications"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_notifications error';\n\nreturn {\n  config_table: 'config_notifications',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_notifications_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_notifications',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        192
+      ],
+      "id": "62a7050b-bacc-49dd-9a14-a1b470e733b7",
+      "name": "Handle config_notifications Read Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction loadWrapper(normalizeName, handleName, table) {\n  const ok = safeNodeJson(normalizeName);\n  if (ok) return ok;\n  const err = safeNodeJson(handleName);\n  if (err) return err;\n  return {\n    config_table: table,\n    rows: [],\n    load_failed: true,\n    load_error_message: 'Config wrapper not executed',\n  };\n}\n\nconst mainWrap = loadWrapper('Normalize config_main', 'Handle config_main Read Error', 'config_main');\nconst notificationWrap = loadWrapper(\n  'Normalize config_notifications',\n  'Handle config_notifications Read Error',\n  'config_notifications',\n);\n\nconst mainRows = (mainWrap.rows || []).filter(r => r.key);\nconst notificationRows = (notificationWrap.rows || []).filter(r => r.event_type);\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst weeklyRule = notificationRows.find(r => r.event_type === 'weekly_summary') || {};\nconst weeklyEnabled = weeklyRule.enabled === true || weeklyRule.enabled === 'true';\n\nconst failedTables = [mainWrap, notificationWrap]\n  .filter(w => w.load_failed)\n  .map(w => w.config_table);\n\nreturn {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_threshold_high: parseInt(kv.score_threshold_high || '80', 10),\n  weekly_summary_enabled: weeklyEnabled,\n  config_load_failed: failedTables.length > 0,\n  config_failed_tables: failedTables,\n  _metadata: { processing_stage: 'weekly_config_loaded' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        96
+      ],
+      "id": "03fcf277-f1e4-44b3-b00c-bd1811b02409",
+      "name": "Load Weekly Config"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Weekly Summary read error';\n\n\nfunction safeNodeAll(name) {\n  try {\n    return $(name).all().map(i => i.json);\n  } catch {\n    return [];\n  }\n}\n\nconst leads = safeNodeAll('Read Leads For Weekly').filter(r => r.lead_id);\nconst now = new Date();\nconst day = now.getUTCDay();\nconst diffToMonday = (day + 6) % 7;\nconst weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diffToMonday));\nconst weekStartStr = weekStart.toISOString().slice(0, 10);\nconst weekEndStr = now.toISOString().slice(0, 10);\n\nconst inWeek = (ts) => {\n  if (!ts) return false;\n  const d = new Date(ts);\n  return d >= weekStart && d <= now;\n};\n\nconst weekLeads = leads.filter(l => inWeek(l.created_at));\nconst correlationId = 'weekly-' + weekStartStr + '-' + Math.random().toString(36).slice(2, 10);\n\nconst metricsJson = {\n  week_start: weekStartStr,\n  week_end: weekEndStr,\n  generated_at: now.toISOString(),\n  new_leads: weekLeads.length,\n  high_score_leads: weekLeads.filter(l => Number(l.score || 0) >= 80).length,\n  avg_score: 'N/A',\n  crm_sync_rate: weekLeads.length ? 'partial' : 'N/A',\n  slack_sent_count: weekLeads.filter(l => l.notification_status === 'sent').length,\n  review_pending: weekLeads.filter(l => l.review_status === 'pending_review').length,\n  review_approved: weekLeads.filter(l => l.review_status === 'approved').length,\n  review_rejected: weekLeads.filter(l => l.review_status === 'rejected').length,\n  meetings_booked: weekLeads.filter(l => l.meeting_status === 'booked').length,\n  booking_rate: 'N/A',\n  first_touch_sent: weekLeads.filter(l => l.first_touch_status === 'sent').length,\n  error_count: 0,\n  error_types: {},\n  leads_by_source: {},\n  leads_by_industry: {},\n  leads_by_lead_stage: {},\n  funnel: { intake: weekLeads.length, enriched: 0, scored: 0, crm_synced: 0, booked: 0 },\n};\n\nreturn {\n  ...metricsJson,\n  metrics_json: metricsJson,\n  prior_week_metrics: {},\n  prior_week_start: '',\n  mode: 'test',\n  weekly_summary_enabled: true,\n  weekly_gate_passed: false,\n  correlation_id: correlationId,\n  source_breakdown_json: '{}',\n  _weekly_degraded: true,\n  weekly_read_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'weekly_summary_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'Read Leads/Errors/Prior Weekly Metrics',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        416
+      ],
+      "id": "24a223cc-39c7-43e7-a1e6-6d01a225e979",
+      "name": "Handle Weekly Read Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction safeNodeAll(name) {\n  try {\n    return $(name).all().map(i => i.json);\n  } catch {\n    return [];\n  }\n}\n\nconst config = $('Load Weekly Config').first()?.json || {};\nconst leads = safeNodeAll('Read Leads For Weekly').filter(r => r.lead_id);\nconst errors = safeNodeAll('Read Errors For Weekly');\nconst priorRows = safeNodeAll('Read Prior Weekly Metrics').filter(r => r.week_start);\n\nconst now = new Date();\nconst day = now.getUTCDay();\nconst diffToMonday = (day + 6) % 7;\nconst weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diffToMonday));\nconst weekEnd = new Date(now);\n\nconst weekStartStr = weekStart.toISOString().slice(0, 10);\nconst weekEndStr = weekEnd.toISOString().slice(0, 10);\n\nconst inWeek = (ts) => {\n  if (!ts) return false;\n  const d = new Date(ts);\n  return d >= weekStart && d <= weekEnd;\n};\n\nconst threshold = Number(config.score_threshold_high || 80);\nconst weekLeads = leads.filter(l => inWeek(l.created_at));\nconst scores = weekLeads.map(l => Number(l.score || 0)).filter(n => !Number.isNaN(n));\nconst highScore = weekLeads.filter(l => Number(l.score || 0) >= threshold);\nconst crmSynced = weekLeads.filter(l => l.crm_status === 'synced');\nconst notified = weekLeads.filter(l => l.notification_status === 'sent');\nconst reviewPending = weekLeads.filter(l => l.review_status === 'pending_review');\nconst reviewApproved = weekLeads.filter(l => l.review_status === 'approved');\nconst reviewRejected = weekLeads.filter(l => l.review_status === 'rejected');\nconst meetingsBooked = weekLeads.filter(l => l.meeting_status === 'booked');\nconst firstTouchSent = weekLeads.filter(l => l.first_touch_status === 'sent');\n\nconst avgScore = scores.length\n  ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)\n  : 'N/A';\n\nconst crmSyncRate = weekLeads.length\n  ? (crmSynced.length / weekLeads.length * 100).toFixed(1) + '%'\n  : 'N/A';\n\nconst bookingRate = highScore.length\n  ? (meetingsBooked.length / highScore.length * 100).toFixed(1) + '%'\n  : 'N/A';\n\nconst errorTypes = {};\nfor (const e of errors.filter(e => inWeek(e.timestamp))) {\n  const key = (e.message || 'unknown').slice(0, 40);\n  errorTypes[key] = (errorTypes[key] || 0) + 1;\n}\n\nconst groupCount = (rows, field) => {\n  const out = {};\n  for (const row of rows) {\n    const key = (row[field] || 'unknown').toString().trim() || 'unknown';\n    out[key] = (out[key] || 0) + 1;\n  }\n  return out;\n};\n\nconst leadsBySource = groupCount(weekLeads, 'source_type');\nconst leadsByIndustry = groupCount(weekLeads, 'industry');\nconst leadsByStage = groupCount(weekLeads, 'lead_stage');\n\nconst funnel = {\n  intake: weekLeads.length,\n  enriched: weekLeads.filter(l => l.enrichment_status === 'complete').length,\n  scored: weekLeads.filter(l => Number(l.score || 0) > 0).length,\n  crm_synced: crmSynced.length,\n  booked: meetingsBooked.length,\n};\n\nconst priorWeekStart = new Date(weekStart);\npriorWeekStart.setUTCDate(priorWeekStart.getUTCDate() - 7);\nconst priorWeekStartStr = priorWeekStart.toISOString().slice(0, 10);\nconst priorRow = priorRows\n  .filter(r => r.week_start === priorWeekStartStr)\n  .sort((a, b) => (b.generated_at || '').localeCompare(a.generated_at || ''))[0];\n\nlet priorWeekMetrics = {};\nif (priorRow) {\n  try {\n    priorWeekMetrics = priorRow.metrics_json ? JSON.parse(priorRow.metrics_json) : { ...priorRow };\n  } catch {\n    priorWeekMetrics = { ...priorRow };\n  }\n}\n\nconst wowDelta = (key) => {\n  if (!priorRow) return null;\n  const current = Number(weekLeads.length && key === 'new_leads' ? weekLeads.length : 0);\n  const map = {\n    new_leads: weekLeads.length,\n    high_score_leads: highScore.length,\n    meetings_booked: meetingsBooked.length,\n    slack_sent_count: notified.length,\n    error_count: Object.values(errorTypes).reduce((a, b) => a + b, 0),\n  };\n  const c = Number(map[key] ?? 0);\n  const p = Number(priorRow[key] ?? priorWeekMetrics[key] ?? 0);\n  if (p === 0) return c > 0 ? 100 : 0;\n  return Math.round(((c - p) / p) * 100);\n};\n\nconst correlationId = 'weekly-' + weekStartStr + '-' + Math.random().toString(36).slice(2, 10);\nconst generatedAt = now.toISOString();\n\nconst metricsJson = {\n  week_start: weekStartStr,\n  week_end: weekEndStr,\n  generated_at: generatedAt,\n  new_leads: weekLeads.length,\n  high_score_leads: highScore.length,\n  avg_score: avgScore,\n  crm_sync_rate: crmSyncRate,\n  slack_sent_count: notified.length,\n  review_pending: reviewPending.length,\n  review_approved: reviewApproved.length,\n  review_rejected: reviewRejected.length,\n  meetings_booked: meetingsBooked.length,\n  booking_rate: bookingRate,\n  first_touch_sent: firstTouchSent.length,\n  error_count: Object.values(errorTypes).reduce((a, b) => a + b, 0),\n  error_types: errorTypes,\n  leads_by_source: leadsBySource,\n  leads_by_industry: leadsByIndustry,\n  leads_by_lead_stage: leadsByStage,\n  funnel,\n  score_threshold_high: threshold,\n  wow_delta: {\n    new_leads: wowDelta('new_leads'),\n    high_score_leads: wowDelta('high_score_leads'),\n    meetings_booked: wowDelta('meetings_booked'),\n    slack_sent_count: wowDelta('slack_sent_count'),\n    error_count: wowDelta('error_count'),\n  },\n};\n\nreturn {\n  ...metricsJson,\n  metrics_json: metricsJson,\n  prior_week_metrics: priorWeekMetrics,\n  prior_week_start: priorWeekStartStr,\n  mode: config.mode || 'test',\n  weekly_summary_enabled: config.weekly_summary_enabled !== false,\n  weekly_gate_passed:\n    (config.mode || 'test') === 'production' && config.weekly_summary_enabled !== false,\n  correlation_id: correlationId,\n  source_breakdown_json: JSON.stringify(leadsBySource),\n  _metadata: { processing_stage: 'weekly_metrics_built' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        96
+      ],
+      "id": "4bfcbfaa-6189-41fe-9ef5-e7150d4d5f02",
+      "name": "Build Weekly Metrics"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crm_python_ai:8001/weekly-insights",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ week_start: $json.week_start, week_end: $json.week_end, correlation_id: $json.correlation_id, metrics: $json.metrics_json, prior_week_metrics: $json.prior_week_metrics || {} }) }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -176,
+        224
+      ],
+      "id": "8d187231-025c-47b7-a425-2ea862c76ffe",
+      "name": "HTTP Weekly Insights",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown HTTP Weekly Insights error';\n\nconst metrics = $('Build Weekly Metrics').first()?.json || $('Handle Weekly Read Error').first()?.json || {};\n\nconst summary =\n  'Week ' + (metrics.week_start || '') + '\u2013' + (metrics.week_end || '') + ': ' +\n  (metrics.new_leads || 0) + ' new leads, ' +\n  (metrics.high_score_leads || 0) + ' high-score, ' +\n  (metrics.meetings_booked || 0) + ' meetings booked. Metrics-only summary (AI unavailable).';\n\nconst recommendations = [];\nif ((metrics.high_score_leads || 0) > (metrics.meetings_booked || 0)) {\n  recommendations.push('Follow up on high-score leads without bookings');\n}\nif ((metrics.review_pending || 0) > 0) {\n  recommendations.push('Clear pending manual reviews');\n}\n\nreturn {\n  executive_summary: summary,\n  key_trends: [],\n  recommendations,\n  anomalies: (metrics.error_count || 0) > 5 ? ['Elevated error count: ' + metrics.error_count] : [],\n  fallback_used: true,\n  weekly_ai_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'weekly_ai_failed',\n    severity: 'low',\n    error_message: errorMessage,\n    failed_node: 'HTTP Weekly Insights',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        288
+      ],
+      "id": "827b4501-8e7e-4fb2-ba9e-276adeb1bdce",
+      "name": "Handle Weekly AI Failure"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst metrics = safeNodeJson('Build Weekly Metrics') || safeNodeJson('Handle Weekly Read Error') || {};\nconst aiOk = safeNodeJson('HTTP Weekly Insights');\nconst aiFail = safeNodeJson('Handle Weekly AI Failure');\n\nlet insights = aiOk;\nif (!insights || insights.executive_summary === undefined) {\n  insights = aiFail || {\n    executive_summary: 'AI insights unavailable',\n    key_trends: [],\n    recommendations: [],\n    anomalies: [],\n    fallback_used: true,\n  };\n}\n\nconst formatList = (items) => (items || []).map(i => '\u2022 ' + i).join('\\n') || '\u2014';\nconst formatWow = (delta) => {\n  if (delta === null || delta === undefined) return '';\n  const sign = delta > 0 ? '+' : '';\n  return ' (' + sign + delta + '% WoW)';\n};\n\nconst wow = metrics.wow_delta || {};\nconst sourceLines = Object.entries(metrics.leads_by_source || {})\n  .map(([k, v]) => '- ' + k + ': ' + v)\n  .join('\\n') || '\u2014';\n\nconst slackText =\n  '\ud83d\udcc8 CRM Weekly Summary (' + metrics.week_start + ' \u2013 ' + metrics.week_end + ')\\n\\n' +\n  'New leads: ' + metrics.new_leads + formatWow(wow.new_leads) + '\\n' +\n  'High score: ' + metrics.high_score_leads + formatWow(wow.high_score_leads) + '\\n' +\n  'Avg score: ' + metrics.avg_score + '\\n' +\n  'CRM sync rate: ' + metrics.crm_sync_rate + '\\n' +\n  'Meetings booked: ' + metrics.meetings_booked + ' (rate: ' + metrics.booking_rate + ')' + formatWow(wow.meetings_booked) + '\\n' +\n  'Slack sent: ' + metrics.slack_sent_count + '\\n' +\n  'Review pending / approved / rejected: ' + metrics.review_pending + ' / ' + metrics.review_approved + ' / ' + metrics.review_rejected + '\\n' +\n  'Errors: ' + metrics.error_count + '\\n\\n' +\n  'By source:\\n' + sourceLines + '\\n\\n' +\n  'Funnel: intake ' + (metrics.funnel?.intake || 0) +\n  ' \u2192 enriched ' + (metrics.funnel?.enriched || 0) +\n  ' \u2192 scored ' + (metrics.funnel?.scored || 0) +\n  ' \u2192 CRM ' + (metrics.funnel?.crm_synced || 0) +\n  ' \u2192 booked ' + (metrics.funnel?.booked || 0) + '\\n\\n' +\n  'AI Summary:\\n' + (insights.executive_summary || '\u2014') + '\\n\\n' +\n  'Key trends:\\n' + formatList(insights.key_trends) + '\\n\\n' +\n  'Recommendations:\\n' + formatList(insights.recommendations);\n\nreturn {\n  ...metrics,\n  executive_summary: insights.executive_summary || '',\n  key_trends: insights.key_trends || [],\n  recommendations: insights.recommendations || [],\n  anomalies: insights.anomalies || [],\n  fallback_used: insights.fallback_used === true,\n  ai_summary: insights.executive_summary || '',\n  slack_text: slackText,\n  _metadata: { processing_stage: 'weekly_report_merged' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        224
+      ],
+      "id": "8d8de594-6ce1-4a79-9358-8b1e77762925",
+      "name": "Merge Weekly Report"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2b8d953d-c0d4-428d-95b8-f63e72868fae",
+              "leftValue": "={{ $json.weekly_gate_passed }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        224
+      ],
+      "id": "24e52dc9-71fd-4111-8f9f-1cf9786d832f",
+      "name": "Should Send Weekly?"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        128
+      ],
+      "id": "e5be6e3c-2d58-40ea-a058-96e21318fd4f",
+      "name": "Slack Weekly Report",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "8ae2f627-ef71-403f-a6ec-22c2a17989e2",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst report = $input.item.json;\nreturn {\n  ...report,\n  slack_skipped: true,\n  _metadata: { processing_stage: 'weekly_slack_skipped_test_or_disabled' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        416
+      ],
+      "id": "4839a07a-4f46-468e-8b90-29c9d29ae838",
+      "name": "Skip Weekly Slack"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Weekly Report error';\n\nreturn {\n  error_type: 'slack_weekly_failed',\n  slack_error_message: errorMessage,\n  _metadata: { processing_stage: 'slack_weekly_error_handled', severity: 'low', error_message: errorMessage },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        224
+      ],
+      "id": "caac87c2-1fe2-43f2-9be5-e54059d49496",
+      "name": "Log Slack Weekly Error"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "weekly_metrics"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "week_start": "={{ $json.week_start }}",
+            "week_end": "={{ $json.week_end }}",
+            "generated_at": "={{ $json.generated_at || new Date().toISOString() }}",
+            "new_leads": "={{ $json.new_leads }}",
+            "high_score_leads": "={{ $json.high_score_leads }}",
+            "avg_score": "={{ $json.avg_score }}",
+            "crm_sync_rate": "={{ $json.crm_sync_rate }}",
+            "slack_sent_count": "={{ $json.slack_sent_count }}",
+            "review_pending": "={{ $json.review_pending }}",
+            "review_approved": "={{ $json.review_approved }}",
+            "meetings_booked": "={{ $json.meetings_booked }}",
+            "first_touch_sent": "={{ $json.first_touch_sent }}",
+            "error_count": "={{ $json.error_count }}",
+            "source_breakdown_json": "={{ $json.source_breakdown_json }}",
+            "metrics_json": "={{ JSON.stringify($json.metrics_json || {}) }}",
+            "ai_summary": "={{ $json.ai_summary }}",
+            "fallback_used": "={{ $json.fallback_used }}",
+            "correlation_id": "={{ $json.correlation_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "week_start",
+              "displayName": "week_start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "week_end",
+              "displayName": "week_end",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "generated_at",
+              "displayName": "generated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "new_leads",
+              "displayName": "new_leads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "high_score_leads",
+              "displayName": "high_score_leads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avg_score",
+              "displayName": "avg_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "crm_sync_rate",
+              "displayName": "crm_sync_rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "slack_sent_count",
+              "displayName": "slack_sent_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_pending",
+              "displayName": "review_pending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_approved",
+              "displayName": "review_approved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "meetings_booked",
+              "displayName": "meetings_booked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first_touch_sent",
+              "displayName": "first_touch_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_count",
+              "displayName": "error_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_breakdown_json",
+              "displayName": "source_breakdown_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "metrics_json",
+              "displayName": "metrics_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_summary",
+              "displayName": "ai_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fallback_used",
+              "displayName": "fallback_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1168,
+        192
+      ],
+      "id": "ba25a270-a1e0-462a-9e3d-cb9a799c0cf4",
+      "name": "Append Weekly Metrics",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        192
+      ],
+      "id": "222c810b-aa33-44ac-80d2-4539e7e1154a",
+      "name": "Weekly Summary End"
+    }
+  ],
+  "connections": {
+    "Friday 5pm": {
+      "main": [
+        [
+          {
+            "node": "Read Leads For Weekly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leads For Weekly": {
+      "main": [
+        [
+          {
+            "node": "Read Errors For Weekly",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Weekly Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Errors For Weekly": {
+      "main": [
+        [
+          {
+            "node": "Read Prior Weekly Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Weekly Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Prior Weekly Metrics": {
+      "main": [
+        [
+          {
+            "node": "Read config_main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Weekly Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_main": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_main Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_main": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_main Read Error": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_notifications Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Load Weekly Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_notifications Read Error": {
+      "main": [
+        [
+          {
+            "node": "Load Weekly Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Weekly Config": {
+      "main": [
+        [
+          {
+            "node": "Build Weekly Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Weekly Read Error": {
+      "main": [
+        [
+          {
+            "node": "HTTP Weekly Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Weekly Metrics": {
+      "main": [
+        [
+          {
+            "node": "HTTP Weekly Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Weekly Insights": {
+      "main": [
+        [
+          {
+            "node": "Merge Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Weekly AI Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Weekly AI Failure": {
+      "main": [
+        [
+          {
+            "node": "Merge Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Weekly Report": {
+      "main": [
+        [
+          {
+            "node": "Should Send Weekly?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Weekly?": {
+      "main": [
+        [
+          {
+            "node": "Slack Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Weekly Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Weekly Report": {
+      "main": [
+        [
+          {
+            "node": "Append Weekly Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Slack Weekly Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Slack Weekly Error": {
+      "main": [
+        [
+          {
+            "node": "Append Weekly Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Weekly Slack": {
+      "main": [
+        [
+          {
+            "node": "Append Weekly Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Weekly Metrics": {
+      "main": [
+        [
+          {
+            "node": "Weekly Summary End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "B2B Lead Error Handler",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "63fa5f7c-2749-4a08-acc8-05163fcd1efa",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+  },
+  "nodeGroups": [],
+  "id": "UlDgVaZGic18Joj2",
+  "tags": [
+    {
+      "updatedAt": "2026-07-01T02:31:24.969Z",
+      "createdAt": "2026-07-01T02:31:24.969Z",
+      "id": "tb551WiNlnAgjnHk",
+      "name": "crm-workflow"
+    }
+  ]
+}

@@ -7,6 +7,8 @@ A reusable n8n workflow template for B2B lead processing after form submission. 
 ```
 Tally/Google Forms → Intake → Enrichment & Scoring → CRM Sync & Notification
                               ↓
+Calendly Webhook → Update meeting status → Slack notify
+                              ↓
                          Error Handler → error_logs + Slack alert
 ```
 
@@ -26,7 +28,7 @@ Tally/Google Forms → Intake → Enrichment & Scoring → CRM Sync & Notificati
 |------|---------|
 | `workflows/` | n8n workflow JSON exports (import manually) |
 | `docker/` | Sidecar compose, env template, deploy guide |
-| `python-service/` | FastAPI sidecar for `/enrich`, `/score`, `/manual-review` |
+| `python-service/` | FastAPI sidecar: `/enrich`, `/score`, `/sales-memo`, `/manual-review`, `/outbound-email`, `/weekly-insights` |
 | `prompts/` | Versioned LLM prompt files (`.md` with frontmatter) |
 | `schemas/` | Unified Lead JSON Schema |
 | `sheets/template/` | CSV templates for Google Sheets initialization |
@@ -46,8 +48,11 @@ Tally/Google Forms → Intake → Enrichment & Scoring → CRM Sync & Notificati
 - [SHEETS_SETUP.md](docs/SHEETS_SETUP.md) — Google Sheets initialization
 - [CREDENTIALS.md](docs/CREDENTIALS.md) — API keys and OAuth setup
 - [TEST_PRODUCTION.md](docs/TEST_PRODUCTION.md) — Mode switching
+- [WORKFLOW_SYNC_FROM_EXPORT.md](docs/WORKFLOW_SYNC_FROM_EXPORT.md) — Sync UI exports to `workflows/`
+- [CODE_NODE_MODES.md](docs/CODE_NODE_MODES.md) — Code 节点 `runOnceForAllItems` vs `runOnceForEachItem`
 - [FIELD_MAPPING.md](docs/FIELD_MAPPING.md) — Form field → Lead Schema mapping
 - [ERROR_HANDLING.md](docs/ERROR_HANDLING.md) — Error workflow behavior
+- [ERROR_HANDLING_NODES.md](docs/ERROR_HANDLING_NODES.md) — Per-node On Error / Retry / wiring guide
 - [PROMPTS.md](docs/PROMPTS.md) — Prompt file management
 - [RUN_EXAMPLE.md](docs/RUN_EXAMPLE.md) — End-to-end test walkthrough
 

@@ -69,6 +69,35 @@ def build_scoring_trace_output(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def build_sales_memo_trace_output(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "company_background": (result.get("company_background") or [])[:4],
+        "talking_points": (result.get("talking_points") or [])[:4],
+        "pain_hypotheses": (result.get("pain_hypotheses") or [])[:4],
+        "recommended_opener": preview(result.get("recommended_opener", ""), SUMMARY_PREVIEW_LIMIT),
+        "fallback_used": result.get("fallback_used", False),
+    }
+
+
+def build_outbound_email_trace_output(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "subject": preview(result.get("subject", ""), 120),
+        "body_preview": preview(result.get("body", ""), SUMMARY_PREVIEW_LIMIT),
+        "personalization_notes": preview(result.get("personalization_notes", ""), SUMMARY_PREVIEW_LIMIT),
+        "fallback_used": result.get("fallback_used", False),
+    }
+
+
+def build_weekly_insights_trace_output(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "executive_summary": preview(result.get("executive_summary", ""), SUMMARY_PREVIEW_LIMIT),
+        "key_trends": (result.get("key_trends") or [])[:4],
+        "recommendations": (result.get("recommendations") or [])[:4],
+        "anomalies": (result.get("anomalies") or [])[:4],
+        "fallback_used": result.get("fallback_used", False),
+    }
+
+
 def build_crm_propagate_metadata(
     *,
     lead_id: str,

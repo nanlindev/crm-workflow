@@ -107,3 +107,62 @@ function onFormSubmit(e) {
 | `score` | Python `/score` (0-100) |
 | `recommended_action` | Python `/score` + routing rules |
 | `review_status` | Review rules Code node |
+
+## Sales memo fields
+
+| Field | Source |
+|-------|--------|
+| `sales_memo` | Python `/sales-memo` (JSON) — only when score ≥ `sales_memo_min_score` and not rejected |
+| `sales_memo_status` | `complete` \| `skipped_low_score` \| `failed` |
+
+## Meeting / Calendly fields
+
+| Field | Source |
+|-------|--------|
+| `meeting_status` | Intake sets `not_booked` on new leads; Calendly webhook updates to `booked` / `canceled` / `rescheduled` |
+| `meeting_time` | Calendly `payload.event.start_time` |
+| `calendly_event_uri` | Calendly `payload.event.uri` |
+| `calendly_invitee_email` | Calendly `payload.invitee.email` |
+
+Webhook path: `/webhook/calendly` — see `B2B Lead Calendly Webhook` workflow.
+
+### Calendly webhook payload (simplified)
+
+```json
+{
+  "event": "invitee.created",
+  "payload": {
+    "event": {
+      "uri": "https://api.calendly.com/scheduled_events/...",
+      "start_time": "2026-07-10T14:00:00.000000Z"
+    },
+    "invitee": {
+      "email": "jane@acme.com",
+      "uri": "https://api.calendly.com/scheduled_events/.../invitees/..."
+    }
+  }
+}
+```
+
+Unmatched invitees (email not in `leads`) are logged to `audit_logs` as `calendly_unmatched` without raising an error.
+
+## Booking reminder fields
+
+| Field | Source |
+|-------|--------|
+| `booking_reminder_sent` | `B2B Lead Booking Follow-up` sets `true` after successful Slack reminder |
+| `booking_reminder_at` | ISO timestamp when reminder was sent |
+
+Scheduled workflow: **B2B Lead Booking Follow-up** (daily 10:00). Eligible leads: `score >= score_threshold_high`, `meeting_status=not_booked`, older than `booking_reminder_hours` (default 24), and `booking_reminder_sent` not true. Controlled by `config_notifications` row `booking_reminder` and `config_main.mode`.
+
+## Slack action fields
+
+| Field | Source |
+|-------|--------|
+| `owner_id` | Slack user ID on **Assign** button (`assign_lead`) |
+| `lead_stage` | `sql` (assign), `junk` (mark junk), `nurture` (nurture) |
+| `review_status` | Updated by Slack Actions: `approved`, `rejected`, or `review_later` |
+| `reviewer` | Slack user ID on assign |
+| `reviewed_at` | ISO timestamp when a Slack action is applied |
+
+Webhook path: `/webhook/slack-interactions` — see `B2B Lead Slack Actions` workflow. Buttons are emitted by CRM Sync Block Kit notifications (`assign_lead`, `mark_junk`, `nurture_lead`).

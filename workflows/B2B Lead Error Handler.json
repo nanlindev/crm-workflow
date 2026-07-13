@@ -6,10 +6,10 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        0,
+        608,
         0
       ],
-      "id": "eec51b04-b04f-4b6b-8755-5add979f59ef",
+      "id": "8e379676-53c2-4861-a5a9-6f5407c26d92",
       "name": "Error Trigger"
     },
     {
@@ -20,10 +20,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
-        0
+        1728,
+        -80
       ],
-      "id": "c9389771-0040-4183-9036-da8309952232",
+      "id": "175eba0f-bda8-4395-bc77-384649489800",
       "name": "Extract Error Details"
     },
     {
@@ -31,8 +31,8 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "id",
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
         },
         "sheetName": {
           "__rl": true,
@@ -50,25 +50,118 @@
             "correlation_id": "={{ $json.correlation_id }}",
             "retry_suggestion": "={{ $json.retry_suggestion }}",
             "timestamp": "={{ $json.timestamp }}"
-          }
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "node",
+              "displayName": "node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stack",
+              "displayName": "stack",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retry_suggestion",
+              "displayName": "retry_suggestion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        440,
-        0
+        1952,
+        -80
       ],
-      "id": "07ba5a13-7ce8-4147-a199-2a33bd5d2f03",
+      "id": "afae6908-a97d-4c2d-9ee5-2bed5bb8c8d4",
       "name": "Write error_logs",
-      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Write error_logs error';\n\n\nconst details = $('Extract Error Details').first()?.json ?? errJson;\n\nreturn {\n  ...details,\n  error_logs_write_failed: true,\n  error_logs_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'error_logs_write_failed',\n    severity: 'high',\n    error_message: errorMessage,\n    failed_node: 'Write error_logs',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        0
+      ],
+      "id": "1c1e887b-68ff-4423-acda-d514dd1cef1c",
+      "name": "Handle error_logs Write Failure"
     },
     {
       "parameters": {
@@ -78,37 +171,168 @@
           "mode": "id",
           "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
         },
-        "text": "=\ud83d\udea8 CRM Workflow Error\nWorkflow: {{ $('Extract Error Details').item.json.workflow }}\nNode: {{ $('Extract Error Details').item.json.node }}\nMessage: {{ $('Extract Error Details').item.json.message }}\nCorrelation: {{ $('Extract Error Details').item.json.correlation_id }}"
+        "text": "=\ud83d\udea8 CRM Workflow Error\nWorkflow: {{ $('Extract Error Details').item.json.workflow }}\nNode: {{ $('Extract Error Details').item.json.node }}\nMessage: {{ $('Extract Error Details').item.json.message }}\nCorrelation: {{ $('Extract Error Details').item.json.correlation_id }}",
+        "otherOptions": {}
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
       "position": [
-        660,
-        0
+        2400,
+        -80
       ],
-      "id": "a68137f0-3ece-4e00-8b17-90f38d193f13",
+      "id": "3c3d2229-8063-437f-920a-0dc0bb383ef8",
       "name": "Slack Error Alert",
-      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "8d75b450-2169-47f9-b3b3-792e689a0482",
       "credentials": {
         "slackOAuth2Api": {
           "id": "SLACK_CREDENTIAL_ID",
           "name": "Slack account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "return { error_type: 'slack_notification_failed', _metadata: { processing_stage: 'slack_error_handled', severity: 'low' } };"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Error Alert error';\n\nreturn {\n  error_type: 'slack_notification_failed',\n  slack_error_message: errorMessage,\n  _metadata: { processing_stage: 'slack_error_handled', severity: 'low', error_message: errorMessage },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        120
+        2624,
+        -80
       ],
-      "id": "25329dd5-74b2-47bc-8c85-1e2763561574",
+      "id": "ebc283ea-67ad-4a26-940c-863da08c7e7a",
       "name": "Log Slack Error"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1747941248,
+          "mode": "list",
+          "cachedResultName": "config_main",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ctYQxdFPeRgo6mC8T3ru_O0GP9dXgocpUZi2yPOBokw/edit#gid=1747941248"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "3296ddd1-af72-4652-a568-0002598bd7f6",
+      "name": "Read config_main",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 207766743,
+          "mode": "list",
+          "cachedResultName": "config_notifications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ctYQxdFPeRgo6mC8T3ru_O0GP9dXgocpUZi2yPOBokw/edit#gid=207766743"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "e723cdfc-af98-4c2c-bef6-266058327329",
+      "name": "Read config_notifications",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const mode = ($('Read config_main').all().find(r => r.json.key === 'mode') || {}).json?.value || 'test';\nconst rules = $('Read config_notifications').all().map(r => r.json);\nconst rule = rules.find(r => r.event_type === 'error_alert');\nconst enabled = rule && (rule.enabled === true || rule.enabled === 'true');\nreturn {\n  ...$('Extract Error Details').item.json,\n  should_alert_slack: String(mode).toLowerCase() === 'production' && enabled,\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "c1ce6232-a8eb-413f-aee8-a03e981b1b8c",
+      "name": "Check Error Alert Enabled"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "82087e13-60d9-4df2-be8b-c39cc14abca3",
+              "leftValue": "={{ $json.should_alert_slack }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "eafac93c-4517-410a-9880-e2627da63e7e",
+      "name": "Should Alert Slack?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2864,
+        160
+      ],
+      "id": "99208331-9b1c-4958-8351-809a1cb294dd",
+      "name": "No Operation, do nothing"
     }
   ],
   "connections": {
@@ -116,7 +340,7 @@
       "main": [
         [
           {
-            "node": "Extract Error Details",
+            "node": "Read config_main",
             "type": "main",
             "index": 0
           }
@@ -142,6 +366,24 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Handle error_logs Write Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle error_logs Write Failure": {
+      "main": [
+        [
+          {
+            "node": "Slack Error Alert",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -156,6 +398,68 @@
           }
         ]
       ]
+    },
+    "Read config_main": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Check Error Alert Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Error Alert Enabled": {
+      "main": [
+        [
+          {
+            "node": "Should Alert Slack?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Alert Slack?": {
+      "main": [
+        [
+          {
+            "node": "Extract Error Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Slack Error": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -163,12 +467,18 @@
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "eecbfe9a-74c6-469f-ba7f-cc7e1a3c97dc",
+  "versionId": "df65d490-a9bd-47ca-97ab-e1e1d1beaf0c",
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
   },
+  "nodeGroups": [],
+  "id": "iy78L8df5468a36U",
   "tags": [
     {
+      "updatedAt": "2026-07-01T02:31:24.969Z",
+      "createdAt": "2026-07-01T02:31:24.969Z",
+      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]

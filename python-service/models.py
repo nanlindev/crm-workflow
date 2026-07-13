@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -78,3 +78,77 @@ class ManualReviewResult(BaseModel):
     suggested_questions: List[str] = Field(default_factory=list)
     risk_flags: List[str] = Field(default_factory=list)
     confidence: str = "medium"
+
+
+class SalesMemoRequest(BaseModel):
+    lead_id: str
+    correlation_id: str
+    source_type: str = ""
+    source_name: str = ""
+    contact_name: str = ""
+    contact_email: str = ""
+    contact_role: str = ""
+    company_name: str = ""
+    company_domain: str = ""
+    industry: str = ""
+    company_size: str = ""
+    content_summary: str = ""
+    intent_signals: List[str] = Field(default_factory=list)
+    enrichment_summary: str = ""
+    score: int = Field(default=0, ge=0, le=100)
+    score_reasoning: str = ""
+    recommended_action: str = ""
+
+
+class SalesMemoResult(BaseModel):
+    company_background: List[str] = Field(default_factory=list)
+    talking_points: List[str] = Field(default_factory=list)
+    pain_hypotheses: List[str] = Field(default_factory=list)
+    recommended_opener: str = ""
+    fallback_used: bool = False
+
+
+class OutboundEmailRequest(BaseModel):
+    lead_id: str
+    correlation_id: str
+    source_type: str = ""
+    source_name: str = ""
+    contact_name: str = ""
+    contact_email: str = ""
+    contact_role: str = ""
+    company_name: str = ""
+    company_domain: str = ""
+    industry: str = ""
+    company_size: str = ""
+    content_summary: str = ""
+    intent_signals: List[str] = Field(default_factory=list)
+    enrichment_summary: str = ""
+    score: int = Field(default=0, ge=0, le=100)
+    score_reasoning: str = ""
+    recommended_action: str = ""
+    sales_memo: str = ""
+    sender_name: str = ""
+    calendly_url: str = ""
+
+
+class OutboundEmailResult(BaseModel):
+    subject: str = ""
+    body: str = ""
+    personalization_notes: str = ""
+    fallback_used: bool = False
+
+
+class WeeklyInsightsRequest(BaseModel):
+    week_start: str
+    week_end: str
+    correlation_id: str = ""
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    prior_week_metrics: dict[str, Any] = Field(default_factory=dict)
+
+
+class WeeklyInsightsResult(BaseModel):
+    executive_summary: str = ""
+    key_trends: List[str] = Field(default_factory=list)
+    recommendations: List[str] = Field(default_factory=list)
+    anomalies: List[str] = Field(default_factory=list)
+    fallback_used: bool = False

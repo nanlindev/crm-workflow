@@ -2,9 +2,14 @@ key,value,description
 mode,test,test or production — test skips CRM and external notifications
 score_threshold_high,80,Score at or above triggers high-score routing
 score_threshold_low,40,Score below triggers low-priority routing
+sales_memo_min_score,80,Minimum score to generate AI sales memo
 score_gray_low,40,Lower bound of manual review gray zone
 score_gray_high,79,Upper bound of manual review gray zone
 default_crm,hubspot,Primary CRM identifier
 calendly_url,https://calendly.com/your-link,Static Calendly URL for high-score leads
+booking_reminder_hours,24,Hours after lead creation before sending booking reminder
+first_touch_min_score,80,Minimum score for automated first-touch outbound email
+first_touch_sender_name,Your Team,Display name for outbound email signature
 source_trust_threshold,50,Minimum source trust level to skip review
 freemail_domains,"gmail.com,outlook.com,yahoo.com,hotmail.com,icloud.com",Comma-separated freemail domains
+slack_admin_users,,Comma-separated Slack user IDs allowed to use Block Kit actions (mirror to SLACK_ADMIN_USERS env)

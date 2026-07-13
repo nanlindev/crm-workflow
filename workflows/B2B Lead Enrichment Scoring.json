@@ -2,14 +2,74 @@
   "name": "B2B Lead Enrichment Scoring",
   "nodes": [
     {
-      "parameters": {},
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "lead_id"
+            },
+            {
+              "name": "correlation_id"
+            },
+            {
+              "name": "source_type"
+            },
+            {
+              "name": "source_name"
+            },
+            {
+              "name": "source_trust_level",
+              "type": "number"
+            },
+            {
+              "name": "company_name"
+            },
+            {
+              "name": "company_domain"
+            },
+            {
+              "name": "contact_name"
+            },
+            {
+              "name": "contact_role"
+            },
+            {
+              "name": "contact_email"
+            },
+            {
+              "name": "raw_content"
+            },
+            {
+              "name": "sheets_write_failed",
+              "type": "boolean"
+            },
+            {
+              "name": "sheets_error_message"
+            },
+            {
+              "name": "dedup_skipped",
+              "type": "boolean"
+            },
+            {
+              "name": "read_error_message"
+            },
+            {
+              "name": "audit_log_failed",
+              "type": "boolean"
+            },
+            {
+              "name": "audit_log_error_message"
+            }
+          ]
+        }
+      },
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        0,
-        200
+        7728,
+        3216
       ],
-      "id": "9f473758-7ddf-4eac-b964-c2549828838b",
+      "id": "3b1c9c75-aa9f-4db8-a35a-58f470e2caaa",
       "name": "When Executed by Another Workflow"
     },
     {
@@ -29,18 +89,21 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        0,
-        0
+        8176,
+        3216
       ],
-      "id": "180efd00-35e0-48ff-8fb4-c2547d8508d7",
+      "id": "c1be332a-c593-4168-9838-060b88afb121",
       "name": "Read config_main",
-      "onError": "continueErrorOutput",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -59,18 +122,22 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        0,
-        120
+        8624,
+        3216
       ],
-      "id": "f28667c9-2796-44e3-8c04-5239addb148c",
+      "id": "ee1180f8-4e17-4712-8f28-1ead1cf20235",
       "name": "Read config_routing",
-      "onError": "continueErrorOutput",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -89,18 +156,21 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        0,
-        240
+        9072,
+        3216
       ],
-      "id": "c5f3f3f7-d95e-4383-a62b-b57e22eb7bcf",
+      "id": "febafe8c-1a01-4f38-a51d-bd764c37e3c8",
       "name": "Read config_notifications",
-      "onError": "continueErrorOutput",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -119,91 +189,35 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        0,
-        360
+        9520,
+        3216
       ],
-      "id": "df0ffd21-0839-4bd3-8c0a-f689795aa8cb",
+      "id": "7da03c8f-aa85-4eb6-a535-1e22a082f1c7",
       "name": "Read config_review",
-      "onError": "continueErrorOutput",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      }
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineAll",
-        "options": {}
       },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        220,
-        60
-      ],
-      "id": "df1245dd-820a-4440-927f-ec88c1f2f91d",
-      "name": "Merge Config 1"
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineAll",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        440,
-        120
-      ],
-      "id": "309a51e5-dc45-4b80-90d9-9bab3276593c",
-      "name": "Merge Config 2"
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineAll",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        660,
-        180
-      ],
-      "id": "17a00dc7-9f77-4612-b39a-974d28442cd5",
-      "name": "Merge Config 3"
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "\nconst lead = $('When Executed by Another Workflow').item.json;\nconst mainRows = $('Read config_main').all().map(i => i.json);\nconst routingRows = $('Read config_routing').all().map(i => i.json);\nconst notificationRows = $('Read config_notifications').all().map(i => i.json);\nconst reviewRows = $('Read config_review').all().map(i => i.json);\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst scoreHigh = parseInt(kv.score_threshold_high || '80', 10);\nconst scoreLow = parseInt(kv.score_threshold_low || '40', 10);\nconst grayLow = parseInt(kv.score_gray_low || '40', 10);\nconst grayHigh = parseInt(kv.score_gray_high || '79', 10);\n\nconst global_config = {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_thresholds: { high: scoreHigh, low: scoreLow, gray_low: grayLow, gray_high: grayHigh },\n  calendly_url: kv.calendly_url || '',\n  source_trust_threshold: parseInt(kv.source_trust_threshold || '50', 10),\n  freemail_domains: (kv.freemail_domains || 'gmail.com,outlook.com,yahoo.com,hotmail.com,icloud.com').split(',').map(s => s.trim()),\n  routing_rules: routingRows.filter(r => r.min_score !== undefined),\n  notification_rules: notificationRows.filter(r => r.enabled === true || r.enabled === 'true'),\n  review_rules: reviewRows.filter(r => r.enabled === true || r.enabled === 'true'),\n  _metadata: { processing_stage: 'config_loaded', config_load_failed: false },\n};\n\nreturn { ...lead, global_config };\n"
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction loadWrapper(normalizeName, handleName, table) {\n  const ok = safeNodeJson(normalizeName);\n  if (ok) return ok;\n  const err = safeNodeJson(handleName);\n  if (err) return err;\n  return {\n    config_table: table,\n    rows: [],\n    load_failed: true,\n    load_error_message: 'Config wrapper not executed',\n  };\n}\n\nconst lead = safeNodeJson('Hold Lead') ?? {};\n\nconst mainWrap = loadWrapper('Normalize config_main', 'Handle config_main Error', 'config_main');\nconst routingWrap = loadWrapper('Normalize config_routing', 'Handle config_routing Error', 'config_routing');\nconst notificationWrap = loadWrapper(\n  'Normalize config_notifications',\n  'Handle config_notifications Error',\n  'config_notifications',\n);\nconst reviewWrap = loadWrapper('Normalize config_review', 'Handle config_review Error', 'config_review');\n\nconst wrappers = [mainWrap, routingWrap, notificationWrap, reviewWrap];\nconst mainRows = (mainWrap.rows || []).filter(r => r.key);\nconst routingRows = (routingWrap.rows || []).filter(r => r.min_score !== undefined);\nconst notificationRows = (notificationWrap.rows || []).filter(\n  r => r.enabled === true || r.enabled === 'true',\n);\nconst reviewRows = (reviewWrap.rows || []).filter(r => r.enabled === true || r.enabled === 'true');\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst scoreHigh = parseInt(kv.score_threshold_high || '80', 10);\nconst scoreLow = parseInt(kv.score_threshold_low || '40', 10);\nconst grayLow = parseInt(kv.score_gray_low || '40', 10);\nconst grayHigh = parseInt(kv.score_gray_high || '79', 10);\n\nconst failedTables = wrappers.filter(w => w.load_failed).map(w => w.config_table);\nconst errorMessages = wrappers\n  .filter(w => w.load_failed && w.load_error_message)\n  .map(w => `${w.config_table}: ${w.load_error_message}`);\n\nconst global_config = {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_thresholds: { high: scoreHigh, low: scoreLow, gray_low: grayLow, gray_high: grayHigh },\n  sales_memo_min_score: parseInt(kv.sales_memo_min_score || kv.score_threshold_high || '80', 10),\n  calendly_url: kv.calendly_url || '',\n  source_trust_threshold: parseInt(kv.source_trust_threshold || '50', 10),\n  freemail_domains: (kv.freemail_domains || 'gmail.com,outlook.com,yahoo.com,hotmail.com,icloud.com')\n    .split(',')\n    .map(s => s.trim()),\n  routing_rules: routingRows,\n  notification_rules: notificationRows,\n  review_rules: reviewRows,\n  first_touch_min_score: parseInt(kv.first_touch_min_score || kv.sales_memo_min_score || kv.score_threshold_high || '80', 10),\nfirst_touch_sender_name: kv.first_touch_sender_name || 'Your Team',\n  _metadata: {\n    processing_stage: failedTables.length ? 'config_load_degraded' : 'config_loaded',\n    config_load_failed: failedTables.length > 0,\n    config_load_partial: failedTables.length > 0 && failedTables.length < 4,\n    failed_tables: failedTables.join(','),\n  },\n};\n\nconst result = { ...lead, global_config };\nif (errorMessages.length) {\n  result.config_load_error_message = errorMessages.join('; ');\n}\nreturn result;\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        200
+        9968,
+        3216
       ],
-      "id": "ca933b59-a31b-4c6b-b37c-4b89b70dcf6b",
+      "id": "1859d180-613b-4df7-b76b-79c114757e55",
       "name": "Build Global Config"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "\nreturn {\n  global_config: {\n    mode: 'test',\n    score_thresholds: { high: 80, low: 40, gray_low: 40, gray_high: 79 },\n    calendly_url: '',\n    source_trust_threshold: 50,\n    freemail_domains: ['gmail.com','outlook.com','yahoo.com','hotmail.com','icloud.com'],\n    routing_rules: [],\n    notification_rules: [],\n    review_rules: [],\n    _metadata: { processing_stage: 'config_load_failed', config_load_failed: true, severity: 'high' },\n  },\n  ...($input.item.json || {}),\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        880,
-        400
-      ],
-      "id": "7d79deba-4ea2-4d2f-a575-f09bcc9ca10a",
-      "name": "Handle Config Load Error"
     },
     {
       "parameters": {
@@ -213,16 +227,25 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        200
+        10192,
+        3216
       ],
-      "id": "b9bf738c-bbcb-478b-8c36-bf6ec838e561",
+      "id": "4a2b454c-e0aa-4490-98de-3eedf1432a8f",
       "name": "Domain Enrichment"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://crm_python_ai:8001/enrich",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -276,15 +299,6 @@
             }
           ]
         },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Correlation-Id",
-              "value": "={{ $json.correlation_id }}"
-            }
-          ]
-        },
         "options": {
           "batching": {
             "batch": {
@@ -298,12 +312,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1320,
-        200
+        11088,
+        3216
       ],
-      "id": "d43da7bb-0492-498e-aa41-541f5caab3e2",
+      "id": "5756172c-b8f1-4d3a-a979-480b3a31b767",
       "name": "HTTP Enrich Lead",
       "retryOnFail": true,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
       "onError": "continueErrorOutput"
     },
@@ -315,30 +330,39 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1540,
-        200
+        11312,
+        3120
       ],
-      "id": "1c32d13b-9dc8-44e4-bb87-ac80227c081d",
+      "id": "1e13a1a5-4d34-4f97-bb7c-6b3ed7b54db7",
       "name": "Merge Enrichment Result"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "\nconst item = $('Domain Enrichment').item.json;\nreturn {\n  ...item,\n  content_summary: (item.raw_content || '').slice(0, 300),\n  enrichment_status: 'failed',\n  enrichment_summary: 'LLM enrichment failed; using raw content fallback',\n  processing_status: 'enriched',\n  _metadata: { processing_stage: 'enrichment_fallback', severity: 'medium' },\n};\n"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown HTTP Enrich Lead error';\n\nconst lead = $('Domain Enrichment').item.json;\nreturn {\n  ...lead,\n  content_summary: (lead.raw_content || '').slice(0, 300),\n  enrichment_status: 'failed',\n  enrichment_summary: 'LLM enrichment failed; using raw content fallback',\n  processing_status: 'enriched',\n  enrichment_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'enrichment_fallback',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'HTTP Enrich Lead',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1540,
-        400
+        11312,
+        3312
       ],
-      "id": "3aff89de-f5bc-45d4-b6fd-dde6f1028d07",
+      "id": "d5066bfe-dd4f-4f0a-bd8f-a55109b2dfab",
       "name": "Handle Enrichment Failure"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://crm_python_ai:8001/score",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -408,15 +432,6 @@
             }
           ]
         },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Correlation-Id",
-              "value": "={{ $json.correlation_id }}"
-            }
-          ]
-        },
         "options": {
           "batching": {
             "batch": {
@@ -430,41 +445,42 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1760,
-        200
+        11536,
+        3216
       ],
-      "id": "60a4bc23-e11c-4077-a4bd-103a24a9d0ae",
+      "id": "8480bf09-31fd-4ce9-bdfa-fbc7a6557c02",
       "name": "HTTP Score Lead",
       "retryOnFail": true,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "\nconst lead = $('Domain Enrichment').item.json;\nconst ai = $input.item.json;\nconst scoreData = ai.score !== undefined ? ai : ($('HTTP Score Lead').item?.json || {});\nreturn {\n  ...lead,\n  score: scoreData.score ?? 0,\n  score_reasoning: scoreData.score_reasoning || '',\n  confidence: scoreData.confidence || 'low',\n  recommended_action: scoreData.recommended_action || 'manual_review',\n  routing_decision: scoreData.routing_decision || '',\n  fallback_used: scoreData.fallback_used || false,\n  intent_signals: JSON.stringify(scoreData.intent_signals || []),\n  processing_status: 'scoring',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'scoring_merged' },\n};\n"
+        "jsCode": "\nconst lead = $('Merge Enrichment Result').item.json;\nconst ai = $input.item.json;\nconst scoreData = ai.score !== undefined ? ai : ($('HTTP Score Lead').item?.json || {});\nreturn {\n  ...lead,\n  score: scoreData.score ?? 0,\n  score_reasoning: scoreData.score_reasoning || '',\n  confidence: scoreData.confidence || 'low',\n  recommended_action: scoreData.recommended_action || 'manual_review',\n  routing_decision: scoreData.routing_decision || '',\n  fallback_used: scoreData.fallback_used || false,\n  intent_signals: JSON.stringify(scoreData.intent_signals || []),\n  processing_status: 'scoring',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'scoring_merged' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1980,
-        200
+        11760,
+        3120
       ],
-      "id": "97cef836-d14c-4a49-9c3a-952881ace6a2",
+      "id": "49b381e4-b1d1-44a4-8892-6023f1d6b386",
       "name": "Merge Scoring Result"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "\nconst item = $('Domain Enrichment').item.json;\nreturn {\n  ...item,\n  score: 0,\n  score_reasoning: 'AI scoring failed',\n  confidence: 'low',\n  recommended_action: 'manual_review',\n  routing_decision: 'fallback_manual_review',\n  fallback_used: true,\n  processing_status: 'scoring',\n  _metadata: { processing_stage: 'scoring_fallback', severity: 'high' },\n};\n"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown HTTP Score Lead error';\n\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst lead =\n  safeNodeJson('Merge Enrichment Result') ??\n  safeNodeJson('Handle Enrichment Failure') ??\n  safeNodeJson('Domain Enrichment') ??\n  {};\n\nreturn {\n  ...lead,\n  score: 0,\n  score_reasoning: 'AI scoring failed',\n  confidence: 'low',\n  recommended_action: 'manual_review',\n  routing_decision: 'fallback_manual_review',\n  fallback_used: true,\n  sales_memo: '',\n  sales_memo_status: 'skipped_low_score',\n  processing_status: 'scoring',\n  scoring_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'scoring_fallback',\n    severity: 'high',\n    error_message: errorMessage,\n    failed_node: 'HTTP Score Lead',\n  },\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1980,
-        400
+        12656,
+        3504
       ],
-      "id": "0420c0cc-b291-4f86-a16a-8dca1264dbff",
+      "id": "c78b353c-f40e-4d3d-8fce-961253887018",
       "name": "Handle Scoring Failure"
     },
     {
@@ -475,10 +491,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2200,
-        200
+        12880,
+        3216
       ],
-      "id": "7adac30b-75f9-4b1c-a487-59040c5cfbf3",
+      "id": "703e2060-7653-45cd-bca8-bdcdeccfff0c",
       "name": "Apply Review Rules"
     },
     {
@@ -489,33 +505,35 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2420,
-        200
+        13776,
+        3248
       ],
-      "id": "f7e8725b-e404-475a-b948-27654e6310d1",
+      "id": "27fd5308-8983-44ea-b6ff-4387a0882605",
       "name": "Apply Routing Rules"
     },
     {
       "parameters": {
-        "operation": "append",
+        "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "id",
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "name",
-          "value": "leads"
+          "value": "leads",
+          "mode": "name"
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
+            "row_number": 0,
             "lead_id": "={{ $json.lead_id }}",
             "content_summary": "={{ $json.content_summary }}",
             "industry": "={{ $json.industry }}",
-            "company_size": "={{ $json.company_size }}",
             "intent_signals": "={{ $json.intent_signals }}",
+            "company_size": "={{ $json.company_size }}",
+            "domain_type": "={{ $json.domain_type }}",
             "enrichment_status": "={{ $json.enrichment_status }}",
             "enrichment_summary": "={{ $json.enrichment_summary }}",
             "score": "={{ $json.score }}",
@@ -524,28 +542,596 @@
             "recommended_action": "={{ $json.recommended_action }}",
             "routing_decision": "={{ $json.routing_decision }}",
             "fallback_used": "={{ $json.fallback_used }}",
+            "sales_memo": "={{ $json.sales_memo }}",
+            "sales_memo_status": "={{ $json.sales_memo_status }}",
             "review_status": "={{ $json.review_status }}",
             "processing_status": "={{ $json.processing_status }}",
-            "updated_at": "={{ $json.updated_at }}"
-          }
+            "updated_at": "={{ $json.updated_at }}",
+            "review_notes": "={{ $json.review_notes || '' }}",
+            "company_region": "={{ $json.company_region || '' }}"
+          },
+          "matchingColumns": [
+            "lead_id"
+          ],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lead_hash",
+              "displayName": "lead_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_type",
+              "displayName": "source_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_name",
+              "displayName": "source_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_trust_level",
+              "displayName": "source_trust_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_domain",
+              "displayName": "company_domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "domain_type",
+              "displayName": "domain_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_name",
+              "displayName": "contact_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_role",
+              "displayName": "contact_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_email",
+              "displayName": "contact_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content_summary",
+              "displayName": "content_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "raw_content",
+              "displayName": "raw_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_size",
+              "displayName": "company_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "industry",
+              "displayName": "industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "intent_signals",
+              "displayName": "intent_signals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "enrichment_status",
+              "displayName": "enrichment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "enrichment_summary",
+              "displayName": "enrichment_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score_reasoning",
+              "displayName": "score_reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "routing_decision",
+              "displayName": "routing_decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fallback_used",
+              "displayName": "fallback_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sales_memo",
+              "displayName": "sales_memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sales_memo_status",
+              "displayName": "sales_memo_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_status",
+              "displayName": "crm_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_contact_id",
+              "displayName": "crm_contact_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_company_id",
+              "displayName": "crm_company_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "review_status",
+              "displayName": "review_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "review_notes",
+              "displayName": "review_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviewer",
+              "displayName": "reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviewed_at",
+              "displayName": "reviewed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "owner_id",
+              "displayName": "owner_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lead_stage",
+              "displayName": "lead_stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_status",
+              "displayName": "meeting_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_time",
+              "displayName": "meeting_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "calendly_invitee_email",
+              "displayName": "calendly_invitee_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "booking_reminder_sent",
+              "displayName": "booking_reminder_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "booking_reminder_at",
+              "displayName": "booking_reminder_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_status",
+              "displayName": "first_touch_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_channel",
+              "displayName": "first_touch_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_at",
+              "displayName": "first_touch_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_error",
+              "displayName": "first_touch_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_region",
+              "displayName": "company_region",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "outbound_email_subject",
+              "displayName": "outbound_email_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "outbound_email_body",
+              "displayName": "outbound_email_body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        2640,
-        200
+        14000,
+        3248
       ],
-      "id": "b46c17f2-02e9-4713-bb8b-ba24b6211ffb",
+      "id": "09a18516-3a4e-4925-9588-be79a0e0fe5a",
       "name": "Update Lead Scores",
-      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Update Lead Scores error';\n\n\nconst lead =\n  $('Apply Routing Rules').first()?.json ??\n  $('Domain Enrichment').first()?.json;\n\nreturn {\n  ...lead,\n  sheets_update_failed: true,\n  sheets_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'score_sheet_update_failed',\n    severity: 'high',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Update Lead Scores',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14224,
+        3312
+      ],
+      "id": "275dddc0-da7d-4251-aca0-bbc38520c0ba",
+      "name": "Handle Sheets Score Error"
     },
     {
       "parameters": {
@@ -554,16 +1140,935 @@
           "mode": "name",
           "value": "B2B Lead CRM Sync Notification"
         },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "dedup_skipped": "={{ $json.dedup_skipped ?? false }}",
+            "sheets_write_failed": "={{ $json.sheets_write_failed ?? false }}",
+            "sheets_update_failed": "={{ $json.sheets_update_failed ?? false }}",
+            "audit_log_failed": "={{ $json.audit_log_failed ?? false }}",
+            "score": "={{ $json.score }}",
+            "lead_id": "={{ $json.lead_id }}",
+            "correlation_id": "={{ $json.correlation_id }}",
+            "contact_email": "={{ $json.contact_email }}",
+            "contact_name": "={{ $json.contact_name }}",
+            "contact_role": "={{ $json.contact_role }}",
+            "company_name": "={{ $json.company_name }}",
+            "review_status": "={{ $json.review_status }}",
+            "recommended_action": "={{ $json.recommended_action }}",
+            "processing_status": "={{ $json.processing_status }}",
+            "global_config": "={{ $json.global_config }}",
+            "company_domain": "={{ $json.company_domain }}",
+            "confidence": "={{ $json.confidence }}",
+            "routing_decision": "={{ $json.routing_decision }}",
+            "sheets_error_message": "={{ $json.sheets_error_message ?? \"\" }}",
+            "read_error_message": "={{ $json.read_error_message ?? \"\" }}",
+            "audit_log_error_message": "={{ $json.audit_log_error_message ?? \"\" }}",
+            "scoring_error_message": "={{ $json.scoring_error_message ?? \"\" }}",
+            "enrichment_error_message": "={{ $json.enrichment_error_message ?? \"\" }}",
+            "config_load_error_message": "={{ $json.config_load_error_message ?? \"\" }}",
+            "industry": "={{ $json.industry }}",
+            "company_size": "={{ $json.company_size }}",
+            "content_summary": "={{ $json.content_summary }}",
+            "intent_signals": "={{ $json.intent_signals }}",
+            "enrichment_summary": "={{ $json.enrichment_summary }}",
+            "enrichment_status": "={{ $json.enrichment_status }}",
+            "sales_memo": "={{ $json.sales_memo }}",
+            "sales_memo_status": "={{ $json.sales_memo_status }}",
+            "source_type": "={{ $json.source_type ?? \"\" }}",
+            "company_region": "={{ $json.company_region ?? \"\" }}",
+            "source_name": "={{ $json.source_name ?? \"\" }}",
+            "skip_notification": "={{ $json.skip_notification ?? false }}",
+            "trigger_source": "={{ $json.trigger_source ?? \"\" }}",
+            "domain_type": "={{ $json.domain_type ?? \"\" }}",
+            "score_reasoning": "={{ $json.score_reasoning ?? \"\" }}",
+            "first_touch_status": "={{ $json.first_touch_status ?? \"\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact_email",
+              "displayName": "contact_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact_name",
+              "displayName": "contact_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact_role",
+              "displayName": "contact_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "review_status",
+              "displayName": "review_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "global_config",
+              "displayName": "global_config",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            },
+            {
+              "id": "company_domain",
+              "displayName": "company_domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "routing_decision",
+              "displayName": "routing_decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "dedup_skipped",
+              "displayName": "dedup_skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean"
+            },
+            {
+              "id": "sheets_write_failed",
+              "displayName": "sheets_write_failed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean"
+            },
+            {
+              "id": "sheets_error_message",
+              "displayName": "sheets_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "sheets_update_failed",
+              "displayName": "sheets_update_failed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean"
+            },
+            {
+              "id": "read_error_message",
+              "displayName": "read_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "audit_log_failed",
+              "displayName": "audit_log_failed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean"
+            },
+            {
+              "id": "audit_log_error_message",
+              "displayName": "audit_log_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "config_load_error_message",
+              "displayName": "config_load_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "enrichment_error_message",
+              "displayName": "enrichment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "scoring_error_message",
+              "displayName": "scoring_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "industry",
+              "displayName": "industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "company_size",
+              "displayName": "company_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "content_summary",
+              "displayName": "content_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "intent_signals",
+              "displayName": "intent_signals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "enrichment_summary",
+              "displayName": "enrichment_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "enrichment_status",
+              "displayName": "enrichment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "sales_memo",
+              "displayName": "sales_memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "sales_memo_status",
+              "displayName": "sales_memo_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "source_type",
+              "displayName": "source_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "source_name",
+              "displayName": "source_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "company_region",
+              "displayName": "company_region",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "skip_notification",
+              "displayName": "skip_notification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean",
+              "removed": false
+            },
+            {
+              "id": "trigger_source",
+              "displayName": "trigger_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "domain_type",
+              "displayName": "domain_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "score_reasoning",
+              "displayName": "score_reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "first_touch_status",
+              "displayName": "first_touch_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2860,
-        200
+        14672,
+        3248
       ],
-      "id": "84f30c31-5bc6-4d7f-80a7-588bc3c2dcbe",
+      "id": "844c53b1-6d83-4188-afc2-f761205452d9",
       "name": "Execute CRM Sync"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return $input.item.json;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7952,
+        3216
+      ],
+      "id": "57f378df-bead-4def-880e-fb438533cdf7",
+      "name": "Hold Lead"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        3120
+      ],
+      "id": "a14f3b76-138b-40a0-83ff-036468b66b2d",
+      "name": "Normalize config_main"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_main error';\n\nreturn {\n  config_table: 'config_main',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_main_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_main',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        3312
+      ],
+      "id": "9b29c365-809a-4c64-8bbc-8431cdb5cd94",
+      "name": "Handle config_main Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_routing',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8848,
+        3120
+      ],
+      "id": "51324e25-176b-4dc1-9c8b-4a0a6f962535",
+      "name": "Normalize config_routing"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_routing error';\n\nreturn {\n  config_table: 'config_routing',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_routing_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_routing',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8848,
+        3312
+      ],
+      "id": "52c921c9-ded3-4752-bb47-f2c50c360769",
+      "name": "Handle config_routing Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_notifications',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9296,
+        3120
+      ],
+      "id": "32ae8ad6-b1bb-47ad-9b05-6509a113152e",
+      "name": "Normalize config_notifications"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_notifications error';\n\nreturn {\n  config_table: 'config_notifications',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_notifications_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_notifications',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9296,
+        3312
+      ],
+      "id": "69abfe44-de11-43ad-be7a-b1bf539b4bc9",
+      "name": "Handle config_notifications Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_review',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9744,
+        3120
+      ],
+      "id": "722b2ca6-b14f-4ed7-b872-2605ce7b8a7d",
+      "name": "Normalize config_review"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_review error';\n\nreturn {\n  config_table: 'config_review',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_review_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_review',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9744,
+        3312
+      ],
+      "id": "8e2d2094-ad65-47fc-ab90-2cbe3f26538f",
+      "name": "Handle config_review Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst lead = safeNodeJson('Apply Routing Rules') ?? {};\nconst sheetErr = safeNodeJson('Handle Sheets Score Error');\n\nconst payload = {\n  lead_id: lead.lead_id,\n  correlation_id: lead.correlation_id,\n  contact_email: (lead.contact_email ?? '').toLowerCase().trim(),\n  contact_name: lead.contact_name ?? '',\n  contact_role: lead.contact_role ?? '',\n  company_name: lead.company_name ?? '',\n  company_domain: lead.company_domain ?? '',\n  domain_type: lead.domain_type ?? '',\n  score: lead.score,\n  score_reasoning: lead.score_reasoning ?? '',\n  first_touch_status: lead.first_touch_status ?? '',\n  review_status: lead.review_status ?? '',\n  recommended_action: lead.recommended_action ?? '',\n  routing_decision: lead.routing_decision ?? '',\n  processing_status: lead.processing_status ?? '',\n  global_config: lead.global_config,\n  industry: lead.industry ?? '',\n  company_size: lead.company_size ?? '',\n  content_summary: lead.content_summary ?? '',\n  intent_signals: lead.intent_signals ?? '',\n  enrichment_summary: lead.enrichment_summary ?? '',\n  enrichment_status: lead.enrichment_status ?? '',\n  sales_memo: lead.sales_memo ?? '',\n  sales_memo_status: lead.sales_memo_status ?? '',\n  source_type: lead.source_type ?? '',\n  source_name: lead.source_name ?? '',\n  company_region: lead.company_region ?? '',\n};\n\nif (lead.confidence != null && lead.confidence !== '') {\n  payload.confidence = lead.confidence;\n}\n\nconst optionalKeys = [\n  'sheets_write_failed',\n  'sheets_error_message',\n  'dedup_skipped',\n  'read_error_message',\n  'audit_log_failed',\n  'audit_log_error_message',\n  'config_load_error_message',\n  'enrichment_error_message',\n  'scoring_error_message',\n];\n\nfor (const key of optionalKeys) {\n  const value = lead[key];\n  if (value != null && value !== '') {\n    payload[key] = value;\n  }\n}\n\nif (sheetErr?.sheets_update_failed) {\n  payload.sheets_update_failed = true;\n  if (sheetErr.sheets_error_message) {\n    payload.sheets_error_message = sheetErr.sheets_error_message;\n  }\n}\n\nreturn payload;",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14448,
+        3248
+      ],
+      "id": "fbeb63d2-8f9c-425b-af2a-072cc139207c",
+      "name": "Normalize Enriched Lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "94c1a75a-f8ae-4285-a3e4-130007d814f4",
+              "leftValue": "={{ $json.domain_type }}",
+              "rightValue": "corporate",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        10416,
+        3216
+      ],
+      "id": "e19c145e-604a-4dc2-8fc8-35c94665bf75",
+      "name": "Is Corporate Domain?"
+    },
+    {
+      "parameters": {
+        "url": "https://api.hunter.io/v2/companies/find",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.company_domain }}"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $env.HUNTER_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        10640,
+        3152
+      ],
+      "id": "3c39ca14-d7e9-4538-ab95-73812f67c66a",
+      "name": "Hunter Company Lookup",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Domain Enrichment').item.json;\nconst resp = $input.item.json || {};\nconst hasError = $input.item.error;\nconst errorObj = hasError || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  (typeof errorObj === 'string' ? errorObj : null) ||\n  '';\nconst co = resp.data;\n\nlet companyRegion = '';\nif (co?.location) {\n  if (typeof co.location === 'string') companyRegion = co.location;\n  else {\n    const parts = [co.location.city, co.location.state, co.location.country].filter(Boolean);\n    companyRegion = parts.join(', ');\n  }\n}\n\nconst hasData = !hasError && co && (co.name || co.category?.industry);\nconst external = hasData\n  ? JSON.stringify({\n      source: 'hunter',\n      name: co.name,\n      domain: co.domain,\n      industry: co.category?.industry || co.category?.sector || '',\n      company_size: co.metrics?.employees || '',\n      company_region: companyRegion,\n      description: co.description || '',\n      location: co.location || '',\n      founded: co.foundedYear,\n      tags: co.tags || [],\n    })\n  : '';\n\nreturn {\n  ...lead,\n  external_enrichment: external,\n  company_region: companyRegion,\n  hunter_error_message: hasError ? String(errorMessage || 'Hunter Company Lookup failed') : '',\n  _metadata: {\n    ...(lead._metadata || {}),\n    processing_stage: hasError\n      ? 'hunter_enrichment_failed'\n      : hasData\n        ? 'hunter_company_enriched'\n        : 'hunter_skipped',\n    ...(hasError\n      ? { severity: 'low', error_message: errorMessage, failed_node: 'Hunter Company Lookup' }\n      : {}),\n  },\n};",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10864,
+        3152
+      ],
+      "id": "5bb13aec-d19e-4d97-ad39-01870435b3e6",
+      "name": "Attach Hunter Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nconst config = item.global_config || {};\nconst minScore = Number(config.sales_memo_min_score ?? 80);\nconst score = Number(item.score || 0);\nconst action = item.recommended_action || '';\nconst eligible = score >= minScore && action !== 'reject';\nreturn {\n  ...item,\n  sales_memo_eligible: eligible,\n  _metadata: { processing_stage: eligible ? 'sales_memo_gate_pass' : 'sales_memo_gate_skip' },\n};",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11984,
+        3120
+      ],
+      "id": "753c54d5-5712-476e-afdc-a42627bf3a2f",
+      "name": "Check Sales Memo Eligible"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fc58cca0-7860-4275-a5d8-7a71f2702753",
+              "leftValue": "={{ $json.sales_memo_eligible }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        12208,
+        3120
+      ],
+      "id": "99501166-ade8-4306-804c-1cf04a68b724",
+      "name": "Sales Memo Eligible?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crm_python_ai:8001/sales-memo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "lead_id",
+              "value": "={{ $json.lead_id }}"
+            },
+            {
+              "name": "correlation_id",
+              "value": "={{ $json.correlation_id }}"
+            },
+            {
+              "name": "source_type",
+              "value": "={{ $json.source_type }}"
+            },
+            {
+              "name": "source_name",
+              "value": "={{ $json.source_name }}"
+            },
+            {
+              "name": "contact_name",
+              "value": "={{ $json.contact_name }}"
+            },
+            {
+              "name": "contact_email",
+              "value": "={{ $json.contact_email }}"
+            },
+            {
+              "name": "contact_role",
+              "value": "={{ $json.contact_role }}"
+            },
+            {
+              "name": "company_name",
+              "value": "={{ $json.company_name }}"
+            },
+            {
+              "name": "company_domain",
+              "value": "={{ $json.company_domain }}"
+            },
+            {
+              "name": "industry",
+              "value": "={{ $json.industry }}"
+            },
+            {
+              "name": "company_size",
+              "value": "={{ $json.company_size }}"
+            },
+            {
+              "name": "content_summary",
+              "value": "={{ $json.content_summary }}"
+            },
+            {
+              "name": "intent_signals",
+              "value": "={{ typeof $json.intent_signals === 'string' ? JSON.parse($json.intent_signals || '[]') : ($json.intent_signals || []) }}"
+            },
+            {
+              "name": "enrichment_summary",
+              "value": "={{ $json.enrichment_summary }}"
+            },
+            {
+              "name": "score",
+              "value": "={{ $json.score }}"
+            },
+            {
+              "name": "score_reasoning",
+              "value": "={{ $json.score_reasoning }}"
+            },
+            {
+              "name": "recommended_action",
+              "value": "={{ $json.recommended_action }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        12432,
+        3024
+      ],
+      "id": "7c604fa8-062b-450b-88f5-390462349783",
+      "name": "HTTP Sales Memo",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Check Sales Memo Eligible').item.json;\nconst ai = $input.item.json;\nreturn {\n  ...lead,\n  sales_memo: JSON.stringify(ai),\n  sales_memo_status: 'complete',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'sales_memo_merged' },\n};",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12656,
+        2928
+      ],
+      "id": "834d7225-ba56-4ebf-9e52-d246ff1c3a96",
+      "name": "Merge Sales Memo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nreturn {\n  ...item,\n  sales_memo: '',\n  sales_memo_status: 'skipped_low_score',\n  updated_at: new Date().toISOString(),\n  _metadata: { processing_stage: 'sales_memo_skipped' },\n};",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12656,
+        3312
+      ],
+      "id": "ee358646-55ea-4c4a-ba82-5a75eb2e9837",
+      "name": "Skip Sales Memo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown HTTP Sales Memo error';\n\nconst lead = $('Check Sales Memo Eligible').item.json;\nconst fallbackMemo = {\n  company_background: [],\n  talking_points: [],\n  pain_hypotheses: [],\n  recommended_opener: (lead.content_summary || 'Review lead summary before outreach.').slice(0, 300),\n  fallback_used: true,\n};\nreturn {\n  ...lead,\n  sales_memo: JSON.stringify(fallbackMemo),\n  sales_memo_status: 'failed',\n  sales_memo_error_message: errorMessage,\n  updated_at: new Date().toISOString(),\n  _metadata: {\n    processing_stage: 'sales_memo_fallback',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'HTTP Sales Memo',\n  },\n};",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12656,
+        3120
+      ],
+      "id": "4d1cc989-d298-46de-b1db-6f23e3158037",
+      "name": "Handle Sales Memo Failure"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0cb8e9cd-f7b7-42ec-a6c4-e875ef153ee4",
+              "leftValue": "={{ $json.review_status }}",
+              "rightValue": "pending_review",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        13120,
+        3216
+      ],
+      "id": "13adb40d-4c8a-4d92-b327-1cd8091ff4b7",
+      "name": "Needs Manual Review AI?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crm_python_ai:8001/manual-review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"lead_id\": \"={{ $json.lead_id }}\",\n  \"correlation_id\": \"={{ $json.correlation_id }}\",\n  \"contact_name\": \"={{ $json.contact_name }}\",\n  \"contact_role\": \"={{ $json.contact_role }}\",\n  \"contact_email\": \"={{ $json.contact_email }}\",\n  \"company_name\": \"={{ $json.company_name }}\",\n  \"company_domain\": \"={{ $json.company_domain }}\",\n  \"score\": \"={{ Number($json.score || 0) }}\",\n  \"score_reasoning\": \"={{ $json.score_reasoning }}\",\n  \"enrichment_status\": \"={{ $json.enrichment_status }}\",\n  \"review_triggers\": \"={{ $json.review_triggers }}\"\n}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        13328,
+        3152
+      ],
+      "id": "238e641a-27e3-4b91-ba12-db653c0abaa0",
+      "name": "HTTP Manual Review",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const lead = $('Apply Review Rules').item.json;\nconst ai = $input.item.json || {};\nconst explanation = ai.review_explanation || '';\nconst questions = Array.isArray(ai.suggested_questions) ? ai.suggested_questions.join('; ') : '';\nconst risks = Array.isArray(ai.risk_flags) ? ai.risk_flags.join(', ') : '';\nconst notes = [\n  explanation,\n  questions ? `Questions: ${questions}` : '',\n  risks ? `Risks: ${risks}` : '',\n].filter(Boolean).join('\\n');\n\nreturn {\n  ...lead,\n  review_notes: notes,\n  _metadata: { processing_stage: 'manual_review_merged' },\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13536,
+        2960
+      ],
+      "id": "57c0805a-b870-41f2-b2ba-1fb82d6691ad",
+      "name": "Merge Manual Review"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Apply Review Rules').item.json;\nreturn { ...lead, _metadata: { processing_stage: 'manual_review_skipped' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13536,
+        3152
+      ],
+      "id": "09ff4502-fbd9-4334-8960-3563a9b684f7",
+      "name": "Skip Manual Review"
     }
   ],
   "connections": {
@@ -571,22 +2076,18 @@
       "main": [
         [
           {
+            "node": "Hold Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hold Lead": {
+      "main": [
+        [
+          {
             "node": "Read config_main",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read config_routing",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read config_notifications",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read config_review",
             "type": "main",
             "index": 0
           }
@@ -597,7 +2098,36 @@
       "main": [
         [
           {
-            "node": "Merge Config 1",
+            "node": "Normalize config_main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_main Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_main": {
+      "main": [
+        [
+          {
+            "node": "Read config_routing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_main Error": {
+      "main": [
+        [
+          {
+            "node": "Read config_routing",
             "type": "main",
             "index": 0
           }
@@ -608,18 +2138,36 @@
       "main": [
         [
           {
-            "node": "Merge Config 1",
+            "node": "Normalize config_routing",
             "type": "main",
-            "index": 1
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_routing Error",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     },
-    "Merge Config 1": {
+    "Normalize config_routing": {
       "main": [
         [
           {
-            "node": "Merge Config 2",
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_routing Error": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
             "type": "main",
             "index": 0
           }
@@ -630,18 +2178,36 @@
       "main": [
         [
           {
-            "node": "Merge Config 2",
+            "node": "Normalize config_notifications",
             "type": "main",
-            "index": 1
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_notifications Error",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     },
-    "Merge Config 2": {
+    "Normalize config_notifications": {
       "main": [
         [
           {
-            "node": "Merge Config 3",
+            "node": "Read config_review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_notifications Error": {
+      "main": [
+        [
+          {
+            "node": "Read config_review",
             "type": "main",
             "index": 0
           }
@@ -652,14 +2218,21 @@
       "main": [
         [
           {
-            "node": "Merge Config 3",
+            "node": "Normalize config_review",
             "type": "main",
-            "index": 1
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_review Error",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     },
-    "Merge Config 3": {
+    "Normalize config_review": {
       "main": [
         [
           {
@@ -670,11 +2243,11 @@
         ]
       ]
     },
-    "Build Global Config": {
+    "Handle config_review Error": {
       "main": [
         [
           {
-            "node": "Domain Enrichment",
+            "node": "Build Global Config",
             "type": "main",
             "index": 0
           }
@@ -685,7 +2258,7 @@
       "main": [
         [
           {
-            "node": "HTTP Enrich Lead",
+            "node": "Is Corporate Domain?",
             "type": "main",
             "index": 0
           }
@@ -765,7 +2338,7 @@
       "main": [
         [
           {
-            "node": "Apply Review Rules",
+            "node": "Check Sales Memo Eligible",
             "type": "main",
             "index": 0
           }
@@ -776,7 +2349,7 @@
       "main": [
         [
           {
-            "node": "Apply Routing Rules",
+            "node": "Needs Manual Review AI?",
             "type": "main",
             "index": 0
           }
@@ -798,7 +2371,232 @@
       "main": [
         [
           {
+            "node": "Normalize Enriched Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Sheets Score Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Sheets Score Error": {
+      "main": [
+        [
+          {
+            "node": "Normalize Enriched Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Global Config": {
+      "main": [
+        [
+          {
+            "node": "Domain Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Enriched Lead": {
+      "main": [
+        [
+          {
             "node": "Execute CRM Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Corporate Domain?": {
+      "main": [
+        [
+          {
+            "node": "Hunter Company Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Enrich Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hunter Company Lookup": {
+      "main": [
+        [
+          {
+            "node": "Attach Hunter Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Attach Hunter Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Hunter Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Enrich Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sales Memo Eligible": {
+      "main": [
+        [
+          {
+            "node": "Sales Memo Eligible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Memo Eligible?": {
+      "main": [
+        [
+          {
+            "node": "HTTP Sales Memo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Sales Memo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Sales Memo": {
+      "main": [
+        [
+          {
+            "node": "Merge Sales Memo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Sales Memo Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Sales Memo": {
+      "main": [
+        [
+          {
+            "node": "Apply Review Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Sales Memo Failure": {
+      "main": [
+        [
+          {
+            "node": "Apply Review Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Sales Memo": {
+      "main": [
+        [
+          {
+            "node": "Apply Review Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Manual Review AI?": {
+      "main": [
+        [
+          {
+            "node": "HTTP Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apply Routing Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Merge Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Apply Routing Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Apply Routing Rules",
             "type": "main",
             "index": 0
           }
@@ -809,15 +2607,21 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "B2B Lead Error Handler"
+    "errorWorkflow": "B2B Lead Error Handler",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "9c7503ce-2230-41f6-b83e-bc5c54d1df08",
+  "versionId": "5d8bb04f-ecab-46ae-b7c4-cc080fa115bf",
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
   },
+  "nodeGroups": [],
+  "id": "Gxzkd64Pc3VeU3a3",
   "tags": [
     {
+      "updatedAt": "2026-07-01T02:31:24.969Z",
+      "createdAt": "2026-07-01T02:31:24.969Z",
+      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]

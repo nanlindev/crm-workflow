@@ -3,4 +3,6 @@ high_score_lead,info,slack,true,high_score
 review_required,warning,slack,true,review_required
 error_alert,critical,slack,true,error_alert
 booking_reminder,info,slack,true,booking
+first_touch_email,info,email,true,first_touch
 daily_summary,info,slack,true,daily_summary
+weekly_summary,info,slack,true,weekly_summary

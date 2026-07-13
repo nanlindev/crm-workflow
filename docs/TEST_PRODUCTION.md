@@ -15,8 +15,9 @@ mode=test
 | Scoring | Runs LLM `/score` + review/routing rules |
 | HubSpot CRM | **Skipped** — `crm_status=skipped_test_mode` |
 | Slack notifications | **Skipped** — `notification_status=skipped_test_mode` |
+| First Touch email draft | **Skipped** — `first_touch_status=skipped_test_mode` |
 | Audit logs | Written normally |
-| Error handler | Active — errors still logged and alerted |
+| Error handler | Active — errors logged; Slack alert only if `config_notifications.error_alert.enabled=true` and `mode=production` |
 
 Use test mode for:
 
@@ -33,8 +34,9 @@ mode=production
 | Step | Behavior |
 |------|----------|
 | CRM sync | Runs when `crm_gate_passed=true` |
-| Slack | Sends notifications for matching events |
-| HubSpot | Upserts contact by email |
+| Slack | Sends when `config_notifications` 对应 event `enabled=true` |
+| HubSpot | 基础 Contact upsert；Assign 后 email DRAFT |
+| First Touch | 首次同步生成草稿 `draft_pending_review`（Sheets）；Assign 后 HubSpot DRAFT |
 
 ### CRM gate conditions
 
@@ -44,9 +46,13 @@ All must be true:
 - `review_status != pending_review`
 - `recommended_action` in (`crm_sync`, `notify_only`)
 
+Slack **Assign** sets `recommended_action=crm_sync`; **Nurture** sets `notify_only`. Both trigger HubSpot via **B2B Lead Slack Actions** → **Execute Post-Assign CRM Sync** with `skip_notification=true` (no duplicate Slack message).
+
 ### Notification gate
 
-Slack sends only when `mode=production`. High-score and review-required events use templates from `config_notifications`.
+Slack sends only when `mode=production` and `should_send_slack=true` (high-score, review-required, and not `recommended_action=reject`). Low-score leads (`0–39`, `reject`) skip Slack; `notification_status=skipped` in production.
+
+Booking reminders (`B2B Lead Booking Follow-up`) also require `mode=production` and `config_notifications.booking_reminder.enabled=true`. Test mode skips Slack and does not set `booking_reminder_sent`.
 
 ## Switching modes
 

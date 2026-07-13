@@ -8,7 +8,10 @@ All LLM prompts live in `prompts/` as markdown files with YAML frontmatter. Prom
 prompts/
 ├── lead_scoring.md      # B2B lead scoring (0-100)
 ├── lead_summary.md      # Enrichment summary generation
-└── manual_review.md     # Manual review explanation
+├── manual_review.md     # Manual review explanation
+├── sales_memo.md        # AI sales memo for high-score leads
+├── outbound_email.md    # AI first-touch outbound email draft
+└── weekly_insights.md   # Weekly CRM metrics AI summary
 ```
 
 ## Frontmatter format
@@ -49,6 +52,18 @@ curl http://localhost:8002/prompts
 
 `{contact_name}`, `{contact_role}`, `{contact_email}`, `{company_name}`, `{company_domain}`, `{score}`, `{score_reasoning}`, `{enrichment_status}`, `{review_triggers}`
 
+### sales_memo.md
+
+`{contact_name}`, `{contact_email}`, `{contact_role}`, `{company_name}`, `{company_domain}`, `{industry}`, `{company_size}`, `{source_type}`, `{source_name}`, `{content_summary}`, `{intent_signals}`, `{enrichment_summary}`, `{score}`, `{score_reasoning}`, `{recommended_action}`
+
+### outbound_email.md
+
+`{contact_name}`, `{contact_email}`, `{contact_role}`, `{company_name}`, `{company_domain}`, `{industry}`, `{company_size}`, `{source_type}`, `{source_name}`, `{content_summary}`, `{intent_signals}`, `{enrichment_summary}`, `{score}`, `{score_reasoning}`, `{recommended_action}`, `{sales_memo}`, `{sender_name}`, `{calendly_url}`
+
+### weekly_insights.md
+
+`{week_start}`, `{week_end}`, `{metrics_json}`, `{prior_week_metrics}`
+
 ## Python loading
 
 `python-service/prompt_loader.py`:
@@ -88,3 +103,6 @@ No n8n workflow changes needed.
 | `POST /enrich` | lead_summary.md |
 | `POST /score` | lead_scoring.md |
 | `POST /manual-review` | manual_review.md |
+| `POST /sales-memo` | sales_memo.md |
+| `POST /outbound-email` | outbound_email.md |
+| `POST /weekly-insights` | weekly_insights.md |

@@ -8,7 +8,7 @@ Sidecar joins **two** external networks:
 
 | Network | Purpose |
 |---------|---------|
-| `n8n_platform` | Shared n8n calls `http://crm_python_ai:8001/enrich` / `/score` |
+| `n8n_platform` | Shared n8n calls `http://crm_python_ai:8001/enrich` / `/score` / `/sales-memo` |
 | `proxy_network` | OTEL → `otel-collector`, Langfuse → `langfuse-web` |
 
 ## Prerequisites
@@ -49,6 +49,7 @@ Import from `workflows/` into shared n8n (see `docs/INSTALL.md`).
 Sidecar URLs:
 - `http://crm_python_ai:8001/enrich`
 - `http://crm_python_ai:8001/score`
+- `http://crm_python_ai:8001/sales-memo`
 
 ## GHCR image
 

@@ -29,6 +29,7 @@
     "raw_content": { "type": "string" },
     "company_size": { "type": "string" },
     "industry": { "type": "string" },
+    "company_region": { "type": "string" },
     "intent_signals": { "type": "array", "items": { "type": "string" } },
     "enrichment_status": {
       "type": "string",
@@ -44,6 +45,11 @@
     },
     "routing_decision": { "type": "string" },
     "fallback_used": { "type": "boolean" },
+    "sales_memo": { "type": "string" },
+    "sales_memo_status": {
+      "type": "string",
+      "enum": ["complete", "skipped_low_score", "failed"]
+    },
     "crm_status": {
       "type": "string",
       "enum": ["pending", "synced", "failed", "skipped", "skipped_test_mode"]
@@ -61,6 +67,43 @@
     "review_notes": { "type": "string" },
     "reviewer": { "type": "string" },
     "reviewed_at": { "type": "string", "format": "date-time" },
+    "owner_id": { "type": "string" },
+    "lead_stage": {
+      "type": "string",
+      "enum": ["mql", "sql", "nurture", "junk"]
+    },
+    "meeting_status": {
+      "type": "string",
+      "enum": ["not_booked", "booked", "canceled", "rescheduled"]
+    },
+    "meeting_time": { "type": "string", "format": "date-time" },
+    "calendly_event_uri": { "type": "string" },
+    "calendly_invitee_email": { "type": "string", "format": "email" },
+    "booking_reminder_sent": { "type": "boolean" },
+    "booking_reminder_at": { "type": "string", "format": "date-time" },
+    "first_touch_status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "draft_pending_review",
+        "approved_to_send",
+        "failed",
+        "skipped",
+        "skipped_test_mode",
+        "skipped_disabled",
+        "skipped_no_crm",
+        "skipped_pending_review",
+        "skipped_action",
+        "skipped_low_score",
+        "skipped_personal",
+        "skipped_already_sent"
+      ]
+    },
+    "first_touch_channel": { "type": "string" },
+    "first_touch_at": { "type": "string", "format": "date-time" },
+    "first_touch_error": { "type": "string" },
+    "outbound_email_subject": { "type": "string" },
+    "outbound_email_body": { "type": "string" },
     "processing_status": {
       "type": "string",
       "enum": [

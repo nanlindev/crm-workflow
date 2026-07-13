@@ -55,14 +55,19 @@ Import into **shared n8n** (platform) in this order (Settings → Import from Fi
 3. `workflows/B2B Lead CRM Sync Notification.json`
 4. `workflows/B2B Lead Intake.json`
 5. `workflows/B2B Lead Daily Summary.json`
+6. `workflows/B2B Lead Weekly Summary.json`
+7. `workflows/B2B Lead Calendly Webhook.json`
+8. `workflows/B2B Lead Booking Follow-up.json`
 
 After import:
 
 - Open each workflow and reconnect credentials (Google Sheets, Slack, HubSpot)
 - Replace `REPLACE_WITH_SHEET_ID` in Google Sheets nodes with your document ID
-- Activate **B2B Lead Intake** and **B2B Lead Daily Summary** workflows
+- **Settings → Error Workflow → `B2B Lead Error Handler`** on each main workflow (import does not auto-bind)
+- Verify error branches per [ERROR_HANDLING_NODES.md](ERROR_HANDLING_NODES.md)
+- Activate **B2B Lead Intake**, **B2B Lead Daily Summary**, **B2B Lead Weekly Summary**, **B2B Lead Calendly Webhook**, and **B2B Lead Booking Follow-up** workflows
 
-Sidecar URLs in workflows: `http://crm_python_ai:8001/enrich` and `/score`
+Sidecar URLs in workflows: `http://crm_python_ai:8001/enrich`, `/score`, `/sales-memo`, and `/weekly-insights`
 
 ## 5. Configure Tally webhook
 
@@ -70,6 +75,14 @@ Sidecar URLs in workflows: `http://crm_python_ai:8001/enrich` and `/score`
 2. Go to Integrations → Webhooks
 3. Set URL to: `https://your-n8n-domain/webhook/tally-lead`
 4. Map fields in `config_sources` sheet (see [FIELD_MAPPING.md](FIELD_MAPPING.md))
+
+## 5b. Configure Calendly webhook
+
+1. Set `CALENDLY_WEBHOOK_SIGNING_KEY` in n8n environment (see [CREDENTIALS.md](CREDENTIALS.md))
+2. Calendly → Integrations → Webhooks → add subscription
+3. URL: `https://your-n8n-domain/webhook/calendly`
+4. Events: `invitee.created`, `invitee.canceled`
+5. Activate **B2B Lead Calendly Webhook** in n8n
 
 ## 6. Test run
 

@@ -1,0 +1,1572 @@
+{
+  "name": "B2B Lead Booking Follow-up",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2208,
+        368
+      ],
+      "id": "c2ebcfe1-92dc-4406-9e1d-99f6da404d60",
+      "name": "Daily 10am"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1984,
+        368
+      ],
+      "id": "76ab5800-1660-414b-aed9-638df9f4ac57",
+      "name": "Read Leads For Reminder",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_main"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1760,
+        272
+      ],
+      "id": "1e10368c-dd36-452d-a505-f6eb333baa48",
+      "name": "Read config_main",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1536,
+        176
+      ],
+      "id": "c8ba652a-aa29-40df-966f-1817317934b9",
+      "name": "Normalize config_main"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_main error';\n\nreturn {\n  config_table: 'config_main',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_main_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_main',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1536,
+        368
+      ],
+      "id": "a9a9a0c3-819f-4808-adb8-383c219b6327",
+      "name": "Handle config_main Read Error"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_notifications"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1312,
+        272
+      ],
+      "id": "dc7f3161-784f-4dcc-a639-212fd304c173",
+      "name": "Read config_notifications",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_notifications',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        176
+      ],
+      "id": "c357b995-9308-4f6c-b119-b047d381ae60",
+      "name": "Normalize config_notifications"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_notifications error';\n\nreturn {\n  config_table: 'config_notifications',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_notifications_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_notifications',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        368
+      ],
+      "id": "cf9032e8-dc2d-4aab-9434-1b1677530740",
+      "name": "Handle config_notifications Read Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction loadWrapper(normalizeName, handleName, table) {\n  const ok = safeNodeJson(normalizeName);\n  if (ok) return ok;\n  const err = safeNodeJson(handleName);\n  if (err) return err;\n  return {\n    config_table: table,\n    rows: [],\n    load_failed: true,\n    load_error_message: 'Config wrapper not executed',\n  };\n}\n\nconst mainWrap = loadWrapper('Normalize config_main', 'Handle config_main Read Error', 'config_main');\nconst notificationWrap = loadWrapper(\n  'Normalize config_notifications',\n  'Handle config_notifications Read Error',\n  'config_notifications',\n);\n\nconst mainRows = (mainWrap.rows || []).filter(r => r.key);\nconst notificationRows = (notificationWrap.rows || []).filter(r => r.event_type);\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst bookingRule =\n  notificationRows.find(r => r.event_type === 'booking_reminder') || {};\nconst reminderEnabled =\n  bookingRule.enabled === true || bookingRule.enabled === 'true';\n\nconst failedTables = [mainWrap, notificationWrap]\n  .filter(w => w.load_failed)\n  .map(w => w.config_table);\n\nreturn {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_threshold_high: parseInt(kv.score_threshold_high || '80', 10),\n  booking_reminder_hours: parseInt(kv.booking_reminder_hours || '24', 10),\n  calendly_url: kv.calendly_url || '',\n  booking_reminder_enabled: reminderEnabled,\n  booking_reminder_channels: String(bookingRule.channels || 'slack')\n    .split(',')\n    .map(s => s.trim())\n    .filter(Boolean),\n  booking_reminder_template_key: bookingRule.template_key || 'booking',\n  config_load_failed: failedTables.length > 0,\n  failed_tables: failedTables.join(','),\n  _metadata: {\n    processing_stage: failedTables.length\n      ? 'booking_reminder_config_degraded'\n      : 'booking_reminder_config_loaded',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        272
+      ],
+      "id": "071e98d7-f0f7-483c-a0c9-f194c3d8dddd",
+      "name": "Load Booking Config"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read Leads For Reminder error';\n\nreturn {\n  read_failed: true,\n  read_error_message: errorMessage,\n  due_count: 0,\n  has_due_reminders: false,\n  _metadata: {\n    processing_stage: 'booking_reminder_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'Read Leads For Reminder',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        560
+      ],
+      "id": "54716f09-1c39-4e48-85cb-c8f713689224",
+      "name": "Handle Booking Read Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst leads = $('Read Leads For Reminder')\n  .all()\n  .map(i => i.json)\n  .filter(r => r.lead_id);\nconst config = $('Load Booking Config').first()?.json ?? {};\n\nconst scoreMin = Number(config.score_threshold_high || 80);\nconst hours = Number(config.booking_reminder_hours || 24);\nconst cutoff = Date.now() - hours * 60 * 60 * 1000;\n\nfunction reminderAlreadySent(value) {\n  if (value === true || value === 'true' || value === 'TRUE' || value === '1') return true;\n  return false;\n}\n\nconst dueLeads = leads.filter(l => {\n  const score = Number(l.score || 0);\n  if (score < scoreMin) return false;\n  const status = String(l.meeting_status || '').toLowerCase();\n  if (status !== 'not_booked') return false;\n  if (reminderAlreadySent(l.booking_reminder_sent)) return false;\n  const created = Date.parse(l.created_at || '');\n  if (!created || Number.isNaN(created) || created > cutoff) return false;\n  return true;\n});\n\nreturn {\n  ...config,\n  due_leads: dueLeads,\n  due_count: dueLeads.length,\n  has_due_reminders: dueLeads.length > 0,\n  _metadata: { processing_stage: 'booking_reminders_filtered' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        272
+      ],
+      "id": "91f1434c-09d3-49cb-8129-a46dbc2bb619",
+      "name": "Filter Due Booking Reminders"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "387171ba-0b7d-4745-aa19-19f4b66e33ab",
+              "leftValue": "={{ $json.has_due_reminders }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -416,
+        272
+      ],
+      "id": "3a3b6e8c-124e-4790-bfc6-11d195bbb626",
+      "name": "Has Due Reminders?"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst filtered = $('Filter Due Booking Reminders').first()?.json ?? {};\nconst dueLeads = filtered.due_leads || [];\n\nreturn dueLeads.map(lead => ({\n  json: {\n    ...lead,\n    mode: filtered.mode,\n    calendly_url: filtered.calendly_url,\n    booking_reminder_enabled: filtered.booking_reminder_enabled,\n    booking_reminder_channels: filtered.booking_reminder_channels,\n    booking_reminder_template_key: filtered.booking_reminder_template_key,\n    score_threshold_high: filtered.score_threshold_high,\n    booking_reminder_hours: filtered.booking_reminder_hours,\n  },\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        176
+      ],
+      "id": "aab26c54-4d0b-4daa-9267-846aee92cbad",
+      "name": "Expand Due Leads"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst mode = String(item.mode || 'test').toLowerCase();\nconst channels = item.booking_reminder_channels || ['slack'];\nconst enabled = item.booking_reminder_enabled === true || item.booking_reminder_enabled === 'true';\nconst gatePassed = mode === 'production' && enabled && channels.includes('slack');\n\nconst name = item.contact_name || 'Unknown';\nconst email = item.contact_email || '';\nconst score = item.score != null && item.score !== '' ? item.score : 'N/A';\nconst createdAt = item.created_at || 'N/A';\nconst calendlyUrl = item.calendly_url || '';\nconst bookLine = calendlyUrl ? `Book: ${calendlyUrl}` : 'Book: (no Calendly URL configured)';\n\nreturn {\n  ...item,\n  reminder_gate_passed: gatePassed,\n  slack_text: [\n    '\u23f0 Booking reminder \u2014 high-score lead has not booked',\n    `Lead: ${name} (${email})`,\n    `Score: ${score}`,\n    `Created: ${createdAt}`,\n    bookLine,\n    `Correlation: ${item.correlation_id || 'N/A'}`,\n  ].join('\\n'),\n  _metadata: { processing_stage: 'booking_reminder_prepared' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        176
+      ],
+      "id": "d89eea2b-35fd-4ad1-a0f9-2af9cf15a1ac",
+      "name": "Build Booking Reminder Text"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ad4c65fc-2969-4602-8d3a-fd171a080e4b",
+              "leftValue": "={{ $json.reminder_gate_passed }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        176
+      ],
+      "id": "3c2a1d36-acdf-4122-9641-fe8f885f095d",
+      "name": "Should Send Reminder?"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        96
+      ],
+      "id": "fffd5ccd-0498-4d02-abf1-7f516b26a264",
+      "name": "Slack Booking Reminder",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "f1503696-f632-45c9-a52b-af83bf3ba5c9",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst lead = $('Build Booking Reminder Text').item.json;\nconst now = new Date().toISOString();\nreturn {\n  ...lead,\n  booking_reminder_sent: true,\n  booking_reminder_at: now,\n  reminder_status: 'sent',\n  updated_at: now,\n  _metadata: { processing_stage: 'booking_reminder_sent' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        0
+      ],
+      "id": "1f5d7128-4e82-4758-9bba-c19bbe369607",
+      "name": "Mark Reminder Sent"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst lead = $('Build Booking Reminder Text').item.json;\nconst mode = String(lead.mode || 'test').toLowerCase();\nconst enabled = lead.booking_reminder_enabled === true || lead.booking_reminder_enabled === 'true';\nlet skipReason = 'disabled';\nif (!enabled) skipReason = 'disabled';\nelse if (mode !== 'production') skipReason = 'test_mode';\nelse skipReason = 'channel_not_slack';\n\nreturn {\n  ...lead,\n  reminder_status: skipReason === 'test_mode' ? 'skipped_test_mode' : 'skipped_disabled',\n  skip_reason: skipReason,\n  _metadata: { processing_stage: 'booking_reminder_skipped' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        384
+      ],
+      "id": "2cdea89a-df19-439a-a08a-b6a7ab8312cb",
+      "name": "Skip Reminder"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Booking Reminder error';\n\nconst lead = $('Build Booking Reminder Text').item.json;\nreturn {\n  ...lead,\n  reminder_status: 'failed',\n  slack_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'booking_reminder_slack_failed',\n    severity: 'low',\n    error_message: errorMessage,\n    failed_node: 'Slack Booking Reminder',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        192
+      ],
+      "id": "0bb0feda-b226-49c7-aa9a-56a027febe5c",
+      "name": "Log Slack Reminder Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst status = item.reminder_status || 'unknown';\nconst auditByStatus = {\n  sent: 'booking_reminder',\n  failed: 'booking_reminder_failed',\n  skipped_test_mode: 'booking_reminder_skipped_test',\n  skipped_disabled: 'booking_reminder_disabled',\n};\nreturn {\n  lead_id: item.lead_id || '',\n  correlation_id: item.correlation_id || '',\n  audit_event: auditByStatus[status] || 'booking_reminder_unknown',\n  reminder_status: status,\n  booking_reminder_sent: item.booking_reminder_sent === true,\n  booking_reminder_at: item.booking_reminder_at || '',\n  slack_error_message: item.slack_error_message || '',\n  skip_reason: item.skip_reason || '',\n  updated_at: item.updated_at || new Date().toISOString(),\n  _metadata: { processing_stage: 'booking_reminder_audit_prepared' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        176
+      ],
+      "id": "0a656361-a595-42f4-a52f-0bd2b945125e",
+      "name": "Prepare Booking Reminder Audit"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b9fb184-2d45-4edc-959d-0cbbb2939c57",
+              "leftValue": "={{ $json.booking_reminder_sent }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1152,
+        176
+      ],
+      "id": "d30043a9-9fec-4245-9e1b-72a87cb6ab79",
+      "name": "Should Update Lead?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "booking_reminder_sent": "={{ true }}",
+            "booking_reminder_at": "={{ $json.booking_reminder_at }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "lead_id"
+          ],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lead_hash",
+              "displayName": "lead_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_type",
+              "displayName": "source_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_name",
+              "displayName": "source_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_trust_level",
+              "displayName": "source_trust_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_domain",
+              "displayName": "company_domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "domain_type",
+              "displayName": "domain_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_name",
+              "displayName": "contact_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_role",
+              "displayName": "contact_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_email",
+              "displayName": "contact_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content_summary",
+              "displayName": "content_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "raw_content",
+              "displayName": "raw_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_size",
+              "displayName": "company_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "industry",
+              "displayName": "industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "intent_signals",
+              "displayName": "intent_signals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "enrichment_status",
+              "displayName": "enrichment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "enrichment_summary",
+              "displayName": "enrichment_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score_reasoning",
+              "displayName": "score_reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "routing_decision",
+              "displayName": "routing_decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fallback_used",
+              "displayName": "fallback_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sales_memo",
+              "displayName": "sales_memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sales_memo_status",
+              "displayName": "sales_memo_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_status",
+              "displayName": "crm_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_contact_id",
+              "displayName": "crm_contact_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_company_id",
+              "displayName": "crm_company_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "review_status",
+              "displayName": "review_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "review_notes",
+              "displayName": "review_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviewer",
+              "displayName": "reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviewed_at",
+              "displayName": "reviewed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_status",
+              "displayName": "meeting_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_time",
+              "displayName": "meeting_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "calendly_invitee_email",
+              "displayName": "calendly_invitee_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "booking_reminder_sent",
+              "displayName": "booking_reminder_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "booking_reminder_at",
+              "displayName": "booking_reminder_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1376,
+        96
+      ],
+      "id": "93b47898-3db7-4d97-a969-923ac90dbe51",
+      "name": "Update Lead Reminder Status",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Update Lead Reminder Status error';\n\nconst audit = $('Prepare Booking Reminder Audit').item.json;\nreturn {\n  ...audit,\n  sheets_update_failed: true,\n  sheets_error_message: errorMessage,\n  audit_event: 'booking_reminder_update_failed',\n  _metadata: {\n    processing_stage: 'booking_reminder_update_failed',\n    severity: 'high',\n    error_message: errorMessage,\n    failed_node: 'Update Lead Reminder Status',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        32
+      ],
+      "id": "de9d4cd4-07ae-4cf9-ad33-8213e3686f4e",
+      "name": "Handle Update Reminder Error"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "audit_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "correlation_id": "={{ $json.correlation_id }}",
+            "event": "={{ $json.audit_event }}",
+            "new_value": "={{ $json.reminder_status }}",
+            "workflow": "B2B Lead Booking Follow-up",
+            "timestamp": "={{ $json.updated_at || new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event",
+              "displayName": "event",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "old_value",
+              "displayName": "old_value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "new_value",
+              "displayName": "new_value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1824,
+        176
+      ],
+      "id": "3906632a-605d-44b6-8ea1-4adf3813ef5c",
+      "name": "Write Booking Reminder Audit",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "error_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow": "B2B Lead Booking Follow-up",
+            "execution_id": "={{ $execution.id }}",
+            "node": "Read Leads For Reminder",
+            "message": "={{ $json.read_error_message }}",
+            "retry_suggestion": "retry_sheets_read",
+            "timestamp": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "node",
+              "displayName": "node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stack",
+              "displayName": "stack",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retry_suggestion",
+              "displayName": "retry_suggestion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1536,
+        560
+      ],
+      "id": "718cc4f8-ab05-4431-8262-4e42a19dbe84",
+      "name": "Write Reminder Read Error Log",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        432
+      ],
+      "id": "c3989e9f-6d7a-49af-ba51-498362f4aa8b",
+      "name": "Booking Follow-up End"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        528
+      ],
+      "id": "5be7de54-fcee-4606-90a8-997b236b34b1",
+      "name": "No Due Reminders End"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        560
+      ],
+      "id": "b851928c-66d2-4f98-a728-ede06f5ab004",
+      "name": "Booking Follow-up Failed End"
+    }
+  ],
+  "connections": {
+    "Daily 10am": {
+      "main": [
+        [
+          {
+            "node": "Read Leads For Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leads For Reminder": {
+      "main": [
+        [
+          {
+            "node": "Read config_main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Booking Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_main": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_main Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_main": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_main Read Error": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_notifications Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Load Booking Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_notifications Read Error": {
+      "main": [
+        [
+          {
+            "node": "Load Booking Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Booking Config": {
+      "main": [
+        [
+          {
+            "node": "Filter Due Booking Reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Due Booking Reminders": {
+      "main": [
+        [
+          {
+            "node": "Has Due Reminders?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Due Reminders?": {
+      "main": [
+        [
+          {
+            "node": "Expand Due Leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Due Reminders End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Due Leads": {
+      "main": [
+        [
+          {
+            "node": "Build Booking Reminder Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Booking Reminder Text": {
+      "main": [
+        [
+          {
+            "node": "Should Send Reminder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Reminder?": {
+      "main": [
+        [
+          {
+            "node": "Slack Booking Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Booking Reminder": {
+      "main": [
+        [
+          {
+            "node": "Mark Reminder Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Slack Reminder Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Reminder Sent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Booking Reminder Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Reminder": {
+      "main": [
+        [
+          {
+            "node": "Prepare Booking Reminder Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Slack Reminder Error": {
+      "main": [
+        [
+          {
+            "node": "Prepare Booking Reminder Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Booking Reminder Audit": {
+      "main": [
+        [
+          {
+            "node": "Should Update Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Update Lead?": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Reminder Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write Booking Reminder Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Reminder Status": {
+      "main": [
+        [
+          {
+            "node": "Write Booking Reminder Audit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Update Reminder Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Update Reminder Error": {
+      "main": [
+        [
+          {
+            "node": "Write Booking Reminder Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Booking Reminder Audit": {
+      "main": [
+        [
+          {
+            "node": "Booking Follow-up End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Due Reminders End": {
+      "main": [
+        [
+          {
+            "node": "Booking Follow-up End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Booking Read Error": {
+      "main": [
+        [
+          {
+            "node": "Write Reminder Read Error Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Reminder Read Error Log": {
+      "main": [
+        [
+          {
+            "node": "Booking Follow-up Failed End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "B2B Lead Error Handler",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "048b6097-23db-4589-80f2-1c0e87b210a8",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+  },
+  "nodeGroups": [],
+  "id": "7ojPpo6zGnaDRcnE",
+  "tags": [
+    {
+      "updatedAt": "2026-07-01T02:31:24.969Z",
+      "createdAt": "2026-07-01T02:31:24.969Z",
+      "id": "tb551WiNlnAgjnHk",
+      "name": "crm-workflow"
+    }
+  ]
+}
