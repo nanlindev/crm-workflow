@@ -6,6 +6,7 @@
         "rule": {
           "interval": [
             {
+              "field": "days",
               "triggerAtHour": 9
             }
           ]
@@ -14,10 +15,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -272,
-        672
+        0,
+        200
       ],
-      "id": "b2d3eecd-fdf8-482d-b06f-99d13e405385",
+      "id": "18c9ba71-7c83-4f3c-b92a-4ddcff46d761",
       "name": "Daily 9am"
     },
     {
@@ -37,21 +38,19 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -48,
-        672
+        220,
+        200
       ],
-      "id": "ce537153-ed9e-4603-91c3-b7408831a224",
+      "id": "826ba768-0a40-4c2e-b94f-276a1c00934b",
       "name": "Read Leads For Summary",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -70,49 +69,215 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        176,
-        592
+        440,
+        200
       ],
-      "id": "82dabf68-6322-4987-8b18-6ea0991a9819",
+      "id": "2120011d-633d-49aa-9eda-a269be8433a4",
       "name": "Read Errors For Summary",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "alwaysOutputData": true
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Daily Summary read error';\n\n\nconst leads = $('Read Leads For Summary').all().map(i => i.json).filter(r => r.lead_id);\nconst today = new Date().toISOString().slice(0, 10);\nconst todayLeads = leads.filter(l => (l.created_at || '').startsWith(today));\n\nreturn {\n  date: today,\n  new_leads: todayLeads.length,\n  high_score_leads: todayLeads.filter(l => Number(l.score || 0) >= 80).length,\n  crm_success_rate: todayLeads.length ? 'partial' : 'N/A',\n  slack_success_count: todayLeads.filter(l => l.notification_status === 'sent').length,\n  review_pending: todayLeads.filter(l => l.review_status === 'pending_review').length,\n  review_approved: todayLeads.filter(l => l.review_status === 'approved').length,\n  error_count: 0,\n  error_types: {},\n  _summary_degraded: true,\n  summary_read_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'summary_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'Read Leads/Errors For Summary',\n  },\n};\n"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Daily Summary read error';\n\nfunction safeNodeAll(name) {\n  try {\n    return $(name).all().map(i => i.json);\n  } catch {\n    return [];\n  }\n}\n\nconst leads = safeNodeAll('Read Leads For Summary').filter(r => r.lead_id);\nconst yesterday = new Date();\nyesterday.setUTCDate(yesterday.getUTCDate() - 1);\nconst reportDate = yesterday.toISOString().slice(0, 10);\nconst dayLeads = leads.filter(l => (l.created_at || '').startsWith(reportDate));\n\nreturn {\n  date: reportDate,\n  new_leads: dayLeads.length,\n  high_score_leads: dayLeads.filter(l => Number(l.score || 0) >= 80).length,\n  crm_success_rate: dayLeads.length ? 'partial' : 'N/A',\n  slack_success_count: dayLeads.filter(l => l.notification_status === 'sent').length,\n  review_pending: dayLeads.filter(l => l.review_status === 'pending_review').length,\n  review_approved: dayLeads.filter(l => l.review_status === 'approved').length,\n  error_count: 0,\n  error_types: {},\n  mode: 'test',\n  daily_summary_enabled: false,\n  daily_gate_passed: false,\n  _summary_degraded: true,\n  summary_read_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'summary_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'Read Leads/Errors For Summary',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        400,
-        736
+        440,
+        400
       ],
-      "id": "729de916-fddb-4a56-9277-248504d091f9",
+      "id": "6d03d84f-190d-43c8-8d9b-4720d505e9a3",
       "name": "Handle Summary Read Error"
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "\nconst leads = $('Read Leads For Summary').all().map(i => i.json);\nconst errors = $('Read Errors For Summary').all().map(i => i.json);\nconst today = new Date().toISOString().slice(0, 10);\n\nconst todayLeads = leads.filter(l => (l.created_at || '').startsWith(today));\nconst highScore = todayLeads.filter(l => Number(l.score || 0) >= 80);\nconst crmSynced = todayLeads.filter(l => l.crm_status === 'synced');\nconst crmFailed = todayLeads.filter(l => l.crm_status === 'failed');\nconst notified = todayLeads.filter(l => l.notification_status === 'sent');\nconst reviewPending = todayLeads.filter(l => l.review_status === 'pending_review');\nconst reviewApproved = todayLeads.filter(l => l.review_status === 'approved');\n\nconst errorTypes = {};\nfor (const e of errors.filter(e => (e.timestamp || '').startsWith(today))) {\n  const key = (e.message || 'unknown').slice(0, 40);\n  errorTypes[key] = (errorTypes[key] || 0) + 1;\n}\n\nconst summary = {\n  date: today,\n  new_leads: todayLeads.length,\n  high_score_leads: highScore.length,\n  crm_success_rate: todayLeads.length ? (crmSynced.length / todayLeads.length * 100).toFixed(1) + '%' : 'N/A',\n  slack_success_count: notified.length,\n  review_pending: reviewPending.length,\n  review_approved: reviewApproved.length,\n  error_count: Object.values(errorTypes).reduce((a,b)=>a+b,0),\n  error_types: errorTypes,\n  _metadata: { processing_stage: 'daily_summary_built' },\n};\n\nreturn summary;\n"
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_main"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        660,
+        200
+      ],
+      "id": "2629399c-c9b1-498e-8531-66fe2e033194",
+      "name": "Read config_main",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        624,
-        672
+        660,
+        360
       ],
-      "id": "f5be7dd8-7ddf-4b99-bc41-71d4ef7d7637",
+      "id": "37c584af-7a73-4631-aea4-f0aa387e2a4e",
+      "name": "Normalize config_main"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_main error';\n\nreturn {\n  config_table: 'config_main',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_main_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_main',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        520
+      ],
+      "id": "04bd45da-0773-4620-b037-18ca41031cfd",
+      "name": "Handle config_main Read Error"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_notifications"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        200
+      ],
+      "id": "29dad9fa-9052-4766-b41d-02328f7f3762",
+      "name": "Read config_notifications",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_notifications',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        360
+      ],
+      "id": "4d28fff7-1474-44f4-9a39-26bef61fec47",
+      "name": "Normalize config_notifications"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Read config_notifications error';\n\nreturn {\n  config_table: 'config_notifications',\n  rows: [],\n  load_failed: true,\n  load_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'config_notifications_read_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Read config_notifications',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        520
+      ],
+      "id": "559e8ddb-7658-422e-af3b-d61a88eea563",
+      "name": "Handle config_notifications Read Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction loadWrapper(normalizeName, handleName, table) {\n  const ok = safeNodeJson(normalizeName);\n  if (ok) return ok;\n  const err = safeNodeJson(handleName);\n  if (err) return err;\n  return {\n    config_table: table,\n    rows: [],\n    load_failed: true,\n    load_error_message: 'Config wrapper not executed',\n  };\n}\n\nconst mainWrap = loadWrapper('Normalize config_main', 'Handle config_main Read Error', 'config_main');\nconst notificationWrap = loadWrapper(\n  'Normalize config_notifications',\n  'Handle config_notifications Read Error',\n  'config_notifications',\n);\n\nconst mainRows = (mainWrap.rows || []).filter(r => r.key);\nconst notificationRows = (notificationWrap.rows || []).filter(r => r.event_type);\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst dailyRule = notificationRows.find(r => r.event_type === 'daily_summary') || {};\nconst dailyEnabled = dailyRule.enabled === true || dailyRule.enabled === 'true';\n\nconst failedTables = [mainWrap, notificationWrap]\n  .filter(w => w.load_failed)\n  .map(w => w.config_table);\n\nreturn {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_threshold_high: parseInt(kv.score_threshold_high || '80', 10),\n  daily_summary_enabled: dailyEnabled,\n  config_load_failed: failedTables.length > 0,\n  config_failed_tables: failedTables,\n  _metadata: { processing_stage: 'daily_config_loaded' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ],
+      "id": "f8db218e-064e-4e9d-8635-7faca29bc118",
+      "name": "Load Daily Config"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nfunction safeNodeAll(name) {\n  try {\n    return $(name).all().map(i => i.json);\n  } catch {\n    return [];\n  }\n}\n\nconst config = $('Load Daily Config').first()?.json || {};\nconst leads = safeNodeAll('Read Leads For Summary').filter(r => r.lead_id);\nconst errors = safeNodeAll('Read Errors For Summary');\nconst yesterday = new Date();\nyesterday.setUTCDate(yesterday.getUTCDate() - 1);\nconst reportDate = yesterday.toISOString().slice(0, 10);\nconst threshold = Number(config.score_threshold_high || 80);\n\nconst dayLeads = leads.filter(l => (l.created_at || '').startsWith(reportDate));\nconst highScore = dayLeads.filter(l => Number(l.score || 0) >= threshold);\nconst crmSynced = dayLeads.filter(l => l.crm_status === 'synced');\nconst notified = dayLeads.filter(l => l.notification_status === 'sent');\nconst reviewPending = dayLeads.filter(l => l.review_status === 'pending_review');\nconst reviewApproved = dayLeads.filter(l => l.review_status === 'approved');\n\nconst errorTypes = {};\nfor (const e of errors.filter(e => (e.timestamp || '').startsWith(reportDate))) {\n  const key = (e.message || 'unknown').slice(0, 40);\n  errorTypes[key] = (errorTypes[key] || 0) + 1;\n}\n\nconst dailyEnabled = config.daily_summary_enabled === true;\nconst mode = (config.mode || 'test').toLowerCase();\n\nreturn {\n  date: reportDate,\n  new_leads: dayLeads.length,\n  high_score_leads: highScore.length,\n  crm_success_rate: dayLeads.length ? (crmSynced.length / dayLeads.length * 100).toFixed(1) + '%' : 'N/A',\n  slack_success_count: notified.length,\n  review_pending: reviewPending.length,\n  review_approved: reviewApproved.length,\n  error_count: Object.values(errorTypes).reduce((a,b)=>a+b,0),\n  error_types: errorTypes,\n  score_threshold_high: threshold,\n  mode,\n  daily_summary_enabled: dailyEnabled,\n  daily_gate_passed: mode === 'production' && dailyEnabled,\n  _metadata: { processing_stage: 'daily_summary_built' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ],
+      "id": "d953df66-40c8-4df1-b1bb-d8861d77747a",
       "name": "Build Daily Summary"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ac8152f-5ca9-4e73-9011-1224e714ed5d",
+              "leftValue": "={{ $json.daily_gate_passed }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        200
+      ],
+      "id": "2d9d4931-4f09-4ca6-986d-2021dc87ca3d",
+      "name": "Should Send Daily?"
     },
     {
       "parameters": {
@@ -122,35 +287,53 @@
           "mode": "id",
           "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
         },
-        "text": "=\ud83d\udcca CRM Daily Summary ({{ $json.date }})\nNew leads: {{ $json.new_leads }}\nHigh score: {{ $json.high_score_leads }}\nCRM success rate: {{ $json.crm_success_rate }}\nSlack sent: {{ $json.slack_success_count }}\nReview pending: {{ $json.review_pending }}\nErrors: {{ $json.error_count }}",
-        "otherOptions": {}
+        "text": "=\ud83d\udcca CRM Daily Summary ({{ $json.date }})\nNew leads: {{ $json.new_leads }}\nHigh score: {{ $json.high_score_leads }}\nCRM success rate: {{ $json.crm_success_rate }}\nSlack sent: {{ $json.slack_success_count }}\nReview pending: {{ $json.review_pending }}\nErrors: {{ $json.error_count }}"
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
       "position": [
-        848,
-        672
+        1760,
+        120
       ],
-      "id": "79cf37c5-6444-4951-a933-c3346b41e3b6",
+      "id": "bfe1e4e6-ca0b-4fac-82c5-2a31a72133cf",
       "name": "Slack Daily Report",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "webhookId": "31318d0a-c06b-485b-966b-415c1bffb2a2",
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Daily Report error';\n\nreturn {\n  error_type: 'slack_summary_failed',\n  slack_error_message: errorMessage,\n  _metadata: { processing_stage: 'slack_summary_error_handled', severity: 'low', error_message: errorMessage },\n};\n"
+        "jsCode": "\nconst summary = $input.item.json;\nreturn {\n  ...summary,\n  slack_skipped: true,\n  _metadata: { processing_stage: 'daily_slack_skipped_test_or_disabled' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1072,
-        736
+        1760,
+        320
       ],
-      "id": "646f732f-7b91-47d8-b6b3-57af640832b9",
+      "id": "86bc2fec-cf34-4c8c-ab73-0567bacde1bc",
+      "name": "Skip Daily Slack"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Daily Report error';\n\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst summary = safeNodeJson('Build Daily Summary') || safeNodeJson('Handle Summary Read Error') || {};\nreturn {\n  ...summary,\n  error_type: 'slack_summary_failed',\n  slack_error_message: errorMessage,\n  _metadata: { processing_stage: 'slack_summary_error_handled', severity: 'low', error_message: errorMessage },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        240
+      ],
+      "id": "367b667f-f86c-4a6a-9cf4-84caa7f28ea6",
       "name": "Log Slack Summary Error"
     },
     {
@@ -158,11 +341,11 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1296,
-        672
+        1980,
+        120
       ],
-      "id": "768836ef-f49c-48e0-b9f1-687a10509682",
-      "name": "Daily Summary Failed End"
+      "id": "e95c77c1-41f8-4b93-8458-b4290ba33878",
+      "name": "Daily Summary End"
     }
   ],
   "connections": {
@@ -199,7 +382,7 @@
       "main": [
         [
           {
-            "node": "Build Daily Summary",
+            "node": "Read config_main",
             "type": "main",
             "index": 0
           }
@@ -213,7 +396,87 @@
         ]
       ]
     },
-    "Handle Summary Read Error": {
+    "Read config_main": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_main Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_main": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_main Read Error": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_notifications",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle config_notifications Read Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_notifications": {
+      "main": [
+        [
+          {
+            "node": "Load Daily Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle config_notifications Read Error": {
+      "main": [
+        [
+          {
+            "node": "Load Daily Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Daily Config": {
       "main": [
         [
           {
@@ -228,7 +491,36 @@
       "main": [
         [
           {
+            "node": "Should Send Daily?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Summary Read Error": {
+      "main": [
+        [
+          {
+            "node": "Should Send Daily?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Daily?": {
+      "main": [
+        [
+          {
             "node": "Slack Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Daily Slack",
             "type": "main",
             "index": 0
           }
@@ -239,7 +531,7 @@
       "main": [
         [
           {
-            "node": "Daily Summary Failed End",
+            "node": "Daily Summary End",
             "type": "main",
             "index": 0
           }
@@ -257,7 +549,18 @@
       "main": [
         [
           {
-            "node": "Daily Summary Failed End",
+            "node": "Daily Summary End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Daily Slack": {
+      "main": [
+        [
+          {
+            "node": "Daily Summary End",
             "type": "main",
             "index": 0
           }
@@ -268,21 +571,15 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "B2B Lead Error Handler",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
   },
-  "versionId": "d2a9042e-d4fe-4370-acfe-b350d9c71273",
+  "versionId": "6fc50ce0-3eb1-4b6c-9ac2-890ac6d22ea5",
   "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+    "templateCredsSetupCompleted": false
   },
-  "nodeGroups": [],
-  "id": "tzzvYBPJStx6hRyJ",
   "tags": [
     {
-      "updatedAt": "2026-07-01T02:31:24.969Z",
-      "createdAt": "2026-07-01T02:31:24.969Z",
-      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]

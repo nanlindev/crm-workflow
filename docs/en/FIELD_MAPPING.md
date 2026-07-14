@@ -1,6 +1,6 @@
 # Field Mapping
 
-All form sources normalize to the [Lead Schema](../schemas/lead.schema.json) before enrichment.
+All form sources normalize to the [Lead Schema](../../schemas/lead.schema.json) before enrichment.
 
 ## Tally (primary)
 

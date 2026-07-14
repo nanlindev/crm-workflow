@@ -1,3 +1,9 @@
+"""Observability helpers for Langfuse + OpenTelemetry on CRM LLM calls.
+
+Builds truncated trace I/O, propagates W3C context from n8n, and classifies errors
+for consistent metadata (correlation_id, lead_id, prompt version/hash).
+"""
+
 import hashlib
 import json
 import time

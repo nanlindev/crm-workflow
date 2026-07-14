@@ -1,67 +1,79 @@
 # B2B Lead Automation Template
 
-A reusable n8n workflow template for B2B lead processing after form submission. Supports Tally (primary) and Google Forms (secondary) as intake sources, Google Sheets for data and configuration, DeepSeek for scoring/enrichment, HubSpot CRM sync, and Slack notifications.
+Reusable n8n workflows for B2B lead processing after form submission: Tally / Google Forms intake, Google Sheets as system of record, DeepSeek enrichment & scoring, HubSpot sync, Slack notifications, Calendly meeting updates, and scheduled digests.
+
+**Chinese documentation:** [docs/zh/](docs/zh/)
 
 ## Architecture
 
-```
+```text
 Tally/Google Forms → Intake → Enrichment & Scoring → CRM Sync & Notification
-                              ↓
-Calendly Webhook → Update meeting status → Slack notify
-                              ↓
-                         Error Handler → error_logs + Slack alert
+Calendly / Slack Actions / Daily & Weekly Summary / Booking Follow-up
+Error Handler → error_logs (+ Slack alert when gated)
 ```
+
+Full diagram and component roles: [docs/en/ARCHITECTURE.md](docs/en/ARCHITECTURE.md).  
+Workflow catalog: [docs/en/WORKFLOWS.md](docs/en/WORKFLOWS.md).
 
 ## Quick start
 
-1. Start shared n8n: see `../platform-n8n/docs/DEPLOY.md`
-2. Copy `.env.example` to `.env` and fill in credentials
-3. Follow [docs/SHEETS_SETUP.md](docs/SHEETS_SETUP.md) to create Google Sheets
-4. Run `docker compose -f docker/compose.yml up -d` (sidecar only)
-5. Import workflows from `workflows/` into shared n8n (port 5678)
-6. Connect credentials (Google Sheets, Slack, HubSpot)
-7. Set `config_main.mode=test` and submit a test Tally form
+1. Start shared n8n — see `../platform-n8n/docs/DEPLOY.md`
+2. Copy `.env.example` → `.env` and fill secrets
+3. Create Sheets from templates — [docs/en/SHEETS_SETUP.md](docs/en/SHEETS_SETUP.md) (**`prompt_registry` must have 6 rows**)
+4. `docker compose -f docker/compose.yml up -d --build` (CRM sidecar)
+5. Import all 9 workflows from `workflows/` (port 5678) — [docs/en/INSTALL.md](docs/en/INSTALL.md)
+6. Re-bind credentials; set Error Workflow → **B2B Lead Error Handler**
+7. `config_main.mode=test` → submit a test Tally lead
 
 ## Project structure
 
 | Path | Purpose |
 |------|---------|
-| `workflows/` | n8n workflow JSON exports (import manually) |
-| `docker/` | Sidecar compose, env template, deploy guide |
-| `python-service/` | FastAPI sidecar: `/enrich`, `/score`, `/sales-memo`, `/manual-review`, `/outbound-email`, `/weekly-insights` |
-| `prompts/` | Versioned LLM prompt files (`.md` with frontmatter) |
-| `schemas/` | Unified Lead JSON Schema |
-| `sheets/template/` | CSV templates for Google Sheets initialization |
-| `scripts/generate_workflows.py` | Regenerate workflow JSON after code changes |
-| `docs/` | Setup and operation guides |
+| `workflows/` | n8n JSON exports (import manually) |
+| `docker/` | Sidecar compose + env example |
+| `python-service/` | FastAPI: `/enrich`, `/score`, `/sales-memo`, `/outbound-email`, `/weekly-insights`, `/manual-review` |
+| `prompts/` | Versioned LLM prompts |
+| `schemas/` | Lead JSON Schema |
+| `sheets/template/` | Spreadsheet CSV templates |
+| `scripts/generate_workflows.py` | Regenerate workflow JSON |
+| `scripts/sync_workflows_from_export.py` | Sync UI exports → `workflows/` |
+| `docs/en/` | English docs (default) |
+| `docs/zh/` | Chinese docs |
 
 ## Observability
 
-- **Jaeger**: n8n OTEL spans (`n8n-platform` / `n8n-crm-ai-service`)
-- **Langfuse**: LLM generations (`crm-workflow` tag)
-- **correlation_id**: Business ID generated at intake, passed via `X-Correlation-Id` header
-- **trace_id**: W3C traceparent from n8n OTEL, links Jaeger ↔ Langfuse
+- **Jaeger:** n8n OTEL (`n8n-platform` / `n8n-crm-ai-service`)
+- **Langfuse:** LLM generations (`crm-workflow`)
+- **correlation_id** at intake + `X-Correlation-Id` to sidecar
 
-## Documentation
+Details: [docs/en/OBSERVABILITY.md](docs/en/OBSERVABILITY.md).
 
-- [INSTALL.md](docs/INSTALL.md) — Docker setup and workflow import
-- [SHEETS_SETUP.md](docs/SHEETS_SETUP.md) — Google Sheets initialization
-- [CREDENTIALS.md](docs/CREDENTIALS.md) — API keys and OAuth setup
-- [TEST_PRODUCTION.md](docs/TEST_PRODUCTION.md) — Mode switching
-- [WORKFLOW_SYNC_FROM_EXPORT.md](docs/WORKFLOW_SYNC_FROM_EXPORT.md) — Sync UI exports to `workflows/`
-- [CODE_NODE_MODES.md](docs/CODE_NODE_MODES.md) — Code 节点 `runOnceForAllItems` vs `runOnceForEachItem`
-- [FIELD_MAPPING.md](docs/FIELD_MAPPING.md) — Form field → Lead Schema mapping
-- [ERROR_HANDLING.md](docs/ERROR_HANDLING.md) — Error workflow behavior
-- [ERROR_HANDLING_NODES.md](docs/ERROR_HANDLING_NODES.md) — Per-node On Error / Retry / wiring guide
-- [PROMPTS.md](docs/PROMPTS.md) — Prompt file management
-- [RUN_EXAMPLE.md](docs/RUN_EXAMPLE.md) — End-to-end test walkthrough
+## Documentation (English)
+
+| Doc | Topic |
+|-----|--------|
+| [ARCHITECTURE](docs/en/ARCHITECTURE.md) | System design |
+| [WORKFLOWS](docs/en/WORKFLOWS.md) | Nine workflows |
+| [INSTALL](docs/en/INSTALL.md) | Install & import |
+| [DEPLOY](docs/en/DEPLOY.md) | Sidecar deploy |
+| [SHEETS_SETUP](docs/en/SHEETS_SETUP.md) | Google Sheets |
+| [CONFIG_REFERENCE](docs/en/CONFIG_REFERENCE.md) | Config keys & effects |
+| [CREDENTIALS](docs/en/CREDENTIALS.md) | API keys & OAuth |
+| [TEST_PRODUCTION](docs/en/TEST_PRODUCTION.md) | test vs production gates |
+| [PROMPTS](docs/en/PROMPTS.md) | Prompt files & registry |
+| [FIELD_MAPPING](docs/en/FIELD_MAPPING.md) | Form → schema |
+| [ERROR_HANDLING](docs/en/ERROR_HANDLING.md) / [NODES](docs/en/ERROR_HANDLING_NODES.md) | Errors |
+| [CALENDLY_SETUP](docs/en/CALENDLY_SETUP.md) | Calendly webhooks |
+| [SLACK_ACTIONS_SETUP](docs/en/SLACK_ACTIONS_SETUP.md) | Block Kit actions |
+| [RUN_EXAMPLE](docs/en/RUN_EXAMPLE.md) | E2E walkthrough |
+| [OBSERVABILITY](docs/en/OBSERVABILITY.md) | Tracing |
+| [CODE_NODE_MODES](docs/en/CODE_NODE_MODES.md) | Code node modes |
+| [WORKFLOW_SYNC_FROM_EXPORT](docs/en/WORKFLOW_SYNC_FROM_EXPORT.md) | UI → repo sync |
 
 ## Regenerate workflows
-
-After editing `scripts/generate_workflows.py`:
 
 ```bash
 python3 scripts/generate_workflows.py
 ```
 
-Then re-import changed workflows in n8n.
+Then re-import changed JSON and re-bind credentials + Error Workflow.

@@ -1059,21 +1059,33 @@ return {
 """
 
 HANDLE_SUMMARY_READ_ERROR_JS = error_message_prelude("Unknown Daily Summary read error") + r"""
+function safeNodeAll(name) {
+  try {
+    return $(name).all().map(i => i.json);
+  } catch {
+    return [];
+  }
+}
 
-const leads = $('Read Leads For Summary').all().map(i => i.json).filter(r => r.lead_id);
-const today = new Date().toISOString().slice(0, 10);
-const todayLeads = leads.filter(l => (l.created_at || '').startsWith(today));
+const leads = safeNodeAll('Read Leads For Summary').filter(r => r.lead_id);
+const yesterday = new Date();
+yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+const reportDate = yesterday.toISOString().slice(0, 10);
+const dayLeads = leads.filter(l => (l.created_at || '').startsWith(reportDate));
 
 return {
-  date: today,
-  new_leads: todayLeads.length,
-  high_score_leads: todayLeads.filter(l => Number(l.score || 0) >= 80).length,
-  crm_success_rate: todayLeads.length ? 'partial' : 'N/A',
-  slack_success_count: todayLeads.filter(l => l.notification_status === 'sent').length,
-  review_pending: todayLeads.filter(l => l.review_status === 'pending_review').length,
-  review_approved: todayLeads.filter(l => l.review_status === 'approved').length,
+  date: reportDate,
+  new_leads: dayLeads.length,
+  high_score_leads: dayLeads.filter(l => Number(l.score || 0) >= 80).length,
+  crm_success_rate: dayLeads.length ? 'partial' : 'N/A',
+  slack_success_count: dayLeads.filter(l => l.notification_status === 'sent').length,
+  review_pending: dayLeads.filter(l => l.review_status === 'pending_review').length,
+  review_approved: dayLeads.filter(l => l.review_status === 'approved').length,
   error_count: 0,
   error_types: {},
+  mode: 'test',
+  daily_summary_enabled: false,
+  daily_gate_passed: false,
   _summary_degraded: true,
   summary_read_error_message: errorMessage,
   _metadata: {
@@ -1086,7 +1098,17 @@ return {
 """
 
 LOG_SLACK_SUMMARY_ERROR_JS = error_message_prelude("Unknown Slack Daily Report error") + r"""
+function safeNodeJson(name) {
+  try {
+    return $(name).first()?.json;
+  } catch {
+    return undefined;
+  }
+}
+
+const summary = safeNodeJson('Build Daily Summary') || safeNodeJson('Handle Summary Read Error') || {};
 return {
+  ...summary,
   error_type: 'slack_summary_failed',
   slack_error_message: errorMessage,
   _metadata: { processing_stage: 'slack_summary_error_handled', severity: 'low', error_message: errorMessage },
@@ -3461,39 +3483,119 @@ return {
 };
 """
 
-DAILY_SUMMARY_JS = r"""
-const leads = $('Read Leads For Summary').all().map(i => i.json);
-const errors = $('Read Errors For Summary').all().map(i => i.json);
-const today = new Date().toISOString().slice(0, 10);
+LOAD_DAILY_CONFIG_JS = r"""
+function safeNodeJson(name) {
+  try {
+    return $(name).first()?.json;
+  } catch {
+    return undefined;
+  }
+}
 
-const todayLeads = leads.filter(l => (l.created_at || '').startsWith(today));
-const highScore = todayLeads.filter(l => Number(l.score || 0) >= 80);
-const crmSynced = todayLeads.filter(l => l.crm_status === 'synced');
-const crmFailed = todayLeads.filter(l => l.crm_status === 'failed');
-const notified = todayLeads.filter(l => l.notification_status === 'sent');
-const reviewPending = todayLeads.filter(l => l.review_status === 'pending_review');
-const reviewApproved = todayLeads.filter(l => l.review_status === 'approved');
+function loadWrapper(normalizeName, handleName, table) {
+  const ok = safeNodeJson(normalizeName);
+  if (ok) return ok;
+  const err = safeNodeJson(handleName);
+  if (err) return err;
+  return {
+    config_table: table,
+    rows: [],
+    load_failed: true,
+    load_error_message: 'Config wrapper not executed',
+  };
+}
+
+const mainWrap = loadWrapper('Normalize config_main', 'Handle config_main Read Error', 'config_main');
+const notificationWrap = loadWrapper(
+  'Normalize config_notifications',
+  'Handle config_notifications Read Error',
+  'config_notifications',
+);
+
+const mainRows = (mainWrap.rows || []).filter(r => r.key);
+const notificationRows = (notificationWrap.rows || []).filter(r => r.event_type);
+
+const kv = {};
+for (const row of mainRows) {
+  if (row.key) kv[row.key] = row.value;
+}
+
+const dailyRule = notificationRows.find(r => r.event_type === 'daily_summary') || {};
+const dailyEnabled = dailyRule.enabled === true || dailyRule.enabled === 'true';
+
+const failedTables = [mainWrap, notificationWrap]
+  .filter(w => w.load_failed)
+  .map(w => w.config_table);
+
+return {
+  mode: (kv.mode || 'test').toLowerCase(),
+  score_threshold_high: parseInt(kv.score_threshold_high || '80', 10),
+  daily_summary_enabled: dailyEnabled,
+  config_load_failed: failedTables.length > 0,
+  config_failed_tables: failedTables,
+  _metadata: { processing_stage: 'daily_config_loaded' },
+};
+"""
+
+# Aggregates yesterday UTC 00:00–24:00 (not "today so far"). Sets daily_gate_passed for Slack.
+DAILY_SUMMARY_JS = r"""
+function safeNodeAll(name) {
+  try {
+    return $(name).all().map(i => i.json);
+  } catch {
+    return [];
+  }
+}
+
+const config = $('Load Daily Config').first()?.json || {};
+const leads = safeNodeAll('Read Leads For Summary').filter(r => r.lead_id);
+const errors = safeNodeAll('Read Errors For Summary');
+const yesterday = new Date();
+yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+const reportDate = yesterday.toISOString().slice(0, 10);
+const threshold = Number(config.score_threshold_high || 80);
+
+const dayLeads = leads.filter(l => (l.created_at || '').startsWith(reportDate));
+const highScore = dayLeads.filter(l => Number(l.score || 0) >= threshold);
+const crmSynced = dayLeads.filter(l => l.crm_status === 'synced');
+const notified = dayLeads.filter(l => l.notification_status === 'sent');
+const reviewPending = dayLeads.filter(l => l.review_status === 'pending_review');
+const reviewApproved = dayLeads.filter(l => l.review_status === 'approved');
 
 const errorTypes = {};
-for (const e of errors.filter(e => (e.timestamp || '').startsWith(today))) {
+for (const e of errors.filter(e => (e.timestamp || '').startsWith(reportDate))) {
   const key = (e.message || 'unknown').slice(0, 40);
   errorTypes[key] = (errorTypes[key] || 0) + 1;
 }
 
-const summary = {
-  date: today,
-  new_leads: todayLeads.length,
+const dailyEnabled = config.daily_summary_enabled === true;
+const mode = (config.mode || 'test').toLowerCase();
+
+return {
+  date: reportDate,
+  new_leads: dayLeads.length,
   high_score_leads: highScore.length,
-  crm_success_rate: todayLeads.length ? (crmSynced.length / todayLeads.length * 100).toFixed(1) + '%' : 'N/A',
+  crm_success_rate: dayLeads.length ? (crmSynced.length / dayLeads.length * 100).toFixed(1) + '%' : 'N/A',
   slack_success_count: notified.length,
   review_pending: reviewPending.length,
   review_approved: reviewApproved.length,
   error_count: Object.values(errorTypes).reduce((a,b)=>a+b,0),
   error_types: errorTypes,
+  score_threshold_high: threshold,
+  mode,
+  daily_summary_enabled: dailyEnabled,
+  daily_gate_passed: mode === 'production' && dailyEnabled,
   _metadata: { processing_stage: 'daily_summary_built' },
 };
+"""
 
-return summary;
+SKIP_DAILY_SLACK_JS = r"""
+const summary = $input.item.json;
+return {
+  ...summary,
+  slack_skipped: true,
+  _metadata: { processing_stage: 'daily_slack_skipped_test_or_disabled' },
+};
 """
 
 LOAD_WEEKLY_CONFIG_JS = r"""
@@ -3702,9 +3804,9 @@ return {
   prior_week_metrics: priorWeekMetrics,
   prior_week_start: priorWeekStartStr,
   mode: config.mode || 'test',
-  weekly_summary_enabled: config.weekly_summary_enabled !== false,
+  weekly_summary_enabled: config.weekly_summary_enabled === true,
   weekly_gate_passed:
-    (config.mode || 'test') === 'production' && config.weekly_summary_enabled !== false,
+    (config.mode || 'test') === 'production' && config.weekly_summary_enabled === true,
   correlation_id: correlationId,
   source_breakdown_json: JSON.stringify(leadsBySource),
   _metadata: { processing_stage: 'weekly_metrics_built' },
@@ -3767,7 +3869,7 @@ return {
   prior_week_metrics: {},
   prior_week_start: '',
   mode: 'test',
-  weekly_summary_enabled: true,
+  weekly_summary_enabled: false,
   weekly_gate_passed: false,
   correlation_id: correlationId,
   source_breakdown_json: '{}',
@@ -3885,10 +3987,37 @@ return {
 """
 
 LOG_SLACK_WEEKLY_ERROR_JS = error_message_prelude("Unknown Slack Weekly Report error") + r"""
+function safeNodeJson(name) {
+  try {
+    return $(name).first()?.json;
+  } catch {
+    return undefined;
+  }
+}
+
+const report = safeNodeJson('Merge Weekly Report') || safeNodeJson('Skip Weekly Slack') || {};
 return {
+  ...report,
   error_type: 'slack_weekly_failed',
   slack_error_message: errorMessage,
   _metadata: { processing_stage: 'slack_weekly_error_handled', severity: 'low', error_message: errorMessage },
+};
+"""
+
+RESTORE_WEEKLY_REPORT_AFTER_SLACK_JS = r"""
+function safeNodeJson(name) {
+  try {
+    return $(name).first()?.json;
+  } catch {
+    return undefined;
+  }
+}
+
+const report = safeNodeJson('Merge Weekly Report') || {};
+return {
+  ...report,
+  slack_sent: true,
+  _metadata: { processing_stage: 'weekly_slack_sent' },
 };
 """
 
@@ -3898,6 +4027,35 @@ return {
   ...report,
   slack_skipped: true,
   _metadata: { processing_stage: 'weekly_slack_skipped_test_or_disabled' },
+};
+"""
+
+HANDLE_APPEND_WEEKLY_METRICS_ERROR_JS = error_message_prelude("Unknown Append Weekly Metrics error") + r"""
+function safeNodeJson(name) {
+  try {
+    return $(name).first()?.json;
+  } catch {
+    return undefined;
+  }
+}
+
+const report =
+  safeNodeJson('Restore Weekly Report After Slack') ||
+  safeNodeJson('Log Slack Weekly Error') ||
+  safeNodeJson('Skip Weekly Slack') ||
+  safeNodeJson('Merge Weekly Report') ||
+  {};
+
+return {
+  ...report,
+  weekly_metrics_append_failed: true,
+  sheets_error_message: errorMessage,
+  _metadata: {
+    processing_stage: 'weekly_metrics_append_failed',
+    severity: 'medium',
+    error_message: errorMessage,
+    failed_node: 'Append Weekly Metrics',
+  },
 };
 """
 
@@ -4684,6 +4842,7 @@ def build_crm_sync_notification() -> None:
 
 
 def build_daily_summary() -> None:
+    """Daily 09:00 digest for yesterday UTC; Slack only if production + daily_summary.enabled."""
     nodes = [
         {
             "parameters": {"rule": {"interval": [{"field": "days", "triggerAtHour": 9}]}},
@@ -4696,30 +4855,70 @@ def build_daily_summary() -> None:
         sheets_read("Read Leads For Summary", [220, 200], "leads", always_output_data=True),
         sheets_read("Read Errors For Summary", [440, 200], "error_logs", always_output_data=True),
         code_node("Handle Summary Read Error", HANDLE_SUMMARY_READ_ERROR_JS, [440, 400]),
-        code_node("Build Daily Summary", DAILY_SUMMARY_JS, [660, 200]),
+        sheets_read("Read config_main", [660, 200], "config_main", retry=True),
+        code_node(
+            "Normalize config_main",
+            normalize_config_js("config_main"),
+            [660, 360],
+            mode="runOnceForAllItems",
+        ),
+        code_node(
+            "Handle config_main Read Error",
+            handle_config_read_error_js("config_main", "Read config_main"),
+            [660, 520],
+        ),
+        sheets_read("Read config_notifications", [880, 200], "config_notifications", retry=True),
+        code_node(
+            "Normalize config_notifications",
+            normalize_config_js("config_notifications"),
+            [880, 360],
+            mode="runOnceForAllItems",
+        ),
+        code_node(
+            "Handle config_notifications Read Error",
+            handle_config_read_error_js("config_notifications", "Read config_notifications"),
+            [880, 520],
+        ),
+        code_node("Load Daily Config", LOAD_DAILY_CONFIG_JS, [1100, 200], mode="runOnceForAllItems"),
+        code_node("Build Daily Summary", DAILY_SUMMARY_JS, [1320, 200], mode="runOnceForAllItems"),
+        if_bool_node("Should Send Daily?", [1540, 200], "={{ $json.daily_gate_passed }}"),
         slack_node(
             "Slack Daily Report",
-            [880, 200],
+            [1760, 120],
             "=📊 CRM Daily Summary ({{ $json.date }})\nNew leads: {{ $json.new_leads }}\nHigh score: {{ $json.high_score_leads }}\nCRM success rate: {{ $json.crm_success_rate }}\nSlack sent: {{ $json.slack_success_count }}\nReview pending: {{ $json.review_pending }}\nErrors: {{ $json.error_count }}",
         ),
-        code_node("Log Slack Summary Error", LOG_SLACK_SUMMARY_ERROR_JS, [1100, 320]),
-        noop("Daily Summary Failed End", [1100, 200]),
+        code_node("Skip Daily Slack", SKIP_DAILY_SLACK_JS, [1760, 320]),
+        code_node("Log Slack Summary Error", LOG_SLACK_SUMMARY_ERROR_JS, [1980, 240]),
+        noop("Daily Summary End", [1980, 120]),
     ]
     conn = {}
     connect(conn, "Daily 9am", "Read Leads For Summary")
     connect(conn, "Read Leads For Summary", "Read Errors For Summary")
     connect_error(conn, "Read Leads For Summary", "Handle Summary Read Error")
-    connect(conn, "Read Errors For Summary", "Build Daily Summary")
+    connect(conn, "Read Errors For Summary", "Read config_main")
     connect_error(conn, "Read Errors For Summary", "Handle Summary Read Error")
-    connect(conn, "Handle Summary Read Error", "Build Daily Summary")
-    connect(conn, "Build Daily Summary", "Slack Daily Report")
-    connect(conn, "Slack Daily Report", "Daily Summary Failed End")
+    connect(conn, "Read config_main", "Normalize config_main")
+    connect_error(conn, "Read config_main", "Handle config_main Read Error")
+    connect(conn, "Normalize config_main", "Read config_notifications")
+    connect(conn, "Handle config_main Read Error", "Read config_notifications")
+    connect(conn, "Read config_notifications", "Normalize config_notifications")
+    connect_error(conn, "Read config_notifications", "Handle config_notifications Read Error")
+    connect(conn, "Normalize config_notifications", "Load Daily Config")
+    connect(conn, "Handle config_notifications Read Error", "Load Daily Config")
+    connect(conn, "Load Daily Config", "Build Daily Summary")
+    connect(conn, "Build Daily Summary", "Should Send Daily?")
+    connect(conn, "Handle Summary Read Error", "Should Send Daily?")
+    connect(conn, "Should Send Daily?", "Slack Daily Report", src_output=0)
+    connect(conn, "Should Send Daily?", "Skip Daily Slack", src_output=1)
+    connect(conn, "Slack Daily Report", "Daily Summary End")
     connect_error(conn, "Slack Daily Report", "Log Slack Summary Error")
-    connect(conn, "Log Slack Summary Error", "Daily Summary Failed End")
+    connect(conn, "Log Slack Summary Error", "Daily Summary End")
+    connect(conn, "Skip Daily Slack", "Daily Summary End")
     save_workflow("B2B Lead Daily Summary.json", "B2B Lead Daily Summary", nodes, conn, error_workflow="B2B Lead Error Handler")
 
 
 def build_weekly_summary() -> None:
+    """Friday 17:00 weekly metrics + /weekly-insights; always Append weekly_metrics; Slack gated."""
     nodes = [
         {
             "parameters": {
@@ -4776,7 +4975,12 @@ def build_weekly_summary() -> None:
         slack_node("Slack Weekly Report", [2420, 120], "={{ $json.slack_text }}"),
         code_node("Skip Weekly Slack", SKIP_WEEKLY_SLACK_JS, [2420, 320]),
         code_node("Log Slack Weekly Error", LOG_SLACK_WEEKLY_ERROR_JS, [2640, 240]),
-        sheets_append("Append Weekly Metrics", [2640, 120], "weekly_metrics", {
+        code_node(
+            "Restore Weekly Report After Slack",
+            RESTORE_WEEKLY_REPORT_AFTER_SLACK_JS,
+            [2640, 40],
+        ),
+        sheets_append("Append Weekly Metrics", [2860, 120], "weekly_metrics", {
             "week_start": "={{ $json.week_start }}",
             "week_end": "={{ $json.week_end }}",
             "generated_at": "={{ $json.generated_at || new Date().toISOString() }}",
@@ -4796,7 +5000,12 @@ def build_weekly_summary() -> None:
             "fallback_used": "={{ $json.fallback_used }}",
             "correlation_id": "={{ $json.correlation_id }}",
         }, retry=True),
-        noop("Weekly Summary End", [2860, 200]),
+        code_node(
+            "Handle Append Weekly Metrics Error",
+            HANDLE_APPEND_WEEKLY_METRICS_ERROR_JS,
+            [2860, 280],
+        ),
+        noop("Weekly Summary End", [3080, 200]),
     ]
     conn = {}
     connect(conn, "Friday 5pm", "Read Leads For Weekly")
@@ -4823,11 +5032,14 @@ def build_weekly_summary() -> None:
     connect(conn, "Merge Weekly Report", "Should Send Weekly?")
     connect(conn, "Should Send Weekly?", "Slack Weekly Report", src_output=0)
     connect(conn, "Should Send Weekly?", "Skip Weekly Slack", src_output=1)
-    connect(conn, "Slack Weekly Report", "Append Weekly Metrics", src_output=0)
+    connect(conn, "Slack Weekly Report", "Restore Weekly Report After Slack", src_output=0)
     connect_error(conn, "Slack Weekly Report", "Log Slack Weekly Error")
+    connect(conn, "Restore Weekly Report After Slack", "Append Weekly Metrics")
     connect(conn, "Log Slack Weekly Error", "Append Weekly Metrics")
     connect(conn, "Skip Weekly Slack", "Append Weekly Metrics")
     connect(conn, "Append Weekly Metrics", "Weekly Summary End")
+    connect_error(conn, "Append Weekly Metrics", "Handle Append Weekly Metrics Error")
+    connect(conn, "Handle Append Weekly Metrics Error", "Weekly Summary End")
     save_workflow(
         "B2B Lead Weekly Summary.json",
         "B2B Lead Weekly Summary",

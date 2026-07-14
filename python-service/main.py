@@ -1,3 +1,9 @@
+"""CRM Python AI sidecar: FastAPI endpoints for enrichment, scoring, and related LLM tasks.
+
+Called from n8n at http://crm_python_ai:8001/{enrich,score,sales-memo,outbound-email,weekly-insights,manual-review}.
+Prompts load from prompts/*.md via prompt_loader (not from Google Sheets prompt_registry).
+"""
+
 import json
 import logging
 import os
@@ -344,6 +350,7 @@ async def _call_llm_json(
 
 @app.post("/enrich", response_model=EnrichmentResult)
 async def enrich_lead(item: EnrichmentRequest, request: Request):
+    """Summarize and enrich a lead from form content (prompt: lead_summary)."""
     raw_content, _ = truncate_for_llm(item.raw_content)
     prompt = load_prompt("lead_summary")
     return await _call_llm_json(
@@ -390,6 +397,7 @@ async def enrich_lead(item: EnrichmentRequest, request: Request):
 
 @app.post("/score", response_model=ScoringResult)
 async def score_lead(item: ScoringRequest, request: Request):
+    """Score a lead 0–100 and recommend routing (prompt: lead_scoring)."""
     prompt = load_prompt("lead_scoring")
     return await _call_llm_json(
         prompt=prompt,
@@ -433,6 +441,7 @@ async def score_lead(item: ScoringRequest, request: Request):
 
 @app.post("/sales-memo", response_model=SalesMemoResult)
 async def sales_memo(item: SalesMemoRequest, request: Request):
+    """Generate a sales memo for high-score leads (prompt: sales_memo)."""
     prompt = load_prompt("sales_memo")
     return await _call_llm_json(
         prompt=prompt,
@@ -477,6 +486,7 @@ async def sales_memo(item: SalesMemoRequest, request: Request):
 
 @app.post("/outbound-email", response_model=OutboundEmailResult)
 async def outbound_email(item: OutboundEmailRequest, request: Request):
+    """Draft first-touch outbound email (prompt: outbound_email)."""
     prompt = load_prompt("outbound_email")
     return await _call_llm_json(
         prompt=prompt,
@@ -530,6 +540,7 @@ async def outbound_email(item: OutboundEmailRequest, request: Request):
 
 @app.post("/weekly-insights", response_model=WeeklyInsightsResult)
 async def weekly_insights(item: WeeklyInsightsRequest, request: Request):
+    """Weekly metrics narrative for Slack digest (prompt: weekly_insights)."""
     prompt = load_prompt("weekly_insights")
     lead_id = f"weekly-{item.week_start}"
     metrics_json = json.dumps(item.metrics, ensure_ascii=False, default=str)
@@ -564,6 +575,7 @@ async def weekly_insights(item: WeeklyInsightsRequest, request: Request):
 
 @app.post("/manual-review", response_model=ManualReviewResult)
 async def manual_review_explain(item: ManualReviewRequest, request: Request):
+    """Explain why a lead needs manual review (prompt: manual_review)."""
     prompt = load_prompt("manual_review")
     return await _call_llm_json(
         prompt=prompt,
@@ -607,11 +619,13 @@ async def manual_review_explain(item: ManualReviewRequest, request: Request):
 
 @app.get("/health")
 def health_check():
+    """Liveness probe for Docker / compose healthchecks."""
     return {"status": "healthy", "service": "n8n-crm-ai-service", "version": SERVICE_VERSION}
 
 
 @app.get("/prompts")
 def list_prompt_versions():
+    """List loaded prompt keys with version and hash (from prompts/*.md files)."""
     from prompt_loader import list_prompts
 
     return {

@@ -1,10 +1,10 @@
-# Run Example
+# 运行示例
 
-End-to-end test walkthrough with `mode=test`.
+在 `mode=test` 下的端到端测试演练。
 
-## Sample Tally submission
+## 示例 Tally 提交
 
-Submit this via your Tally form or curl the webhook directly:
+通过 Tally 表单提交，或直接 curl webhook：
 
 ```bash
 curl -X POST https://your-n8n-domain/webhook/tally-lead \
@@ -25,7 +25,7 @@ curl -X POST https://your-n8n-domain/webhook/tally-lead \
   }'
 ```
 
-## Expected pipeline
+## 预期流水线
 
 ```mermaid
 sequenceDiagram
@@ -52,52 +52,59 @@ sequenceDiagram
   CRMSync->>Sheets: crm_status=skipped_test_mode
 ```
 
-## Expected leads row (after completion)
+## 预期 leads 行（完成后）
 
-| Field | Example value |
-|-------|---------------|
+| 字段 | 示例值 |
+|------|--------|
 | lead_id | (uuid) |
 | correlation_id | (uuid) |
 | contact_email | sarah.chen@techscale.io |
 | company_domain | techscale.io |
 | domain_type | corporate |
-| score | 75-90 (LLM dependent) |
+| score | 75-90（取决于 LLM） |
 | recommended_action | crm_sync |
 | enrichment_status | complete |
 | crm_status | skipped_test_mode |
 | notification_status | skipped_test_mode |
 | processing_status | completed |
 
-## Verify observability
+## 验证可观测性
 
 ### Langfuse
 
-Search by `correlation_id` from the leads row. Expect:
+用 leads 行中的 `correlation_id` 搜索。预期：
 
-- Span: `crm-lead-enrichment`
-- Span: `crm-lead-scoring`
-- Metadata: `lead_id`, `score`, `prompt_version`, `prompt_hash`
+- Span：`crm-lead-enrichment`
+- Span：`crm-lead-scoring`
+- Metadata：`lead_id`、`score`、`prompt_version`、`prompt_hash`
 
 ### Jaeger
 
-Search by trace_id (from n8n execution or Python logs). Expect:
+按 trace_id 搜索（来自 n8n 执行或 Python 日志）。预期：
 
-- Service: `n8n-crm-workflow` (intake + HTTP nodes)
-- Service: `n8n-crm-ai-service` (Python HTTP spans)
+- Service：`n8n-crm-workflow`（intake + HTTP 节点）
+- Service：`n8n-crm-ai-service`（Python HTTP span）
 
-## Duplicate submission test
+## 重复提交测试
 
-Submit the same email again. Expect:
+用同一邮箱再次提交。预期：
 
-- Same `lead_id` preserved
-- New `correlation_id` generated
-- `is_update=true` in audit_logs
-- Row updated, not duplicated
+- 保留同一 `lead_id`
+- 生成新的 `correlation_id`
+- audit_logs 中 `is_update=true`
+- 行被更新，不会重复插入
 
-## Production smoke test
+## 生产冒烟测试
 
-1. Set `config_main.mode=production`
-2. Submit one lead
-3. Verify HubSpot contact created
-4. Verify Slack notification received
-5. Set back to `test`
+1. 设置 `config_main.mode=production`
+2. 提交一条线索
+3. 确认 HubSpot contact 已创建
+4. 确认收到 Slack 通知
+5. 改回 `test`
+
+
+## 额外检查清单
+
+- 确认 Google Sheets `prompt_registry` 有 **6 行**（含 `sales_memo`、`outbound_email`、`weekly_insights`）。见 [PROMPTS.md](PROMPTS.md)。
+- 确认 sidecar `GET /prompts` 列出相同六个 key。
+- 可观测性检查：[OBSERVABILITY.md](OBSERVABILITY.md)。
