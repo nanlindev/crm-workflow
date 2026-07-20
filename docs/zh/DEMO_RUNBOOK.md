@@ -503,8 +503,8 @@ curl -sS -X POST "$URL" \
 | 5 | Slack Block Kit | `assets/screenshots/04-slack-high-score.png` | A | A2 |
 | 6 | Langfuse（prompt version） | `assets/screenshots/05-langfuse-score-trace.png` | A / H | A3 |
 | 7 | Jaeger（correlation） | `assets/screenshots/06-jaeger-correlation.png` | A | A4 |
-| 8 | HubSpot Contact | `assets/screenshots/07-hubspot-contact.png` | B | B1 |
-| 9 | HubSpot DRAFT email | `assets/screenshots/08-hubspot-draft-email.png` | B | B2 |
+| 8 | HubSpot Contact + DRAFT | `assets/screenshots/07-hubspot-contact.png` | B | B1（无单独 `08`） |
+| 9 | （已并入上栏） | — | B | — |
 | 10 | Meeting 字段更新 | `assets/screenshots/09-calendly-meeting-fields.png` | E | E1 |
 | 11 | Daily/Weekly Slack | `assets/screenshots/10-daily-weekly-slack.png` | H | H1 |
 | 12 | Booking reminder Slack | `assets/screenshots/11-booking-reminder-slack.png` | G | G1 |

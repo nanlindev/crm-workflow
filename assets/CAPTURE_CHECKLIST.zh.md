@@ -58,8 +58,7 @@
 | [ ] | A2 | Slack demo 频道：高分 Block Kit 卡片（含 Assign / Junk / Nurture） | `04-slack-high-score.png` |
 | [ ] | A3 | Langfuse：该次 `/score`（或 enrich）generation，**prompt version** 可见 | `05-langfuse-score-trace.png` |
 | [ ] | A4 | Jaeger：`n8n-platform` / sidecar span，能对上同一 `correlation_id` | `06-jaeger-correlation.png` |
-| [ ] | B1 | Slack 点 **Assign** 后 → HubSpot Contact 页 | `07-hubspot-contact.png` |
-| [ ] | B2 | 同一 Contact Timeline 上的 **DRAFT** outbound email | `08-hubspot-draft-email.png` |
+| [ ] | B1 | Slack 点 **Assign** 后 → HubSpot Contact 页（含 Timeline **DRAFT** email，一张图即可） | `07-hubspot-contact.png` |
 | [ ] | E1 | Calendly 预约或模拟 `invitee.created` → Sheets meeting 相关字段已更新 | `09-calendly-meeting-fields.png` |
 
 ### 建议（至少再完成 2 项）

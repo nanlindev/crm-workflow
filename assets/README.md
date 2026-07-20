@@ -48,8 +48,8 @@ chmod +x scripts/render_architecture.sh
 | 5 | `screenshots/04-slack-high-score.png` | A |
 | 6 | `screenshots/05-langfuse-score-trace.png` | A / H |
 | 7 | `screenshots/06-jaeger-correlation.png` | A |
-| 8 | `screenshots/07-hubspot-contact.png` | B |
-| 9 | `screenshots/08-hubspot-draft-email.png` | B |
+| 8 | `screenshots/07-hubspot-contact.png` | B（Contact + DRAFT，无单独 `08`） |
+| 9 | — | 已并入 `07` |
 | 10 | `screenshots/09-calendly-meeting-fields.png` | E |
 | 11 | `screenshots/10-daily-weekly-slack.png` | H |
 | 12 | `screenshots/11-booking-reminder-slack.png` | G |

@@ -5,7 +5,7 @@
 ## 脚本
 
 ```bash
-cd /home/lotey/lindev/crm-workflow
+cd /path/to/crm-workflow
 python3 scripts/sync_workflows_from_export.py
 ```
 

@@ -1,12 +1,37 @@
 # B2B Lead Automation Template
 
-Reusable n8n workflows for B2B lead processing after form submission: Tally / Google Forms intake, Google Sheets as system of record, DeepSeek enrichment & scoring, HubSpot sync, Slack notifications, Calendly meeting updates, and scheduled digests.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Inbound B2B leads often stall between form, scoring, CRM, and follow-up. This template runs a **production-gated** path on n8n: Tally intake → DeepSeek enrichment & scoring → Slack human-in-the-loop → HubSpot Contact + email DRAFT → Calendly meeting sync → daily/weekly digests — with Jaeger and Langfuse on every correlated lead.
+
+**Full stack:** n8n + AI sidecar + HubSpot + Slack + Google Sheets + observability.
 
 **Chinese documentation:** [docs/zh/](docs/zh/) · **全链路演示清单（含录像点）：** [docs/zh/DEMO_RUNBOOK.md](docs/zh/DEMO_RUNBOOK.md)
 
-## Showcase assets
+## Showcase
 
-Portfolio stills / demo video live under [`assets/`](assets/) — see [MANIFEST](assets/MANIFEST.md) for filenames and capture status. Architecture diagram: [`assets/architecture.png`](assets/architecture.png). Production demo steps: [DEMO_RUNBOOK](docs/DEMO_RUNBOOK.md).
+Buyer overview, case narrative, and demo stills:
+
+| Doc | Audience |
+|-----|----------|
+| **[SHOWCASE](docs/SHOWCASE.md)** | Problem / solution / stack / screenshots / demo video |
+| **[CASE_STUDY](docs/CASE_STUDY.md)** | Production-demo narrative and design choices |
+| **[DEMO_RUNBOOK](docs/DEMO_RUNBOOK.md)** | Reproduce scenarios A–J on a live stack |
+
+![Architecture](assets/architecture.png)
+
+**Demo video:** Loom / `assets/demo-video.mp4` — see [MANIFEST](assets/MANIFEST.md) (narration: [demo-video-script.md](assets/demo-video-script.md)).
+
+**Selected stills** (from remote production demo):
+
+| | | |
+|--|--|--|
+| ![Workflows](assets/screenshots/01-n8n-workflows-list.png) | ![Sheets lead](assets/screenshots/03-sheets-new-lead.png) | ![Slack](assets/screenshots/04-slack-high-score.png) |
+| n8n workflows | Sheets lead row | Slack Block Kit |
+| ![Langfuse](assets/screenshots/05-langfuse-score-trace.png) | ![HubSpot](assets/screenshots/07-hubspot-contact.png) | ![Jaeger](assets/screenshots/06-jaeger-correlation.png) |
+| Langfuse score | HubSpot Contact + DRAFT | Jaeger correlation |
+
+All filenames and capture status: [assets/MANIFEST.md](assets/MANIFEST.md) · full gallery: [SHOWCASE](docs/SHOWCASE.md).
 
 ## Architecture
 
@@ -21,11 +46,13 @@ Workflow catalog: [docs/en/WORKFLOWS.md](docs/en/WORKFLOWS.md).
 
 ## Quick start
 
-1. Start shared n8n — see `../platform-n8n/docs/DEPLOY.md`
-2. Copy `.env.example` → `.env` and fill secrets
+You need a running **n8n** instance (self-hosted or cloud) that can reach this project's Python sidecar over Docker network (or HTTP). This repo is the **CRM workflows + AI sidecar**; it does not bundle n8n itself.
+
+1. Bring up n8n (any compatible host). If you use the companion `platform-n8n` stack, start it first and ensure Docker networks `proxy_network` + `n8n_platform` exist — see [docs/en/DEPLOY.md](docs/en/DEPLOY.md) and [docs/en/INSTALL.md](docs/en/INSTALL.md).
+2. Copy `.env.example` → `.env` and fill secrets ([CREDENTIALS](docs/en/CREDENTIALS.md))
 3. Create Sheets from templates — [docs/en/SHEETS_SETUP.md](docs/en/SHEETS_SETUP.md) (**`prompt_registry` must have 6 rows**)
 4. `docker compose -f docker/compose.yml up -d --build` (CRM sidecar)
-5. Import all 9 workflows from `workflows/` (port 5678) — [docs/en/INSTALL.md](docs/en/INSTALL.md)
+5. Import all 9 workflows from `workflows/` — [docs/en/INSTALL.md](docs/en/INSTALL.md)
 6. Re-bind credentials; set Error Workflow → **B2B Lead Error Handler**
 7. `config_main.mode=test` → submit a test Tally lead
 
@@ -56,6 +83,10 @@ Details: [docs/en/OBSERVABILITY.md](docs/en/OBSERVABILITY.md).
 
 | Doc | Topic |
 |-----|--------|
+| [SHOWCASE](docs/SHOWCASE.md) | Buyer-facing overview & screenshots |
+| [CASE_STUDY](docs/CASE_STUDY.md) | Production demo narrative |
+| [DEMO_RUNBOOK](docs/DEMO_RUNBOOK.md) | Production scenarios A–J |
+| [PORTFOLIO_COPY](docs/PORTFOLIO_COPY.md) | Upwork / Fiverr / LinkedIn drafts |
 | [ARCHITECTURE](docs/en/ARCHITECTURE.md) | System design |
 | [WORKFLOWS](docs/en/WORKFLOWS.md) | Nine workflows |
 | [INSTALL](docs/en/INSTALL.md) | Install & import |
@@ -73,6 +104,10 @@ Details: [docs/en/OBSERVABILITY.md](docs/en/OBSERVABILITY.md).
 | [OBSERVABILITY](docs/en/OBSERVABILITY.md) | Tracing |
 | [CODE_NODE_MODES](docs/en/CODE_NODE_MODES.md) | Code node modes |
 | [WORKFLOW_SYNC_FROM_EXPORT](docs/en/WORKFLOW_SYNC_FROM_EXPORT.md) | UI → repo sync |
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ## Regenerate workflows
 

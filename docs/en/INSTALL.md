@@ -3,13 +3,15 @@
 ## Prerequisites
 
 - Docker and Docker Compose v2.20+
-- Sibling repo `platform-n8n` with shared n8n runtime
-- External Docker networks `proxy_network` and `n8n_platform`
+- A running **n8n** instance that can reach the CRM sidecar (self-hosted recommended). Optional companion stack: sibling repo `platform-n8n` (shared n8n + Docker networks)
+- External Docker networks `proxy_network` and `n8n_platform` (create manually or via your n8n platform scripts)
 - Google Cloud project with Sheets API enabled
 - DeepSeek API key
 - Tally account (free tier) for form intake
 
 ## 1. Start shared platform n8n
+
+If you use the companion `platform-n8n` repo (same parent folder as this project):
 
 ```bash
 cd ../platform-n8n
@@ -18,12 +20,12 @@ cp .env.example .env
 docker compose -f docker/compose.yml up -d
 ```
 
-n8n UI: http://localhost:5678
+Otherwise start your own n8n, join it to `n8n_platform` / `proxy_network` as needed, and continue from step 2. n8n UI is typically http://localhost:5678
 
 ## 2. Configure CRM project
 
 ```bash
-cd ../crm-workflow
+cd ../crm-workflow   # or: cd /path/to/crm-workflow
 cp .env.example .env
 # Edit .env — DeepSeek, Langfuse, GOOGLE_SHEETS_DOCUMENT_ID, etc.
 ```

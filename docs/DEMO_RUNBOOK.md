@@ -4,7 +4,7 @@ Step-by-step script for a **production-mode** full-chain demo on the remote n8n 
 
 **中文完整手动清单（含每处录像/截图提示）：** [zh/DEMO_RUNBOOK.md](zh/DEMO_RUNBOOK.md)
 
-Related docs: [TEST_PRODUCTION](en/TEST_PRODUCTION.md) · [INSTALL](en/INSTALL.md) · [OBSERVABILITY](en/OBSERVABILITY.md) · [RUN_EXAMPLE](en/RUN_EXAMPLE.md) · [WORKFLOWS](en/WORKFLOWS.md)
+Related docs: [SHOWCASE](SHOWCASE.md) · [CASE_STUDY](CASE_STUDY.md) · [TEST_PRODUCTION](en/TEST_PRODUCTION.md) · [INSTALL](en/INSTALL.md) · [OBSERVABILITY](en/OBSERVABILITY.md) · [RUN_EXAMPLE](en/RUN_EXAMPLE.md) · [WORKFLOWS](en/WORKFLOWS.md)
 
 **Priority for portfolio:** Scenarios **A, B, E, J** are required. Complete at least **two** of C / D / G / H. Scenario H should use the **gated Daily / Weekly** flows (post-debug: config load + `Should Send *` + Skip Slack in test).
 
@@ -178,9 +178,8 @@ Slack Actions → Execute Post-Assign CRM Sync
 
 | # | Capture |
 |---|--------|
-| B1 | HubSpot Contact |
-| B2 | HubSpot DRAFT email on timeline |
-| B3 | Sheets `crm_contact_id` + review fields |
+| B1 | HubSpot Contact **with** DRAFT email on timeline → `07-hubspot-contact.png` (no separate `08`) |
+| B2 | Sheets `crm_contact_id` + review fields |
 
 **Status:** [ ] Done
 
@@ -397,8 +396,8 @@ Tunnel helper: `REMOTE_HOST=user@host ./scripts/ssh_tunnel_demo.sh`
 | 5 | Slack Block Kit | `assets/screenshots/04-slack-high-score.png` | A |
 | 6 | Langfuse (prompt version) | `assets/screenshots/05-langfuse-score-trace.png` | A / H |
 | 7 | Jaeger (`correlation_id`) | `assets/screenshots/06-jaeger-correlation.png` | A |
-| 8 | HubSpot Contact | `assets/screenshots/07-hubspot-contact.png` | B |
-| 9 | HubSpot DRAFT email | `assets/screenshots/08-hubspot-draft-email.png` | B |
+| 8 | HubSpot Contact + DRAFT | `assets/screenshots/07-hubspot-contact.png` | B |
+| 9 | _(merged)_ | same as #8 — no `08-hubspot-draft-email.png` | B |
 | 10 | Calendly → meeting fields | `assets/screenshots/09-calendly-meeting-fields.png` | E |
 | 11 | Daily / Weekly Slack | `assets/screenshots/10-daily-weekly-slack.png` | H |
 | 12 | Booking reminder Slack | `assets/screenshots/11-booking-reminder-slack.png` | G |

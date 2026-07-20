@@ -3,13 +3,15 @@
 ## 前置条件
 
 - Docker 与 Docker Compose v2.20+
-- 兄弟仓库 `platform-n8n`（共享 n8n 运行时）
-- 外部 Docker 网络 `proxy_network` 与 `n8n_platform`
+- 可访问 CRM sidecar 的 **n8n**（自建推荐）。可选兄弟仓库 `platform-n8n`（共享 n8n + Docker 网络）
+- 外部 Docker 网络 `proxy_network` 与 `n8n_platform`（可手动创建，或用 platform 脚本）
 - 已启用 Sheets API 的 Google Cloud 项目
 - DeepSeek API key
 - Tally 账号（免费档即可）用于表单入库
 
 ## 1. 启动共享 platform n8n
+
+若使用同级目录下的 `platform-n8n`：
 
 ```bash
 cd ../platform-n8n
@@ -18,14 +20,14 @@ cp .env.example .env
 docker compose -f docker/compose.yml up -d
 ```
 
-n8n UI：http://localhost:5678
+否则自行启动 n8n，按需加入 `n8n_platform` / `proxy_network`，然后从步骤 2 继续。n8n UI 一般为 http://localhost:5678
 
 ## 2. 配置 CRM 项目
 
 ```bash
-cd ../crm-workflow
+cd ../crm-workflow   # 或：cd /path/to/crm-workflow
 cp .env.example .env
-# Edit .env — DeepSeek, Langfuse, GOOGLE_SHEETS_DOCUMENT_ID, etc.
+# 编辑 .env — DeepSeek、Langfuse、GOOGLE_SHEETS_DOCUMENT_ID 等
 ```
 
 创建并共享电子表格：[SHEETS_SETUP.md](SHEETS_SETUP.md)。  

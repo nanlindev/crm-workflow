@@ -154,11 +154,10 @@ assets/raw/take8-booking.mp4
 3. [ ] **开录** → ⏱ 分屏静止 **2 秒**  
 4. [ ] 在 Slack 点击 **Assign**  
 5. [ ] ⏱ 等 Slack 卡 **chat.update**（同一条卡变化，不是新刷一条）停 **3 秒**  
-6. [ ] 右窗刷新 / 打开 Contact → ⏱ Contact 页停 **3 秒** → 📷 `07-hubspot-contact.png`  
-7. [ ] 滚到 **Timeline / Activity**，找到 **DRAFT** outbound email  
-8. [ ] ⏱ **停留 4–5 秒** → 📷 `08-hubspot-draft-email.png`  
-9. [ ] （可选）再切 Sheets 看 `crm_contact_id`、`review_status=approved`，⏱ 2–3 秒  
-10. [ ] **停录**
+6. [ ] 右窗刷新 / 打开 Contact → 滚到 **Timeline**，露出 **DRAFT** outbound email  
+7. [ ] ⏱ Contact + DRAFT 同屏停 **4–5 秒** → 📷 `07-hubspot-contact.png`（**无单独 `08`**）  
+8. [ ] （可选）再切 Sheets 看 `crm_contact_id`、`review_status=approved`，⏱ 2–3 秒  
+9. [ ] **停录**
 
 ---
 
