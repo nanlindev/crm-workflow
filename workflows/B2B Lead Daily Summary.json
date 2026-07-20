@@ -18,7 +18,7 @@
         0,
         200
       ],
-      "id": "18c9ba71-7c83-4f3c-b92a-4ddcff46d761",
+      "id": "3fd8b759-f1b8-41e6-a91f-a77aa3d93a56",
       "name": "Daily 9am"
     },
     {
@@ -41,7 +41,7 @@
         220,
         200
       ],
-      "id": "826ba768-0a40-4c2e-b94f-276a1c00934b",
+      "id": "4755f4a3-7541-487f-aec4-676b6c9ac650",
       "name": "Read Leads For Summary",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -72,7 +72,7 @@
         440,
         200
       ],
-      "id": "2120011d-633d-49aa-9eda-a269be8433a4",
+      "id": "d10212fd-6c7e-43c2-a809-19e5bfaee5bc",
       "name": "Read Errors For Summary",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -94,7 +94,7 @@
         440,
         400
       ],
-      "id": "6d03d84f-190d-43c8-8d9b-4720d505e9a3",
+      "id": "aaedd927-9742-4f8d-bcb0-72cf465a09d9",
       "name": "Handle Summary Read Error"
     },
     {
@@ -117,7 +117,7 @@
         660,
         200
       ],
-      "id": "2629399c-c9b1-498e-8531-66fe2e033194",
+      "id": "c3b860f0-6150-4afa-9235-a25adb5c97bb",
       "name": "Read config_main",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -140,7 +140,7 @@
         660,
         360
       ],
-      "id": "37c584af-7a73-4631-aea4-f0aa387e2a4e",
+      "id": "1f09c9a0-1d31-4332-ab3b-d57373f8af95",
       "name": "Normalize config_main"
     },
     {
@@ -154,7 +154,7 @@
         660,
         520
       ],
-      "id": "04bd45da-0773-4620-b037-18ca41031cfd",
+      "id": "6adc8e32-13f5-4e1b-b07d-ae5ce51c4806",
       "name": "Handle config_main Read Error"
     },
     {
@@ -177,7 +177,7 @@
         880,
         200
       ],
-      "id": "29dad9fa-9052-4766-b41d-02328f7f3762",
+      "id": "366e1a9e-3ea4-4969-8e17-7b9e3e698e45",
       "name": "Read config_notifications",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -200,7 +200,7 @@
         880,
         360
       ],
-      "id": "4d28fff7-1474-44f4-9a39-26bef61fec47",
+      "id": "6ddba2fd-6335-419b-aa65-49340509fbba",
       "name": "Normalize config_notifications"
     },
     {
@@ -214,7 +214,7 @@
         880,
         520
       ],
-      "id": "559e8ddb-7658-422e-af3b-d61a88eea563",
+      "id": "35e2c417-ccb7-4867-89fd-aed7d9ef56d0",
       "name": "Handle config_notifications Read Error"
     },
     {
@@ -228,7 +228,7 @@
         1100,
         200
       ],
-      "id": "f8db218e-064e-4e9d-8635-7faca29bc118",
+      "id": "abef64e7-39bb-4759-a98d-7a354870b52d",
       "name": "Load Daily Config"
     },
     {
@@ -242,7 +242,7 @@
         1320,
         200
       ],
-      "id": "d953df66-40c8-4df1-b1bb-d8861d77747a",
+      "id": "cd644a78-1352-4ae8-b6e6-69b2bbf9d48a",
       "name": "Build Daily Summary"
     },
     {
@@ -256,7 +256,7 @@
           },
           "conditions": [
             {
-              "id": "3ac8152f-5ca9-4e73-9011-1224e714ed5d",
+              "id": "1c5e09f5-83d1-4394-9d28-150eab4d6896",
               "leftValue": "={{ $json.daily_gate_passed }}",
               "rightValue": "true",
               "operator": {
@@ -276,7 +276,7 @@
         1540,
         200
       ],
-      "id": "2d9d4931-4f09-4ca6-986d-2021dc87ca3d",
+      "id": "4249d325-f0f9-4406-ae8a-a33cbfacce1b",
       "name": "Should Send Daily?"
     },
     {
@@ -295,7 +295,7 @@
         1760,
         120
       ],
-      "id": "bfe1e4e6-ca0b-4fac-82c5-2a31a72133cf",
+      "id": "1593376e-34ad-479e-ac11-c5ee89272eba",
       "name": "Slack Daily Report",
       "retryOnFail": true,
       "maxTries": 3,
@@ -319,7 +319,7 @@
         1760,
         320
       ],
-      "id": "86bc2fec-cf34-4c8c-ab73-0567bacde1bc",
+      "id": "ca2892c7-543e-443f-b025-ee85c6db52af",
       "name": "Skip Daily Slack"
     },
     {
@@ -333,7 +333,7 @@
         1980,
         240
       ],
-      "id": "367b667f-f86c-4a6a-9cf4-84caa7f28ea6",
+      "id": "08e7d2f6-13e1-4888-a1f6-dd28c2f46c12",
       "name": "Log Slack Summary Error"
     },
     {
@@ -344,7 +344,7 @@
         1980,
         120
       ],
-      "id": "e95c77c1-41f8-4b93-8458-b4290ba33878",
+      "id": "1864fa1a-fd22-4e13-95c6-f4a37e89ae8a",
       "name": "Daily Summary End"
     }
   ],
@@ -574,7 +574,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "B2B Lead Error Handler"
   },
-  "versionId": "6fc50ce0-3eb1-4b6c-9ac2-890ac6d22ea5",
+  "versionId": "dbedaa9f-9af5-4438-ad41-00a5717b0487",
   "meta": {
     "templateCredsSetupCompleted": false
   },

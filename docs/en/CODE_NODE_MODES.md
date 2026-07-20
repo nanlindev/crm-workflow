@@ -19,7 +19,8 @@ n8n Code node v2 has two execution modes:
 | `Filter Due Booking Reminders` / `Expand Due Leads` / `Load Booking Config` | Booking Follow-up | Multi-row filter / expand |
 | `Load Daily Config` / `Build Daily Summary` | Daily Summary | Config + aggregate yesterday UTC |
 | `Load Weekly Config` / `Build Weekly Metrics` / `Merge Weekly Report` | Weekly Summary | Config + week aggregate |
-| `Check Error Alert Enabled` | Error Handler | Read config rows |
+| `Match Lead By ID` | Slack Actions | Collapse Sheets rows after read |
+| `Match Lead By Email` / `Build Calendly Slack Text` | Calendly Webhook | Same: Sheets N rows must not fan-out Slack Notify |
 
 ### Must use `runOnceForEachItem`
 

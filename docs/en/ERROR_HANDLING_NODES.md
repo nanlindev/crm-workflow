@@ -36,6 +36,8 @@ Handlers read `$input.item.error`, set `*_error_message` / `_metadata`, and pres
 
 Key Sheets reads/writes use Continue + error handlers (`Handle Read Leads Error`, Update/Append Lead Error, Audit Log Error). Dedup uses **Run Once for All Items**. Execute Enrichment Scoring is Stop on error (fail the run).
 
+**Tally Webhook:** `responseMode=responseNode`. After signature check: pass → **Respond 200** then normalize/write; fail → **Respond 401**. (Do not leave a Respond to Webhook node when the webhook still uses “Respond Immediately” — n8n errors with *Unused Respond to Webhook node*.)
+
 ## 2. B2B Lead Enrichment Scoring
 
 Config reads: per-table Normalize or Handle Error wrappers → `Build Global Config` (partial degrade). HTTP Enrich / Score / Sales-memo / Manual-review: Continue + handlers. `Update Lead Scores`: Continue. Execute CRM Sync: Stop.

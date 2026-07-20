@@ -26,3 +26,8 @@ Thumbs.db
 .env
 .env.local
 .env.prod
+
+# Portfolio capture: unmasked / PII originals (keep curated screenshots/)
+assets/raw/
+assets/**/*.mp4
+assets/.architecture_render.html

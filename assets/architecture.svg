@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780">
+  <defs>
+    <style>
+      .title { font: 700 28px "Segoe UI", system-ui, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 14px "Segoe UI", system-ui, sans-serif; fill: #64748b; }
+      .group { font: 600 12px "Segoe UI", system-ui, sans-serif; fill: #334155; letter-spacing: 0.04em; }
+      .box { font: 600 14px "Segoe UI", system-ui, sans-serif; fill: #0f172a; }
+      .small { font: 400 12px "Segoe UI", system-ui, sans-serif; fill: #475569; }
+      .edge { stroke: #64748b; stroke-width: 1.75; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="780" fill="#f8fafc"/>
+  <rect x="0" y="0" width="1400" height="72" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="40" y="38" class="title">B2B Lead Automation - Production Stack</text>
+  <text x="40" y="58" class="subtitle">n8n + AI sidecar + HubSpot / Slack / Sheets + Jaeger / Langfuse</text>
+
+  <!-- Ingress -->
+  <rect x="40" y="110" width="220" height="280" rx="12" fill="#ffffff" stroke="#99f6e4" stroke-width="2"/>
+  <text x="56" y="136" class="group">INGRESS</text>
+  <rect x="60" y="152" width="180" height="48" rx="8" fill="#f0fdfa" stroke="#14b8a6"/>
+  <text x="150" y="181" text-anchor="middle" class="box">Tally Webhook</text>
+  <rect x="60" y="216" width="180" height="48" rx="8" fill="#f0fdfa" stroke="#14b8a6"/>
+  <text x="150" y="245" text-anchor="middle" class="box">Calendly Webhook</text>
+  <rect x="60" y="280" width="180" height="48" rx="8" fill="#f0fdfa" stroke="#14b8a6"/>
+  <text x="150" y="309" text-anchor="middle" class="box">Slack Interactivity</text>
+
+  <!-- platform-n8n -->
+  <rect x="340" y="160" width="280" height="160" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="356" y="186" class="group">PLATFORM-N8N</text>
+  <rect x="360" y="206" width="240" height="80" rx="8" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="480" y="242" text-anchor="middle" class="box">n8n shared runtime</text>
+  <text x="480" y="264" text-anchor="middle" class="small">9 CRM workflows</text>
+
+  <!-- crm sidecar -->
+  <rect x="700" y="160" width="260" height="160" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="716" y="186" class="group">CRM-WORKFLOW</text>
+  <rect x="720" y="206" width="220" height="80" rx="8" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="830" y="242" text-anchor="middle" class="box">crm_python_ai</text>
+  <text x="830" y="264" text-anchor="middle" class="small">FastAPI /enrich /score /...</text>
+
+  <!-- Observability -->
+  <rect x="1040" y="110" width="320" height="280" rx="12" fill="#ffffff" stroke="#bae6fd" stroke-width="2"/>
+  <text x="1056" y="136" class="group">OBSERVABILITY</text>
+  <rect x="1060" y="152" width="280" height="48" rx="8" fill="#f0f9ff" stroke="#0ea5e9"/>
+  <text x="1200" y="181" text-anchor="middle" class="box">otel-collector</text>
+  <rect x="1060" y="220" width="280" height="48" rx="8" fill="#f0f9ff" stroke="#0ea5e9"/>
+  <text x="1200" y="249" text-anchor="middle" class="box">Jaeger UI</text>
+  <rect x="1060" y="288" width="280" height="48" rx="8" fill="#f0f9ff" stroke="#0ea5e9"/>
+  <text x="1200" y="317" text-anchor="middle" class="box">Langfuse UI</text>
+
+  <!-- Integrations -->
+  <rect x="340" y="420" width="680" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="356" y="446" class="group">INTEGRATIONS</text>
+  <rect x="360" y="468" width="190" height="80" rx="8" fill="#fffbeb" stroke="#f59e0b"/>
+  <text x="455" y="504" text-anchor="middle" class="box">Google Sheets</text>
+  <text x="455" y="526" text-anchor="middle" class="small">system of record</text>
+  <rect x="580" y="468" width="190" height="80" rx="8" fill="#faf5ff" stroke="#a855f7"/>
+  <text x="675" y="504" text-anchor="middle" class="box">Slack</text>
+  <text x="675" y="526" text-anchor="middle" class="small">Block Kit + digests</text>
+  <rect x="800" y="468" width="190" height="80" rx="8" fill="#fff1f2" stroke="#f43f5e"/>
+  <text x="895" y="504" text-anchor="middle" class="box">HubSpot</text>
+  <text x="895" y="526" text-anchor="middle" class="small">Contact + DRAFT email</text>
+
+  <!-- Edges -->
+  <path class="edge" d="M260,176 L340,220"/>
+  <path class="edge" d="M260,240 L340,240"/>
+  <path class="edge" d="M260,304 L340,260"/>
+  <path class="edge" d="M620,240 L700,240"/>
+  <path class="edge" d="M480,320 L455,468"/>
+  <path class="edge" d="M500,320 L675,468"/>
+  <path class="edge" d="M520,320 L895,468"/>
+  <path class="edge" d="M620,200 L1040,176"/>
+  <path class="edge" d="M830,160 L1200,152"/>
+  <path class="edge" d="M960,240 L1040,240"/>
+  <path class="edge" d="M1200,200 L1200,220"/>
+  <path class="edge" d="M1200,268 L1200,288"/>
+
+  <text x="40" y="660" class="subtitle">correlation_id at Intake -&gt; X-Correlation-Id to sidecar -&gt; join Jaeger &lt;-&gt; Langfuse</text>
+  <text x="40" y="690" class="subtitle">Demo isolation: dedicated Sheets / Slack channel / HubSpot sandbox / demo Tally + Calendly</text>
+  <text x="40" y="740" class="small">Source: crm-workflow docs/en/ARCHITECTURE.md | portfolio asset #1</text>
+</svg>

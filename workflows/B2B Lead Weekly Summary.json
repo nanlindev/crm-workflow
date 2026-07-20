@@ -21,7 +21,7 @@
         0,
         200
       ],
-      "id": "3d301015-075c-45ab-8e43-d1668f2698b0",
+      "id": "406c82c6-8cb3-4d82-a118-6d40abee8542",
       "name": "Friday 5pm"
     },
     {
@@ -44,7 +44,7 @@
         220,
         200
       ],
-      "id": "a34f23ae-1493-41e4-8e3e-08fd61339246",
+      "id": "df553e11-e92c-419b-9778-99f43ec1aba2",
       "name": "Read Leads For Weekly",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -75,7 +75,7 @@
         440,
         200
       ],
-      "id": "4014c188-4917-4ac3-8d3e-af98680da63e",
+      "id": "95429d1b-ce0c-46f3-b6c7-0d35f90d2682",
       "name": "Read Errors For Weekly",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -106,7 +106,7 @@
         660,
         200
       ],
-      "id": "51d587d7-9fde-439f-9daf-78118656de23",
+      "id": "42c3b9c1-cff6-403b-84ea-cc0aae0d2c7e",
       "name": "Read Prior Weekly Metrics",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -137,7 +137,7 @@
         880,
         200
       ],
-      "id": "2ac5a1d6-c5b9-4c60-ab2a-17cbac48dcb2",
+      "id": "2f1e1c51-72fc-45da-b67c-c3c694be606b",
       "name": "Read config_main",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -160,7 +160,7 @@
         880,
         360
       ],
-      "id": "43fafc7b-2fdb-44c3-b929-3dfe214cf6b7",
+      "id": "c9a68ae4-e1dc-4cda-adaf-237b4ff55684",
       "name": "Normalize config_main"
     },
     {
@@ -174,7 +174,7 @@
         880,
         520
       ],
-      "id": "11f0fabb-57b7-422e-b2d2-85b5e72a2796",
+      "id": "12718472-459e-4cc9-85ed-5487e80152d5",
       "name": "Handle config_main Read Error"
     },
     {
@@ -197,7 +197,7 @@
         1100,
         200
       ],
-      "id": "8217f4eb-e470-413e-9ec1-5d64cf0e0958",
+      "id": "c24c89c0-5526-4468-8f1e-5c0645b4fbd1",
       "name": "Read config_notifications",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -220,7 +220,7 @@
         1100,
         360
       ],
-      "id": "32c601cd-068e-4f2d-9ad5-08554274fc45",
+      "id": "f258fff5-74a1-4abb-ad38-8204343ad216",
       "name": "Normalize config_notifications"
     },
     {
@@ -234,7 +234,7 @@
         1100,
         520
       ],
-      "id": "a5a0b62c-72b6-417a-a961-b6d99ef01ddd",
+      "id": "85dd45e0-3a5f-4ab2-9470-6faee719feb4",
       "name": "Handle config_notifications Read Error"
     },
     {
@@ -248,7 +248,7 @@
         1320,
         200
       ],
-      "id": "6cc35e44-199f-43a8-89f0-6a91e7adc5ae",
+      "id": "a08015b9-3ea6-4bc3-a4a7-ef6a0ff3a6fc",
       "name": "Load Weekly Config"
     },
     {
@@ -262,7 +262,7 @@
         440,
         400
       ],
-      "id": "c391bd5b-c863-4d67-bead-129385a3f832",
+      "id": "407b7030-7a56-4260-aa73-c5e5f3523915",
       "name": "Handle Weekly Read Error"
     },
     {
@@ -276,7 +276,7 @@
         1540,
         200
       ],
-      "id": "bc141d6e-3f6a-49b9-935b-98d037347b42",
+      "id": "cd85962c-47e2-46e2-838a-a3390f5f9be5",
       "name": "Build Weekly Metrics"
     },
     {
@@ -305,7 +305,7 @@
         1760,
         200
       ],
-      "id": "de1ab0fd-54a3-49b8-a946-fe70d7c2a0d7",
+      "id": "7c1b4923-10b2-4d10-9c4e-35fdf5995a87",
       "name": "HTTP Weekly Insights",
       "retryOnFail": true,
       "maxTries": 3,
@@ -323,7 +323,7 @@
         1760,
         400
       ],
-      "id": "63216147-27b1-481c-9322-fe1f9b7d2a10",
+      "id": "9f0d0e49-babb-4e6c-87d3-00ba0bb93669",
       "name": "Handle Weekly AI Failure"
     },
     {
@@ -337,7 +337,7 @@
         1980,
         200
       ],
-      "id": "0db87de7-068e-432b-ba14-91a99fa68289",
+      "id": "c565a530-3a59-4041-a22a-3b1d3e9f8958",
       "name": "Merge Weekly Report"
     },
     {
@@ -351,7 +351,7 @@
           },
           "conditions": [
             {
-              "id": "7a393ef7-f1e2-4668-98a7-cfe7958618be",
+              "id": "7a752d65-f6d6-4897-9f15-88088431e9de",
               "leftValue": "={{ $json.weekly_gate_passed }}",
               "rightValue": "true",
               "operator": {
@@ -371,7 +371,7 @@
         2200,
         200
       ],
-      "id": "f0df6ab3-589b-4cdb-b84d-53f29403b11e",
+      "id": "6f1850b1-5506-430e-9c59-ea34d6dbbae6",
       "name": "Should Send Weekly?"
     },
     {
@@ -390,7 +390,7 @@
         2420,
         120
       ],
-      "id": "d74b5d89-3220-4fcc-b6f0-d1cef14fb724",
+      "id": "9209c5e8-be09-4c05-89ad-b7782383858d",
       "name": "Slack Weekly Report",
       "retryOnFail": true,
       "maxTries": 3,
@@ -414,7 +414,7 @@
         2420,
         320
       ],
-      "id": "1e6d8fda-dd75-4cba-aae7-d45a5c655d04",
+      "id": "a501ee0f-29c7-4911-a197-20bda9872bb6",
       "name": "Skip Weekly Slack"
     },
     {
@@ -428,7 +428,7 @@
         2640,
         240
       ],
-      "id": "52a400a2-5489-42fd-a467-791a4a30a203",
+      "id": "c4acd8e2-9a56-43c2-b5b3-c85a3ca410a2",
       "name": "Log Slack Weekly Error"
     },
     {
@@ -442,7 +442,7 @@
         2640,
         40
       ],
-      "id": "3ba336c6-6563-4b17-bdbf-cb591466c223",
+      "id": "2db41d4f-bb3f-4883-bff0-70d9f3bae9b2",
       "name": "Restore Weekly Report After Slack"
     },
     {
@@ -479,7 +479,192 @@
             "ai_summary": "={{ $json.ai_summary }}",
             "fallback_used": "={{ $json.fallback_used }}",
             "correlation_id": "={{ $json.correlation_id }}"
-          }
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "week_start",
+              "displayName": "week_start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "week_end",
+              "displayName": "week_end",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "generated_at",
+              "displayName": "generated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "new_leads",
+              "displayName": "new_leads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "high_score_leads",
+              "displayName": "high_score_leads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "avg_score",
+              "displayName": "avg_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_sync_rate",
+              "displayName": "crm_sync_rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "slack_sent_count",
+              "displayName": "slack_sent_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "review_pending",
+              "displayName": "review_pending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "review_approved",
+              "displayName": "review_approved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meetings_booked",
+              "displayName": "meetings_booked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_sent",
+              "displayName": "first_touch_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_count",
+              "displayName": "error_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_breakdown_json",
+              "displayName": "source_breakdown_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "metrics_json",
+              "displayName": "metrics_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ai_summary",
+              "displayName": "ai_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fallback_used",
+              "displayName": "fallback_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "correlation_id",
+              "displayName": "correlation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
@@ -489,7 +674,7 @@
         2860,
         120
       ],
-      "id": "8f5c5eac-ec56-4524-9a84-0db18a274b85",
+      "id": "160b9f16-17e1-4de2-9249-9b4967c3bc71",
       "name": "Append Weekly Metrics",
       "onError": "continueErrorOutput",
       "credentials": {
@@ -512,7 +697,7 @@
         2860,
         280
       ],
-      "id": "0732d9a4-2a7f-4b3c-8702-a17c3c573349",
+      "id": "d8a24d9e-3542-49de-b530-c583cd327bf1",
       "name": "Handle Append Weekly Metrics Error"
     },
     {
@@ -523,7 +708,7 @@
         3080,
         200
       ],
-      "id": "031a0c2d-769b-4d7c-95c9-3aa50a74075e",
+      "id": "cf4c36a9-d645-4f53-a2cd-00ecf2399586",
       "name": "Weekly Summary End"
     }
   ],
@@ -851,7 +1036,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "B2B Lead Error Handler"
   },
-  "versionId": "0e247422-62ec-4751-aac5-83cd62505a2a",
+  "versionId": "879def92-f7a6-49c8-bcc6-dc2790000d27",
   "meta": {
     "templateCredsSetupCompleted": false
   },

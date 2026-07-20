@@ -53,5 +53,6 @@ Exact API fields change with Calendly API versions—follow Calendly’s current
 | 401 / invalid signature | Key mismatch; raw body enabled; key not PAT |
 | 200 but unmatched | Email differs from Sheets; lead missing |
 | No delivery | Workflow inactive; wrong URL; free Calendly plan |
+| **One booking → N Slack “booked” messages** | `Match Lead By Email` must be `runOnceForAllItems` (`EachItem` fans out once per Sheets row). Re-import fixed `B2B Lead Calendly Webhook.json` |
 
 Credentials overview: [CREDENTIALS.md](CREDENTIALS.md). Field list: [SHEETS_SETUP.md](SHEETS_SETUP.md).

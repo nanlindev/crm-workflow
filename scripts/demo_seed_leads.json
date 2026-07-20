@@ -1,0 +1,134 @@
+{
+  "_meta": {
+    "description": "Demo pre-seed Tally payloads for portfolio recording. Do NOT include the live camera hero lead — submit that separately during Scenario A.",
+    "count": 7,
+    "usage": "python3 scripts/seed_demo_leads.py --url https://YOUR_N8N/webhook/tally-lead"
+  },
+  "leads": [
+    {
+      "id": "seed-01-high-daily",
+      "purpose": ["weekly", "daily_yesterday"],
+      "expected_path": "high_score / crm_sync",
+      "sheets_after": {
+        "created_at": "YESTERDAY_UTC_10:15:00Z",
+        "note": "Backdate after enrichment finishes so Daily Summary counts this row"
+      },
+      "fields": {
+        "Name": "Alex Rivera",
+        "Email": "alex.rivera+demo@northwindops.io",
+        "Role": "VP Sales Ops",
+        "Company": "Northwind Ops",
+        "Message": "We want to automate B2B lead routing for a 40-person sales team. Budget approved for Q3. Need a live demo this week and HubSpot + Slack integration."
+      }
+    },
+    {
+      "id": "seed-02-high-daily",
+      "purpose": ["weekly", "daily_yesterday"],
+      "expected_path": "high_score / crm_sync",
+      "sheets_after": {
+        "created_at": "YESTERDAY_UTC_14:40:00Z",
+        "note": "Backdate for Daily digest volume"
+      },
+      "fields": {
+        "Name": "Priya Nair",
+        "Email": "priya.nair+demo@brightledger.co",
+        "Role": "Head of Revenue Operations",
+        "Company": "Bright Ledger",
+        "Message": "Evaluating workflow automation to replace spreadsheets. Approved budget, timeline is this quarter. Please send a product demo and pricing."
+      }
+    },
+    {
+      "id": "seed-03-high-booking",
+      "purpose": ["weekly", "booking_followup"],
+      "expected_path": "high_score; keep meeting_status=not_booked",
+      "sheets_after": {
+        "created_at": "TWO_DAYS_AGO_UTC_09:00:00Z",
+        "meeting_status": "not_booked",
+        "booking_reminder_sent": "",
+        "note": "Must stay not_booked and older than booking_reminder_hours for Scenario G"
+      },
+      "fields": {
+        "Name": "Marcus Chen",
+        "Email": "marcus.chen+demo@helixmanufacturing.com",
+        "Role": "Director of Digital Transformation",
+        "Company": "Helix Manufacturing",
+        "Message": "Looking for sales workflow automation across intake, scoring, and CRM sync. Budget is approved. Prefer a demo call next week if the score looks strong."
+      }
+    },
+    {
+      "id": "seed-04-high-week",
+      "purpose": ["weekly"],
+      "expected_path": "high_score / crm_sync",
+      "sheets_after": {
+        "created_at": "keep",
+        "note": "Leave created_at as-is (current week volume)"
+      },
+      "fields": {
+        "Name": "Elena Foss",
+        "Email": "elena.foss+demo@orbitlogistics.net",
+        "Role": "COO",
+        "Company": "Orbit Logistics",
+        "Message": "We need automation for inbound leads and Slack alerts for the ops team. Budget ready. Can we book a demo?"
+      }
+    },
+    {
+      "id": "seed-05-review",
+      "purpose": ["weekly", "manual_review"],
+      "expected_path": "review_required / gray zone (weaker intent)",
+      "sheets_after": {
+        "created_at": "YESTERDAY_UTC_16:05:00Z",
+        "note": "Optional third Daily row; useful for Scenario D screenshot if review fires"
+      },
+      "fields": {
+        "Name": "Jordan Blake",
+        "Email": "jordan.blake+demo@pebbleapps.com",
+        "Role": "Operations Manager",
+        "Company": "Pebble Apps",
+        "Message": "Curious about your automation tools. Not sure about budget yet. Maybe useful later this year."
+      }
+    },
+    {
+      "id": "seed-06-review-freemail",
+      "purpose": ["weekly", "manual_review"],
+      "expected_path": "likely review / lower trust (freemail)",
+      "sheets_after": {
+        "created_at": "keep",
+        "note": "Good Nurture/Junk button practice (Scenario C)"
+      },
+      "fields": {
+        "Name": "Sam Ortiz",
+        "Email": "sam.ortiz.demo.lead@gmail.com",
+        "Role": "Founder",
+        "Company": "Side Project Labs",
+        "Message": "Hi, saw you on LinkedIn. Do you help with general productivity? Just exploring options."
+      }
+    },
+    {
+      "id": "seed-07-mid-week",
+      "purpose": ["weekly"],
+      "expected_path": "mid score / review or nurture (mixed)",
+      "sheets_after": {
+        "created_at": "keep",
+        "note": "Fills weekly funnel variety"
+      },
+      "fields": {
+        "Name": "Nina Okonkwo",
+        "Email": "nina.okonkwo+demo@clearpathconsulting.biz",
+        "Role": "Engagement Manager",
+        "Company": "ClearPath Consulting",
+        "Message": "Client asked about lead routing automation. Interested in how scoring and Slack notifications work. Timeline flexible."
+      }
+    }
+  ],
+  "live_hero_do_not_seed": {
+    "id": "live-hero-scenario-a",
+    "note": "Submit ONLY while recording Scenario A",
+    "fields": {
+      "Name": "Sarah Chen",
+      "Email": "sarah.chen+demo@techscale.io",
+      "Role": "Head of Operations",
+      "Company": "TechScale Inc",
+      "Message": "We need workflow automation for sales. Budget approved for Q3. Need a demo this week."
+    }
+  }
+}

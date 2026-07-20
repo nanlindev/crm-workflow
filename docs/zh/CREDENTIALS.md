@@ -68,7 +68,7 @@ Sidecar 启动时连接；认证失败会记为警告，服务仍继续运行。
 
 1. Tally 表单 → Webhooks → 启用 signing secret
 2. 在 n8n 环境中设置 `TALLY_WEBHOOK_SIGNING_KEY=<secret>`
-3. Intake 使用 `rawBody`；配置了密钥但错误/缺失且要求校验时，验证为 **fail-closed**
+3. Intake 使用 `rawBody`。密钥为空时 **跳过** 验签（仅开发/演示）。配置了密钥后，缺签或验签失败为 **fail-closed**（401）。
 
 ### Hunter.io
 

@@ -2,7 +2,11 @@
 
 Reusable n8n workflows for B2B lead processing after form submission: Tally / Google Forms intake, Google Sheets as system of record, DeepSeek enrichment & scoring, HubSpot sync, Slack notifications, Calendly meeting updates, and scheduled digests.
 
-**Chinese documentation:** [docs/zh/](docs/zh/)
+**Chinese documentation:** [docs/zh/](docs/zh/) · **全链路演示清单（含录像点）：** [docs/zh/DEMO_RUNBOOK.md](docs/zh/DEMO_RUNBOOK.md)
+
+## Showcase assets
+
+Portfolio stills / demo video live under [`assets/`](assets/) — see [MANIFEST](assets/MANIFEST.md) for filenames and capture status. Architecture diagram: [`assets/architecture.png`](assets/architecture.png). Production demo steps: [DEMO_RUNBOOK](docs/DEMO_RUNBOOK.md).
 
 ## Architecture
 

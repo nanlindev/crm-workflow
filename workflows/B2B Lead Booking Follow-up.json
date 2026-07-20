@@ -6,6 +6,7 @@
         "rule": {
           "interval": [
             {
+              "field": "days",
               "triggerAtHour": 10
             }
           ]
@@ -14,10 +15,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -2208,
-        368
+        0,
+        200
       ],
-      "id": "c2ebcfe1-92dc-4406-9e1d-99f6da404d60",
+      "id": "34518f3f-4ebf-41c3-b95d-5ab38f0a24de",
       "name": "Daily 10am"
     },
     {
@@ -37,21 +38,21 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -1984,
-        368
+        220,
+        200
       ],
-      "id": "76ab5800-1660-414b-aed9-638df9f4ac57",
+      "id": "1a4870c1-6862-4cbe-9f3a-8b202439f728",
       "name": "Read Leads For Reminder",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -70,32 +71,33 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -1760,
-        272
+        440,
+        200
       ],
-      "id": "1e10368c-dd36-452d-a505-f6eb333baa48",
+      "id": "ef3cdacf-70f0-4ca0-abdd-7653d58ea9c6",
       "name": "Read config_main",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
+        "mode": "runOnceForAllItems",
         "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1536,
-        176
+        440,
+        360
       ],
-      "id": "c8ba652a-aa29-40df-966f-1817317934b9",
+      "id": "b3c81e09-4246-48ca-8f28-755cbaf945bc",
       "name": "Normalize config_main"
     },
     {
@@ -106,10 +108,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1536,
-        368
+        440,
+        520
       ],
-      "id": "a9a9a0c3-819f-4808-adb8-383c219b6327",
+      "id": "f7381759-f699-4fef-9895-c3bcc7cb7a08",
       "name": "Handle config_main Read Error"
     },
     {
@@ -129,32 +131,33 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -1312,
-        272
+        660,
+        200
       ],
-      "id": "dc7f3161-784f-4dcc-a639-212fd304c173",
+      "id": "429da393-7c10-47ad-82af-033e87c1769a",
       "name": "Read config_notifications",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
+        "mode": "runOnceForAllItems",
         "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_notifications',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1088,
-        176
+        660,
+        360
       ],
-      "id": "c357b995-9308-4f6c-b119-b047d381ae60",
+      "id": "4fcaa12c-a3cf-4d06-b35b-79777cd88c4d",
       "name": "Normalize config_notifications"
     },
     {
@@ -165,23 +168,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1088,
-        368
+        660,
+        520
       ],
-      "id": "cf9032e8-dc2d-4aab-9434-1b1677530740",
+      "id": "df78317f-6422-4a23-a1a1-249696ed3bf5",
       "name": "Handle config_notifications Read Error"
     },
     {
       "parameters": {
+        "mode": "runOnceForAllItems",
         "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction loadWrapper(normalizeName, handleName, table) {\n  const ok = safeNodeJson(normalizeName);\n  if (ok) return ok;\n  const err = safeNodeJson(handleName);\n  if (err) return err;\n  return {\n    config_table: table,\n    rows: [],\n    load_failed: true,\n    load_error_message: 'Config wrapper not executed',\n  };\n}\n\nconst mainWrap = loadWrapper('Normalize config_main', 'Handle config_main Read Error', 'config_main');\nconst notificationWrap = loadWrapper(\n  'Normalize config_notifications',\n  'Handle config_notifications Read Error',\n  'config_notifications',\n);\n\nconst mainRows = (mainWrap.rows || []).filter(r => r.key);\nconst notificationRows = (notificationWrap.rows || []).filter(r => r.event_type);\n\nconst kv = {};\nfor (const row of mainRows) {\n  if (row.key) kv[row.key] = row.value;\n}\n\nconst bookingRule =\n  notificationRows.find(r => r.event_type === 'booking_reminder') || {};\nconst reminderEnabled =\n  bookingRule.enabled === true || bookingRule.enabled === 'true';\n\nconst failedTables = [mainWrap, notificationWrap]\n  .filter(w => w.load_failed)\n  .map(w => w.config_table);\n\nreturn {\n  mode: (kv.mode || 'test').toLowerCase(),\n  score_threshold_high: parseInt(kv.score_threshold_high || '80', 10),\n  booking_reminder_hours: parseInt(kv.booking_reminder_hours || '24', 10),\n  calendly_url: kv.calendly_url || '',\n  booking_reminder_enabled: reminderEnabled,\n  booking_reminder_channels: String(bookingRule.channels || 'slack')\n    .split(',')\n    .map(s => s.trim())\n    .filter(Boolean),\n  booking_reminder_template_key: bookingRule.template_key || 'booking',\n  config_load_failed: failedTables.length > 0,\n  failed_tables: failedTables.join(','),\n  _metadata: {\n    processing_stage: failedTables.length\n      ? 'booking_reminder_config_degraded'\n      : 'booking_reminder_config_loaded',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -864,
-        272
+        880,
+        200
       ],
-      "id": "071e98d7-f0f7-483c-a0c9-f194c3d8dddd",
+      "id": "dfe67294-f22a-47e8-ab4f-49365969bac1",
       "name": "Load Booking Config"
     },
     {
@@ -192,23 +196,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1760,
-        560
+        220,
+        400
       ],
-      "id": "54716f09-1c39-4e48-85cb-c8f713689224",
+      "id": "a54b8cdf-409e-4ef7-8b4c-9cb9502277cb",
       "name": "Handle Booking Read Error"
     },
     {
       "parameters": {
+        "mode": "runOnceForAllItems",
         "jsCode": "\nconst leads = $('Read Leads For Reminder')\n  .all()\n  .map(i => i.json)\n  .filter(r => r.lead_id);\nconst config = $('Load Booking Config').first()?.json ?? {};\n\nconst scoreMin = Number(config.score_threshold_high || 80);\nconst hours = Number(config.booking_reminder_hours || 24);\nconst cutoff = Date.now() - hours * 60 * 60 * 1000;\n\nfunction reminderAlreadySent(value) {\n  if (value === true || value === 'true' || value === 'TRUE' || value === '1') return true;\n  return false;\n}\n\nconst dueLeads = leads.filter(l => {\n  const score = Number(l.score || 0);\n  if (score < scoreMin) return false;\n  const status = String(l.meeting_status || '').toLowerCase();\n  if (status !== 'not_booked') return false;\n  if (reminderAlreadySent(l.booking_reminder_sent)) return false;\n  const created = Date.parse(l.created_at || '');\n  if (!created || Number.isNaN(created) || created > cutoff) return false;\n  return true;\n});\n\nreturn {\n  ...config,\n  due_leads: dueLeads,\n  due_count: dueLeads.length,\n  has_due_reminders: dueLeads.length > 0,\n  _metadata: { processing_stage: 'booking_reminders_filtered' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -640,
-        272
+        1100,
+        200
       ],
-      "id": "91f1434c-09d3-49cb-8129-a46dbc2bb619",
+      "id": "bfce701c-fb1a-40be-9fd8-1b6b928008df",
       "name": "Filter Due Booking Reminders"
     },
     {
@@ -222,7 +227,7 @@
           },
           "conditions": [
             {
-              "id": "387171ba-0b7d-4745-aa19-19f4b66e33ab",
+              "id": "4c399cb4-fcc3-4f72-b439-51ae6f151c02",
               "leftValue": "={{ $json.has_due_reminders }}",
               "rightValue": "true",
               "operator": {
@@ -239,23 +244,24 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -416,
-        272
+        1320,
+        200
       ],
-      "id": "3a3b6e8c-124e-4790-bfc6-11d195bbb626",
+      "id": "c8dd537b-3a55-405d-af14-449a08954ddb",
       "name": "Has Due Reminders?"
     },
     {
       "parameters": {
+        "mode": "runOnceForAllItems",
         "jsCode": "\nconst filtered = $('Filter Due Booking Reminders').first()?.json ?? {};\nconst dueLeads = filtered.due_leads || [];\n\nreturn dueLeads.map(lead => ({\n  json: {\n    ...lead,\n    mode: filtered.mode,\n    calendly_url: filtered.calendly_url,\n    booking_reminder_enabled: filtered.booking_reminder_enabled,\n    booking_reminder_channels: filtered.booking_reminder_channels,\n    booking_reminder_template_key: filtered.booking_reminder_template_key,\n    score_threshold_high: filtered.score_threshold_high,\n    booking_reminder_hours: filtered.booking_reminder_hours,\n  },\n}));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -192,
-        176
+        1540,
+        120
       ],
-      "id": "aab26c54-4d0b-4daa-9267-846aee92cbad",
+      "id": "83f736bb-195f-48f1-b3c0-d13738c15a2c",
       "name": "Expand Due Leads"
     },
     {
@@ -266,10 +272,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        32,
-        176
+        1760,
+        120
       ],
-      "id": "d89eea2b-35fd-4ad1-a0f9-2af9cf15a1ac",
+      "id": "cfe59cab-9e00-41b5-a6ea-150388648cd4",
       "name": "Build Booking Reminder Text"
     },
     {
@@ -283,7 +289,7 @@
           },
           "conditions": [
             {
-              "id": "ad4c65fc-2969-4602-8d3a-fd171a080e4b",
+              "id": "b0728383-eec6-42f1-8df0-aba1fd7858d3",
               "leftValue": "={{ $json.reminder_gate_passed }}",
               "rightValue": "true",
               "operator": {
@@ -300,10 +306,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        256,
-        176
+        1980,
+        120
       ],
-      "id": "3c2a1d36-acdf-4122-9641-fe8f885f095d",
+      "id": "c5ed6a75-6b6a-444a-a99c-717a37bae224",
       "name": "Should Send Reminder?"
     },
     {
@@ -314,28 +320,26 @@
           "mode": "id",
           "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
         },
-        "text": "={{ $json.slack_text }}",
-        "otherOptions": {}
+        "text": "={{ $json.slack_text }}"
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
       "position": [
-        480,
-        96
+        2200,
+        0
       ],
-      "id": "fffd5ccd-0498-4d02-abf1-7f516b26a264",
+      "id": "67eef297-335a-41fc-8fcd-e87b8d796e0e",
       "name": "Slack Booking Reminder",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "webhookId": "f1503696-f632-45c9-a52b-af83bf3ba5c9",
+      "onError": "continueErrorOutput",
       "credentials": {
         "slackOAuth2Api": {
           "id": "SLACK_CREDENTIAL_ID",
           "name": "Slack account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
@@ -345,10 +349,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
+        2420,
         0
       ],
-      "id": "1f5d7128-4e82-4758-9bba-c19bbe369607",
+      "id": "815b9471-b077-4b69-8ed9-b89172113e1e",
       "name": "Mark Reminder Sent"
     },
     {
@@ -359,10 +363,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
-        384
+        2200,
+        240
       ],
-      "id": "2cdea89a-df19-439a-a08a-b6a7ab8312cb",
+      "id": "868c11d6-bfe0-4339-9b36-06d51a9e7df6",
       "name": "Skip Reminder"
     },
     {
@@ -373,10 +377,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
-        192
+        2420,
+        160
       ],
-      "id": "0bb0feda-b226-49c7-aa9a-56a027febe5c",
+      "id": "b9a91c91-ee26-40aa-9853-0c7a6b034d63",
       "name": "Log Slack Reminder Error"
     },
     {
@@ -387,10 +391,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        928,
-        176
+        2640,
+        120
       ],
-      "id": "0a656361-a595-42f4-a52f-0bd2b945125e",
+      "id": "858e0cfa-f18a-4814-a790-08fcc560b81f",
       "name": "Prepare Booking Reminder Audit"
     },
     {
@@ -404,7 +408,7 @@
           },
           "conditions": [
             {
-              "id": "3b9fb184-2d45-4edc-959d-0cbbb2939c57",
+              "id": "845dd8a5-b470-4953-8a01-fdc3cd8b42c4",
               "leftValue": "={{ $json.booking_reminder_sent }}",
               "rightValue": "true",
               "operator": {
@@ -421,10 +425,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1152,
-        176
+        2860,
+        120
       ],
-      "id": "d30043a9-9fec-4245-9e1b-72a87cb6ab79",
+      "id": "ccdc6a2b-e12e-49ba-8fc0-377184a1d408",
       "name": "Should Update Lead?"
     },
     {
@@ -432,8 +436,8 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -446,8 +450,7 @@
             "lead_id": "={{ $json.lead_id }}",
             "booking_reminder_sent": "={{ true }}",
             "booking_reminder_at": "={{ $json.booking_reminder_at }}",
-            "updated_at": "={{ $json.updated_at }}",
-            "row_number": 0
+            "updated_at": "={{ $json.updated_at }}"
           },
           "matchingColumns": [
             "lead_id"
@@ -456,385 +459,6 @@
             {
               "id": "lead_id",
               "displayName": "lead_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "correlation_id",
-              "displayName": "correlation_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "lead_hash",
-              "displayName": "lead_hash",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_type",
-              "displayName": "source_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_name",
-              "displayName": "source_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_url",
-              "displayName": "source_url",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_trust_level",
-              "displayName": "source_trust_level",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_name",
-              "displayName": "company_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_domain",
-              "displayName": "company_domain",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "domain_type",
-              "displayName": "domain_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_name",
-              "displayName": "contact_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_role",
-              "displayName": "contact_role",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_email",
-              "displayName": "contact_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "content_summary",
-              "displayName": "content_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "raw_content",
-              "displayName": "raw_content",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_size",
-              "displayName": "company_size",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "industry",
-              "displayName": "industry",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "intent_signals",
-              "displayName": "intent_signals",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "enrichment_status",
-              "displayName": "enrichment_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "enrichment_summary",
-              "displayName": "enrichment_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "score",
-              "displayName": "score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "score_reasoning",
-              "displayName": "score_reasoning",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "confidence",
-              "displayName": "confidence",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "recommended_action",
-              "displayName": "recommended_action",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "routing_decision",
-              "displayName": "routing_decision",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "fallback_used",
-              "displayName": "fallback_used",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sales_memo",
-              "displayName": "sales_memo",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sales_memo_status",
-              "displayName": "sales_memo_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_status",
-              "displayName": "crm_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_contact_id",
-              "displayName": "crm_contact_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_company_id",
-              "displayName": "crm_company_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "notification_status",
-              "displayName": "notification_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "review_status",
-              "displayName": "review_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "review_notes",
-              "displayName": "review_notes",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "reviewer",
-              "displayName": "reviewer",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "reviewed_at",
-              "displayName": "reviewed_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "meeting_status",
-              "displayName": "meeting_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "meeting_time",
-              "displayName": "meeting_time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "calendly_invitee_email",
-              "displayName": "calendly_invitee_email",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -849,30 +473,12 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "booking_reminder_at",
-              "displayName": "booking_reminder_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "processing_status",
-              "displayName": "processing_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
               "canBeUsedToMatch": true,
               "removed": false
             },
             {
-              "id": "created_at",
-              "displayName": "created_at",
+              "id": "booking_reminder_at",
+              "displayName": "booking_reminder_at",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -887,17 +493,7 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
               "canBeUsedToMatch": true,
-              "readOnly": true,
               "removed": false
             }
           ],
@@ -909,20 +505,20 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1376,
-        96
+        3080,
+        0
       ],
-      "id": "93b47898-3db7-4d97-a969-923ac90dbe51",
+      "id": "492405e0-409b-4f67-940a-62441f9d14ff",
       "name": "Update Lead Reminder Status",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -932,10 +528,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
-        32
+        3300,
+        0
       ],
-      "id": "de9d4cd4-07ae-4cf9-ad33-8213e3686f4e",
+      "id": "c9adce7b-26f5-4f1d-9183-2f1186f3f2aa",
       "name": "Handle Update Reminder Error"
     },
     {
@@ -943,8 +539,8 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -970,7 +566,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -979,20 +576,12 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "event",
               "displayName": "event",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "old_value",
-              "displayName": "old_value",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1007,7 +596,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "workflow",
@@ -1016,7 +606,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -1025,7 +616,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -1036,28 +628,28 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1824,
-        176
+        3300,
+        200
       ],
-      "id": "3906632a-605d-44b6-8ea1-4adf3813ef5c",
+      "id": "1aa57673-ab7f-49e2-902e-380e582e0b01",
       "name": "Write Booking Reminder Audit",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -1071,6 +663,8 @@
             "execution_id": "={{ $execution.id }}",
             "node": "Read Leads For Reminder",
             "message": "={{ $json.read_error_message }}",
+            "stack": "",
+            "correlation_id": "",
             "retry_suggestion": "retry_sheets_read",
             "timestamp": "={{ new Date().toISOString() }}"
           },
@@ -1083,7 +677,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "execution_id",
@@ -1092,7 +687,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "node",
@@ -1101,7 +697,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "message",
@@ -1110,7 +707,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "stack",
@@ -1119,7 +717,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -1128,7 +727,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "retry_suggestion",
@@ -1137,7 +737,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -1146,7 +747,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -1157,28 +759,28 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -1536,
-        560
+        440,
+        400
       ],
-      "id": "718cc4f8-ab05-4431-8262-4e42a19dbe84",
+      "id": "9d964d37-4593-47cf-aae9-2b8d2aa1d682",
       "name": "Write Reminder Read Error Log",
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        2048,
-        432
+        3520,
+        200
       ],
-      "id": "c3989e9f-6d7a-49af-ba51-498362f4aa8b",
+      "id": "5044b020-e7fc-45c2-9718-dd2fe65faa7f",
       "name": "Booking Follow-up End"
     },
     {
@@ -1186,10 +788,10 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1824,
-        528
+        1540,
+        320
       ],
-      "id": "5be7de54-fcee-4606-90a8-997b236b34b1",
+      "id": "3c03ce81-1403-48f4-b041-82bded0b6d87",
       "name": "No Due Reminders End"
     },
     {
@@ -1197,10 +799,10 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        -1312,
-        560
+        660,
+        400
       ],
-      "id": "b851928c-66d2-4f98-a728-ede06f5ab004",
+      "id": "9d9dc469-8090-4f54-8b2b-e07cbe037488",
       "name": "Booking Follow-up Failed End"
     }
   ],
@@ -1551,21 +1153,15 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "B2B Lead Error Handler",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
   },
-  "versionId": "048b6097-23db-4589-80f2-1c0e87b210a8",
+  "versionId": "39825144-e642-4628-80ae-1ad449efe131",
   "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+    "templateCredsSetupCompleted": false
   },
-  "nodeGroups": [],
-  "id": "7ojPpo6zGnaDRcnE",
   "tags": [
     {
-      "updatedAt": "2026-07-01T02:31:24.969Z",
-      "createdAt": "2026-07-01T02:31:24.969Z",
-      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]

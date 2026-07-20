@@ -3,35 +3,35 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
         "path": "slack-interactions",
-        "responseMode": "responseNode",
         "options": {
           "rawBody": true
-        }
+        },
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -2240,
-        544
+        0,
+        200
       ],
-      "id": "f806a16c-e04f-4d72-ab36-4155025f9f92",
+      "id": "2cfaf186-017e-4f89-a1de-c3b8e6cceb26",
       "name": "Slack Interactions Webhook",
-      "webhookId": "fba704ff-ccfe-4bc6-b1ef-429d1d6e01a9"
+      "webhookId": "ba3bb39c-a9e1-4833-86a6-c911a47e3394"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const crypto = require('crypto');\n\nconst item = $input.item;\nconst json = item.json || {};\nconst headers = json.headers || {};\nconst body = json.body ?? json;\nconst signingSecret = $env.SLACK_SIGNING_SECRET || '';\nconst skipTimestampCheck = String($env.SLACK_SKIP_TIMESTAMP_CHECK || '').toLowerCase() === 'true';\nconst maxAgeSeconds = parseInt($env.SLACK_SIGNATURE_MAX_AGE_SECONDS || '300', 10);\n\nconst signatureHeader =\n  headers['x-slack-signature'] ||\n  headers['X-Slack-Signature'] ||\n  '';\nconst timestampHeader =\n  headers['x-slack-request-timestamp'] ||\n  headers['X-Slack-Request-Timestamp'] ||\n  '';\n\nfunction readRawBody() {\n  if (json.rawBody) return { rawBody: json.rawBody, raw_body_source: 'json.rawBody' };\n\n  const binary = item.binary?.data;\n  if (binary?.data) {\n    return {\n      rawBody: Buffer.from(binary.data, binary.encoding || 'base64').toString('utf8'),\n      raw_body_source: 'binary.data',\n    };\n  }\n\n  if (typeof body === 'string') {\n    return { rawBody: body, raw_body_source: 'body_string' };\n  }\n\n  if (body && body.payload != null) {\n    return {\n      rawBody:\n        'payload=' +\n        encodeURIComponent(\n          typeof body.payload === 'string' ? body.payload : JSON.stringify(body.payload),\n        ),\n      raw_body_source: 'payload_reencoded',\n    };\n  }\n\n  return {\n    rawBody: JSON.stringify(body || {}),\n    raw_body_source: 'json_stringified',\n  };\n}\n\nfunction computeSignature(secret, timestamp, payload) {\n  const sigBasestring = `v0:${timestamp}:${payload}`;\n  return (\n    'v0=' + crypto.createHmac('sha256', secret).update(sigBasestring).digest('hex')\n  );\n}\n\nfunction signaturesMatch(signature, expected) {\n  try {\n    return (\n      signature.length === expected.length &&\n      crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))\n    );\n  } catch {\n    return false;\n  }\n}\n\nfunction verifySlackSignature(secret, signature, timestamp, payload) {\n  if (!secret) {\n    return { valid: true, skipped: true, reason: 'verification_skipped' };\n  }\n  if (!signature || !timestamp) {\n    return { valid: false, skipped: false, reason: 'missing_signature' };\n  }\n\n  const requestTs = parseInt(timestamp, 10);\n  const now = Math.floor(Date.now() / 1000);\n  const ageSeconds = Number.isFinite(requestTs) ? Math.abs(now - requestTs) : Number.MAX_SAFE_INTEGER;\n  const timestampFresh =\n    skipTimestampCheck ||\n    (Number.isFinite(requestTs) && ageSeconds <= (Number.isFinite(maxAgeSeconds) ? maxAgeSeconds : 300));\n\n  const expectedSignature = computeSignature(secret, timestamp, payload);\n  const signatureMatch = signaturesMatch(signatureHeader, expectedSignature);\n\n  if (!timestampFresh) {\n    return {\n      valid: false,\n      skipped: false,\n      reason: signatureMatch ? 'timestamp_expired' : 'timestamp_expired_invalid_signature',\n      signature_match: signatureMatch,\n      age_seconds: ageSeconds,\n    };\n  }\n\n  return {\n    valid: signatureMatch,\n    skipped: false,\n    reason: signatureMatch ? 'ok' : 'invalid_signature',\n    signature_match: signatureMatch,\n    age_seconds: ageSeconds,\n  };\n}\n\nconst { rawBody, raw_body_source } = readRawBody();\nconst result = verifySlackSignature(\n  signingSecret,\n  signatureHeader,\n  timestampHeader,\n  rawBody,\n);\n\nreturn {\n  headers,\n  body,\n  rawBody,\n  raw_body_source,\n  signature_valid: result.valid,\n  signature_skipped: result.skipped || false,\n  signature_error: result.reason,\n  signature_match: result.signature_match ?? null,\n  signature_age_seconds: result.age_seconds ?? null,\n  _metadata: {\n    processing_stage: result.valid ? 'slack_signature_verified' : 'slack_signature_failed',\n    severity: result.valid ? 'info' : 'medium',\n  },\n};"
+        "jsCode": "\nconst crypto = require('crypto');\n\nconst item = $input.item;\nconst json = item.json || {};\nconst headers = json.headers || {};\nconst body = json.body ?? json;\nconst signingSecret = $env.SLACK_SIGNING_SECRET || '';\nconst skipTimestampCheck = String($env.SLACK_SKIP_TIMESTAMP_CHECK || '').toLowerCase() === 'true';\nconst maxAgeSeconds = parseInt($env.SLACK_SIGNATURE_MAX_AGE_SECONDS || '300', 10);\n\nconst signatureHeader =\n  headers['x-slack-signature'] ||\n  headers['X-Slack-Signature'] ||\n  '';\nconst timestampHeader =\n  headers['x-slack-request-timestamp'] ||\n  headers['X-Slack-Request-Timestamp'] ||\n  '';\n\nfunction readRawBody() {\n  if (json.rawBody) return { rawBody: json.rawBody, raw_body_source: 'json.rawBody' };\n\n  const binary = item.binary?.data;\n  if (binary?.data) {\n    return {\n      rawBody: Buffer.from(binary.data, binary.encoding || 'base64').toString('utf8'),\n      raw_body_source: 'binary.data',\n    };\n  }\n\n  if (typeof body === 'string') {\n    return { rawBody: body, raw_body_source: 'body_string' };\n  }\n\n  if (body && body.payload != null) {\n    return {\n      rawBody:\n        'payload=' +\n        encodeURIComponent(\n          typeof body.payload === 'string' ? body.payload : JSON.stringify(body.payload),\n        ),\n      raw_body_source: 'payload_reencoded',\n    };\n  }\n\n  return {\n    rawBody: JSON.stringify(body || {}),\n    raw_body_source: 'json_stringified',\n  };\n}\n\nfunction computeSignature(secret, timestamp, payload) {\n  const sigBasestring = `v0:${timestamp}:${payload}`;\n  return (\n    'v0=' + crypto.createHmac('sha256', secret).update(sigBasestring).digest('hex')\n  );\n}\n\nfunction signaturesMatch(signature, expected) {\n  try {\n    return (\n      signature.length === expected.length &&\n      crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))\n    );\n  } catch {\n    return false;\n  }\n}\n\nfunction verifySlackSignature(secret, signature, timestamp, payload) {\n  if (!secret) {\n    return { valid: true, skipped: true, reason: 'verification_skipped' };\n  }\n  if (!signature || !timestamp) {\n    return { valid: false, skipped: false, reason: 'missing_signature' };\n  }\n\n  const requestTs = parseInt(timestamp, 10);\n  const now = Math.floor(Date.now() / 1000);\n  const ageSeconds = Number.isFinite(requestTs) ? Math.abs(now - requestTs) : Number.MAX_SAFE_INTEGER;\n  const timestampFresh =\n    skipTimestampCheck ||\n    (Number.isFinite(requestTs) && ageSeconds <= (Number.isFinite(maxAgeSeconds) ? maxAgeSeconds : 300));\n\n  const expectedSignature = computeSignature(secret, timestamp, payload);\n  const signatureMatch = signaturesMatch(signatureHeader, expectedSignature);\n\n  if (!timestampFresh) {\n    return {\n      valid: false,\n      skipped: false,\n      reason: signatureMatch ? 'timestamp_expired' : 'timestamp_expired_invalid_signature',\n      signature_match: signatureMatch,\n      age_seconds: ageSeconds,\n    };\n  }\n\n  return {\n    valid: signatureMatch,\n    skipped: false,\n    reason: signatureMatch ? 'ok' : 'invalid_signature',\n    signature_match: signatureMatch,\n    age_seconds: ageSeconds,\n  };\n}\n\nconst { rawBody, raw_body_source } = readRawBody();\nconst result = verifySlackSignature(\n  signingSecret,\n  signatureHeader,\n  timestampHeader,\n  rawBody,\n);\n\nreturn {\n  headers,\n  body,\n  rawBody,\n  raw_body_source,\n  signature_valid: result.valid,\n  signature_skipped: result.skipped || false,\n  signature_error: result.reason,\n  signature_match: result.signature_match ?? null,\n  signature_age_seconds: result.age_seconds ?? null,\n  _metadata: {\n    processing_stage: result.valid ? 'slack_signature_verified' : 'slack_signature_failed',\n    severity: result.valid ? 'info' : 'medium',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2016,
-        544
+        220,
+        200
       ],
-      "id": "21143aec-b712-463d-8cf6-d35d15089ea6",
+      "id": "ed44a425-2177-4c41-82cb-86829f06ef4b",
       "name": "Verify Slack Signature"
     },
     {
@@ -45,7 +45,7 @@
           },
           "conditions": [
             {
-              "id": "96bbc8ee-02c4-41b5-84dc-e44e24d6c884",
+              "id": "4885d49f-520b-4f54-8139-8b1b2a13baca",
               "leftValue": "={{ $json.signature_valid }}",
               "rightValue": "true",
               "operator": {
@@ -62,10 +62,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1792,
-        544
+        440,
+        200
       ],
-      "id": "b5b68582-b780-4828-9287-4f66ce32ee09",
+      "id": "6032ae8b-f993-4992-b879-f94fae10e7c2",
       "name": "Signature Valid?"
     },
     {
@@ -73,8 +73,8 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -84,6 +84,8 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
+            "lead_id": "",
+            "correlation_id": "",
             "event": "slack_action_signature_invalid",
             "new_value": "={{ $json.signature_error }}",
             "workflow": "B2B Lead Slack Actions",
@@ -98,7 +100,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -107,20 +110,12 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "event",
               "displayName": "event",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "old_value",
-              "displayName": "old_value",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -135,7 +130,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "workflow",
@@ -144,7 +140,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -153,7 +150,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -164,20 +162,18 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -1568,
-        640
+        660,
+        400
       ],
-      "id": "409cd478-4964-4d96-aed0-ba9593d6a44f",
+      "id": "be9ce466-88e9-4fc1-965a-b46ad44b7c85",
       "name": "Write Invalid Signature Audit",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
@@ -190,10 +186,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        -1344,
-        640
+        880,
+        400
       ],
-      "id": "ed18dacd-cf77-44ae-b000-bc5f4341e122",
+      "id": "fade513e-d952-4239-ae8b-5ec75a4d2189",
       "name": "Respond 401"
     },
     {
@@ -204,10 +200,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1568,
-        448
+        660,
+        200
       ],
-      "id": "f2b8253a-c21b-4a34-8ba3-13c94e9ab2ed",
+      "id": "7862c20a-092d-48d5-b836-62ae77c53637",
       "name": "Parse Slack Payload"
     },
     {
@@ -221,7 +217,7 @@
           },
           "conditions": [
             {
-              "id": "3ded10af-4f14-4cec-bda6-db913e4849e6",
+              "id": "9cf177b2-203b-4527-835f-7807ecba6251",
               "leftValue": "={{ !$json.parse_error }}",
               "rightValue": "true",
               "operator": {
@@ -238,10 +234,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1344,
-        448
+        880,
+        200
       ],
-      "id": "c5e0c3ac-06ae-4de3-a02a-119f77aacc55",
+      "id": "69497161-dd6b-4f54-855a-ebae05438302",
       "name": "Parse OK?"
     },
     {
@@ -249,8 +245,8 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -260,6 +256,8 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
+            "lead_id": "",
+            "correlation_id": "",
             "event": "slack_action_parse_failed",
             "new_value": "={{ $json.parse_error_message || 'payload_parse_failed' }}",
             "workflow": "B2B Lead Slack Actions",
@@ -274,7 +272,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -283,20 +282,12 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "event",
               "displayName": "event",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "old_value",
-              "displayName": "old_value",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -311,7 +302,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "workflow",
@@ -320,7 +312,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -329,7 +322,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -340,20 +334,18 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -1120,
-        544
+        1100,
+        400
       ],
-      "id": "b1df6b1c-63f5-4901-a328-252103ef96fd",
+      "id": "578d25a0-b9ec-4547-b924-826442f31911",
       "name": "Write Parse Error Audit",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
@@ -366,11 +358,28 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        -896,
-        544
+        1320,
+        400
       ],
-      "id": "f22ad6af-7915-4b72-9bb4-564fb2b0da32",
+      "id": "fe0726cd-8b49-493e-9fb8-c0c38c35f9fc",
       "name": "Respond 400"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "8634b116-02f3-47f0-b50a-ca1ac63d9399",
+      "name": "Respond 200 Ack"
     },
     {
       "parameters": {
@@ -383,7 +392,7 @@
           },
           "conditions": [
             {
-              "id": "fd8e404b-1a01-4800-ab33-0fb53f4b8de0",
+              "id": "243f37f9-b034-4912-bfaf-f8fc1d00f646",
               "leftValue": "={{ $json.admin_allowed }}",
               "rightValue": "true",
               "operator": {
@@ -400,10 +409,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -896,
-        352
+        1320,
+        200
       ],
-      "id": "2ad6390b-b7c5-4fac-9fd6-301841417936",
+      "id": "45bcdbf5-94d0-49c4-9016-2c276b409650",
       "name": "Admin Allowed?"
     },
     {
@@ -414,24 +423,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2240,
-        832
+        1320,
+        400
       ],
-      "id": "79d56913-122a-4db3-a3ec-c96b7ebae1a0",
+      "id": "03d894e3-7656-485c-815c-2cdd63817a0d",
       "name": "Set Unauthorized Reply"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "\nconst item = $input.item.json || {};\nconst now = new Date().toISOString();\nconst actionId = item.action_id || '';\n\nconst actionMap = {\n  assign_lead: {\n    review_status: 'approved',\n    recommended_action: 'crm_sync',\n    lead_stage: 'sql',\n    owner_id: item.slack_user_id,\n    reviewer: item.slack_user_id,\n    audit_event: 'slack_action_assign',\n    slack_reply: `Lead assigned to <@${item.slack_user_id}>`,\n  },\n  mark_junk: {\n    review_status: 'rejected',\n    recommended_action: 'reject',\n    lead_stage: 'junk',\n    audit_event: 'slack_action_junk',\n    slack_reply: `Lead marked as junk by <@${item.slack_user_id}>`,\n  },\n  nurture_lead: {\n    review_status: 'review_later',\n    recommended_action: 'notify_only',\n    lead_stage: 'nurture',\n    audit_event: 'slack_action_nurture',\n    slack_reply: `Lead moved to nurture by <@${item.slack_user_id}>`,\n  },\n};\n\nconst action = actionMap[actionId];\nif (!action) {\n  return {\n    ...item,\n    unknown_action: true,\n    skip_update: true,\n    slack_response_type: 'ephemeral',\n    slack_reply: `Unknown action: ${actionId || 'missing'}`,\n    audit_event: 'slack_action_unknown',\n    updated_at: now,\n    _metadata: { processing_stage: 'slack_unknown_action' },\n  };\n}\n\nreturn {\n  ...item,\n  unknown_action: false,\n  skip_update: false,\n  slack_response_type: 'in_channel',\n  review_notes: `Slack action ${actionId} by ${item.slack_user_name || item.slack_user_id}`,\n  reviewed_at: now,\n  updated_at: now,\n  ...action,\n  _metadata: { processing_stage: 'slack_action_resolved' },\n};\n"
+        "jsCode": "\nconst item = $input.item.json || {};\nconst now = new Date().toISOString();\nconst actionId = item.action_id || '';\n\nconst actionMap = {\n  assign_lead: {\n    review_status: 'approved',\n    recommended_action: 'crm_sync',\n    lead_stage: 'sql',\n    owner_id: item.slack_user_id,\n    reviewer: item.slack_user_id,\n    audit_event: 'slack_action_assign',\n    slack_reply: `Lead assigned to <@${item.slack_user_id}>`,\n  },\n  mark_junk: {\n    review_status: 'rejected',\n    recommended_action: 'reject',\n    lead_stage: 'junk',\n    audit_event: 'slack_action_junk',\n    slack_reply: `Lead marked as junk by <@${item.slack_user_id}>`,\n  },\n  nurture_lead: {\n    review_status: 'review_later',\n    recommended_action: 'notify_only',\n    lead_stage: 'nurture',\n    audit_event: 'slack_action_nurture',\n    slack_reply: `Lead moved to nurture by <@${item.slack_user_id}>`,\n  },\n};\n\nconst action = actionMap[actionId];\nif (!action) {\n  return {\n    ...item,\n    unknown_action: true,\n    skip_update: true,\n    audit_event: 'slack_action_unknown',\n    updated_at: now,\n    _metadata: { processing_stage: 'slack_unknown_action' },\n  };\n}\n\nreturn {\n  ...item,\n  unknown_action: false,\n  skip_update: false,\n  review_notes: `Slack action ${actionId} by ${item.slack_user_name || item.slack_user_id}`,\n  reviewed_at: now,\n  updated_at: now,\n  ...action,\n  _metadata: { processing_stage: 'slack_action_resolved' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -672,
-        288
+        1320,
+        200
       ],
-      "id": "c1a05625-a375-46a9-9e19-515ac037b87b",
+      "id": "45cf4b4f-2821-4765-8eb4-6aa0242fe91c",
       "name": "Resolve Lead Action"
     },
     {
@@ -445,7 +454,7 @@
           },
           "conditions": [
             {
-              "id": "a860a64f-e308-45aa-88d1-44a002b1a292",
+              "id": "2c1e5ef2-6957-46d3-823a-c73499703bd1",
               "leftValue": "={{ !$json.unknown_action }}",
               "rightValue": "true",
               "operator": {
@@ -462,10 +471,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -448,
-        288
+        1540,
+        200
       ],
-      "id": "a6579417-89bd-4945-83ef-8b41b699e56d",
+      "id": "d9cc68e2-1054-46a7-9b91-7f5f18bb4d7e",
       "name": "Known Action?"
     },
     {
@@ -485,34 +494,34 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        -224,
-        208
+        1760,
+        120
       ],
-      "id": "a131a0ec-5e53-4cb9-b3ab-d072fac1ff6c",
+      "id": "0b913392-d440-4d53-8d50-ff5f1a5d07e7",
       "name": "Read All Leads For Slack",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const action = $('Resolve Lead Action').first()?.json ?? $input.item.json;\nconst existingRows = $('Read All Leads For Slack').all().map((row) => row.json).filter((row) => row.lead_id);\nconst leadId = action.lead_id || '';\nconst lead = existingRows.find((row) => row.lead_id === leadId);\n\nif (!lead) {\n  return {\n    ...action,\n    lead_found: false,\n    skip_update: true,\n    audit_event: 'slack_action_lead_not_found',\n    _metadata: { processing_stage: 'slack_lead_not_found' },\n  };\n}\n\nconst now = action.updated_at || new Date().toISOString();\nconst merged = {\n  review_status: action.review_status || lead.review_status,\n  recommended_action: action.recommended_action || lead.recommended_action,\n  lead_stage: action.lead_stage || lead.lead_stage,\n  owner_id: action.owner_id || lead.owner_id || '',\n  reviewer: action.reviewer || lead.reviewer || '',\n  review_notes: action.review_notes || lead.review_notes || '',\n  reviewed_at: now,\n  updated_at: now,\n};\n\nreturn {\n  ...action,\n  ...merged,\n  lead_found: true,\n  skip_update: false,\n  contact_name: lead.contact_name || '',\n  contact_email: lead.contact_email || '',\n  company_name: lead.company_name || '',\n  score: lead.score ?? '',\n  correlation_id: action.correlation_id || lead.correlation_id || '',\n  previous_review_status: lead.review_status || '',\n  previous_lead_stage: lead.lead_stage || '',\n  previous_owner_id: lead.owner_id || lead.reviewer || '',\n  already_assigned:\n    action.action_id === 'assign_lead' &&\n    String(lead.review_status || '').toLowerCase() === 'approved' &&\n    !!(lead.owner_id || lead.reviewer),\n  _metadata: { processing_stage: 'slack_lead_matched' },\n};"
+        "mode": "runOnceForAllItems",
+        "jsCode": "\n// Must runOnceForAllItems: Sheets returns one item per row; forEachItem would\n// fan-out and can break $('Resolve Lead Action') / .all() pairing \u2192 false \"Lead not found\".\nconst action = $('Resolve Lead Action').first()?.json || {};\nconst leadId = String(action.lead_id || '').trim();\n\nfunction rowsFrom(name) {\n  try {\n    return $(name).all().map((row) => row.json).filter((row) => row && row.lead_id);\n  } catch {\n    return [];\n  }\n}\n\nlet existingRows = [];\ntry {\n  existingRows = $input.all().map((row) => row.json).filter((row) => row && row.lead_id);\n} catch {\n  existingRows = [];\n}\nif (!existingRows.length) {\n  existingRows = rowsFrom('Read All Leads For Slack');\n}\n\nconst lead = existingRows.find(\n  (row) => String(row.lead_id || '').trim() === leadId,\n);\n\nif (!lead) {\n  return {\n    ...action,\n    lead_found: false,\n    skip_update: true,\n    audit_event: 'slack_action_lead_not_found',\n    sheets_row_count: existingRows.length,\n    _metadata: {\n      processing_stage: 'slack_lead_not_found',\n      lookup_lead_id: leadId,\n      sheets_row_count: existingRows.length,\n    },\n  };\n}\n\nconst now = action.updated_at || new Date().toISOString();\nconst merged = {\n  review_status: action.review_status || lead.review_status,\n  recommended_action: action.recommended_action || lead.recommended_action,\n  lead_stage: action.lead_stage || lead.lead_stage,\n  owner_id: action.owner_id || lead.owner_id || '',\n  reviewer: action.reviewer || lead.reviewer || '',\n  review_notes: action.review_notes || lead.review_notes || '',\n  reviewed_at: now,\n  updated_at: now,\n};\n\nreturn {\n  ...action,\n  ...merged,\n  lead_found: true,\n  skip_update: false,\n  contact_name: lead.contact_name || '',\n  contact_email: lead.contact_email || '',\n  company_name: lead.company_name || '',\n  score: lead.score ?? '',\n  correlation_id: action.correlation_id || lead.correlation_id || '',\n  previous_review_status: lead.review_status || '',\n  previous_lead_stage: lead.lead_stage || '',\n  previous_owner_id: lead.owner_id || lead.reviewer || '',\n  already_assigned:\n    action.action_id === 'assign_lead' &&\n    String(lead.review_status || '').toLowerCase() === 'approved' &&\n    !!(lead.owner_id || lead.reviewer),\n  _metadata: { processing_stage: 'slack_lead_matched' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
-        144
+        1980,
+        120
       ],
-      "id": "7ffe0638-4ed4-49e2-96ee-05d1aea6d591",
+      "id": "b92bd8ae-f2a0-44c4-a27e-09a6db8e05ad",
       "name": "Match Lead By ID"
     },
     {
@@ -523,10 +532,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2240,
-        544
+        1760,
+        320
       ],
-      "id": "686a36ed-b864-46ed-9b21-7d800de77349",
+      "id": "f1e8f99d-3b16-48e6-b590-33acc02fc1ff",
       "name": "Handle Slack Read Error"
     },
     {
@@ -540,7 +549,7 @@
           },
           "conditions": [
             {
-              "id": "937aaa7e-625f-45b9-9860-acc6821404fc",
+              "id": "102540fc-efca-4a74-a173-a8ca6f16baf4",
               "leftValue": "={{ $json.lead_found }}",
               "rightValue": "true",
               "operator": {
@@ -557,19 +566,102 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        224,
-        144
+        2200,
+        120
       ],
-      "id": "601bd519-d611-4f04-be52-dc321de6ebcb",
+      "id": "2d8942ff-3b21-4765-ba36-9050a9859492",
       "name": "Lead Found?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b49de627-82fd-4e3c-96ce-8ab07096673c",
+              "leftValue": "={{ $json.action_id === 'assign_lead' && $json.already_assigned }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2420,
+        120
+      ],
+      "id": "d1a098c9-f044-4dea-b2d9-434158b22a23",
+      "name": "Already Assigned?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction mergeSlackContext(incoming) {\n  const context =\n    safeNodeJson('Match Lead By ID') ??\n    safeNodeJson('Handle Update Review Error') ??\n    safeNodeJson('Handle Slack Read Error') ??\n    safeNodeJson('Resolve Lead Action') ??\n    safeNodeJson('Set Unauthorized Reply') ??\n    safeNodeJson('Parse Slack Payload') ??\n    {};\n\n  return {\n    ...context,\n    ...incoming,\n    response_url: incoming.response_url || context.response_url || '',\n    channel_id: incoming.channel_id || context.channel_id || '',\n    message_ts: incoming.message_ts || context.message_ts || '',\n    slack_user_id: incoming.slack_user_id || context.slack_user_id || '',\n    slack_user_name: incoming.slack_user_name || context.slack_user_name || '',\n    lead_id: incoming.lead_id || context.lead_id || '',\n    correlation_id: incoming.correlation_id || context.correlation_id || '',\n    action_id: incoming.action_id || context.action_id || '',\n    audit_event: incoming.audit_event || context.audit_event || 'slack_action',\n    contact_name: incoming.contact_name || context.contact_name || '',\n    contact_email: incoming.contact_email || context.contact_email || '',\n    company_name: incoming.company_name || context.company_name || '',\n    score: incoming.score ?? context.score ?? '',\n    previous_review_status:\n      context.previous_review_status || incoming.previous_review_status || '',\n    previous_lead_stage: context.previous_lead_stage || incoming.previous_lead_stage || '',\n    previous_owner_id: context.previous_owner_id || incoming.previous_owner_id || '',\n    review_status: incoming.review_status || context.review_status || '',\n    lead_stage: incoming.lead_stage || context.lead_stage || '',\n    already_assigned: incoming.already_assigned ?? context.already_assigned ?? false,\n    lead_found: incoming.lead_found ?? context.lead_found,\n    sheets_update_failed:\n      incoming.sheets_update_failed ?? context.sheets_update_failed ?? false,\n    sheets_error_message:\n      incoming.sheets_error_message || context.sheets_error_message || '',\n    read_error_message: incoming.read_error_message || context.read_error_message || '',\n  };\n}\n\nfunction escapeMrkdwn(value) {\n  return String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction leadHeadline(ctx) {\n  const name = escapeMrkdwn(ctx.contact_name || 'Unknown lead');\n  const company = escapeMrkdwn(ctx.company_name || 'N/A');\n  const email = escapeMrkdwn(ctx.contact_email || 'N/A');\n  const score =\n    ctx.score !== undefined && ctx.score !== null && ctx.score !== ''\n      ? ` \u00b7 Score ${ctx.score}`\n      : '';\n  return `*${name}* @ ${company}${score}\\n\ud83d\udce7 ${email}`;\n}\n\nfunction leadFooter(ctx) {\n  const leadRef = ctx.lead_id ? `\\`${String(ctx.lead_id).slice(0, 8)}\u2026\\`` : 'N/A';\n  const corr = ctx.correlation_id ? `\\`${ctx.correlation_id}\\`` : 'N/A';\n  return `Lead ${leadRef} \u00b7 Correlation ${corr}`;\n}\n\nconst ACTION_META = {\n  assign_lead: {\n    processing: 'Assigning',\n    success: 'Assigned',\n    done: 'Already assigned',\n    fail: 'Assign failed',\n  },\n  mark_junk: {\n    processing: 'Marking as junk',\n    success: 'Marked as junk',\n    done: 'Already marked junk',\n    fail: 'Junk update failed',\n  },\n  nurture_lead: {\n    processing: 'Moving to nurture',\n    success: 'Moved to nurture',\n    done: 'Already in nurture',\n    fail: 'Nurture update failed',\n  },\n};\n\nfunction metaFor(actionId) {\n  return (\n    ACTION_META[actionId] || {\n      processing: 'Processing',\n      success: 'Completed',\n      done: 'Already updated',\n      fail: 'Action failed',\n    }\n  );\n}\n\nfunction buildProcessingBlocks(ctx) {\n  const meta = metaFor(ctx.action_id);\n  return [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text:\n          `\u23f3 *${meta.processing}* \u2014 ${leadHeadline(ctx)}\\n` +\n          `\ud83d\udc64 by <@${ctx.slack_user_id}> \u00b7 please wait\u2026`,\n      },\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: leadFooter(ctx) }],\n    },\n  ];\n}\n\nfunction buildFinalBlocks(ctx) {\n  const meta = metaFor(ctx.action_id);\n  const unauthorized = ctx.audit_event === 'slack_action_unauthorized';\n  const notFound =\n    ctx.audit_event === 'slack_action_lead_not_found' || ctx.lead_found === false;\n  const unknown = ctx.audit_event === 'slack_action_unknown';\n  const failure = ctx.sheets_update_failed || !!ctx.read_error_message;\n\n  if (unauthorized) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: '\ud83d\udeab *Not authorized*\\nYou cannot perform this action.',\n        },\n      },\n    ];\n  }\n\n  if (notFound) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *Lead not found*\\n${leadFooter(ctx)}`,\n        },\n      },\n    ];\n  }\n\n  if (unknown) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *Unknown action*\\n\\`${escapeMrkdwn(ctx.action_id || 'missing')}\\``,\n        },\n      },\n    ];\n  }\n\n  if (failure) {\n    const detail = escapeMrkdwn(\n      ctx.sheets_error_message || ctx.read_error_message || 'Please retry or check Sheets.',\n    );\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *${meta.fail}*\\n${leadHeadline(ctx)}\\n_${detail}_`,\n        },\n      },\n      {\n        type: 'context',\n        elements: [{ type: 'mrkdwn', text: leadFooter(ctx) }],\n      },\n    ];\n  }\n\n  if (ctx.already_assigned && ctx.action_id === 'assign_lead') {\n    const owner = ctx.previous_owner_id ? `<@${ctx.previous_owner_id}>` : 'someone';\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u2139\ufe0f *${meta.done}*\\n${leadHeadline(ctx)}\\n\ud83d\udc64 Owner: ${owner}`,\n        },\n      },\n      {\n        type: 'context',\n        elements: [\n          {\n            type: 'mrkdwn',\n            text: `${leadFooter(ctx)} \u00b7 buttons removed \u00b7 no duplicate update`,\n          },\n        ],\n      },\n    ];\n  }\n\n  let detail = '';\n  if (ctx.action_id === 'assign_lead') {\n    detail = `\\n\ud83d\udc64 Owner: <@${ctx.slack_user_id}>`;\n  } else if (ctx.action_id === 'mark_junk') {\n    detail = '\\n\ud83d\udccb Stage: `junk` \u00b7 Review: `rejected`';\n  } else if (ctx.action_id === 'nurture_lead') {\n    detail = '\\n\ud83d\udccb Stage: `nurture` \u00b7 Review: `review_later`';\n  }\n\n  return [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: `\u2705 *${meta.success}*\\n${leadHeadline(ctx)}${detail}`,\n      },\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: `${leadFooter(ctx)} \u00b7 updated \u00b7 buttons removed` }],\n    },\n  ];\n}\n\nfunction buildSlackMessageBody(ctx, blocks, fallbackText) {\n  return {\n    replace_original: true,\n    blocks,\n    text: fallbackText,\n  };\n}\n\nconst merged = mergeSlackContext($input.item.json || {});\nconst blocks = buildProcessingBlocks(merged);\nconst meta = metaFor(merged.action_id);\n\nreturn {\n  ...merged,\n  has_slack_message_target: !!(merged.channel_id && merged.message_ts),\n  has_response_url: !!merged.response_url,\n  slack_message_body: buildSlackMessageBody(\n    merged,\n    blocks,\n    `${meta.processing} ${merged.contact_name || 'lead'}\u2026`,\n  ),\n  _metadata: { processing_stage: 'slack_ack_prepared' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "id": "b9475428-3767-44bc-9b30-a82390ac2d05",
+      "name": "Prepare Slack Ack"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "update",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.channel_id || $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "ts": "={{ $json.message_ts }}",
+        "messageType": "block",
+        "blocksUi": "={{ JSON.stringify({ blocks: $json.slack_message_body.blocks }) }}",
+        "text": "={{ $json.slack_message_body.text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        2860,
+        0
+      ],
+      "id": "9d5ad445-b90e-4882-afc5-18c8ad13d015",
+      "name": "Slack Update Ack",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -587,8 +679,7 @@
             "reviewer": "={{ $('Match Lead By ID').first().json.reviewer }}",
             "review_notes": "={{ $('Match Lead By ID').first().json.review_notes }}",
             "reviewed_at": "={{ $('Match Lead By ID').first().json.reviewed_at }}",
-            "updated_at": "={{ $('Match Lead By ID').first().json.updated_at }}",
-            "row_number": 0
+            "updated_at": "={{ $('Match Lead By ID').first().json.updated_at }}"
           },
           "matchingColumns": [
             "lead_id"
@@ -597,314 +688,6 @@
             {
               "id": "lead_id",
               "displayName": "lead_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "correlation_id",
-              "displayName": "correlation_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "lead_hash",
-              "displayName": "lead_hash",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_type",
-              "displayName": "source_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_name",
-              "displayName": "source_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_url",
-              "displayName": "source_url",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_trust_level",
-              "displayName": "source_trust_level",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_name",
-              "displayName": "company_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_domain",
-              "displayName": "company_domain",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "domain_type",
-              "displayName": "domain_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_name",
-              "displayName": "contact_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_role",
-              "displayName": "contact_role",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_email",
-              "displayName": "contact_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "content_summary",
-              "displayName": "content_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "raw_content",
-              "displayName": "raw_content",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_size",
-              "displayName": "company_size",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "industry",
-              "displayName": "industry",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "intent_signals",
-              "displayName": "intent_signals",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "enrichment_status",
-              "displayName": "enrichment_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "enrichment_summary",
-              "displayName": "enrichment_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "score",
-              "displayName": "score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "score_reasoning",
-              "displayName": "score_reasoning",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "confidence",
-              "displayName": "confidence",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "recommended_action",
-              "displayName": "recommended_action",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "routing_decision",
-              "displayName": "routing_decision",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "fallback_used",
-              "displayName": "fallback_used",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sales_memo",
-              "displayName": "sales_memo",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sales_memo_status",
-              "displayName": "sales_memo_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_status",
-              "displayName": "crm_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_contact_id",
-              "displayName": "crm_contact_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_company_id",
-              "displayName": "crm_company_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "notification_status",
-              "displayName": "notification_status",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -919,43 +702,18 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
-              "id": "review_notes",
-              "displayName": "review_notes",
+              "id": "recommended_action",
+              "displayName": "recommended_action",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "reviewer",
-              "displayName": "reviewer",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "reviewed_at",
-              "displayName": "reviewed_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "owner_id",
-              "displayName": "owner_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "lead_stage",
@@ -964,11 +722,12 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
-              "id": "meeting_status",
-              "displayName": "meeting_status",
+              "id": "owner_id",
+              "displayName": "owner_id",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -977,8 +736,8 @@
               "removed": false
             },
             {
-              "id": "meeting_time",
-              "displayName": "meeting_time",
+              "id": "reviewer",
+              "displayName": "reviewer",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -987,8 +746,8 @@
               "removed": false
             },
             {
-              "id": "calendly_invitee_email",
-              "displayName": "calendly_invitee_email",
+              "id": "review_notes",
+              "displayName": "review_notes",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -997,38 +756,8 @@
               "removed": false
             },
             {
-              "id": "booking_reminder_sent",
-              "displayName": "booking_reminder_sent",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "booking_reminder_at",
-              "displayName": "booking_reminder_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "processing_status",
-              "displayName": "processing_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "created_at",
-              "displayName": "created_at",
+              "id": "reviewed_at",
+              "displayName": "reviewed_at",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1043,17 +772,7 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
               "canBeUsedToMatch": true,
-              "readOnly": true,
               "removed": false
             }
           ],
@@ -1065,20 +784,20 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1120,
+        3080,
         0
       ],
-      "id": "4d46f41e-19d9-4f95-ae84-fa244048e362",
+      "id": "f6dbf252-f88d-4c4b-b545-45518794b67a",
       "name": "Update Lead Review",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -1088,19 +807,231 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2016,
-        -176
+        3300,
+        200
       ],
-      "id": "c8fa0abf-2dfa-4968-ab04-5d9e05d043ea",
+      "id": "8a53762e-3277-4faf-848c-a4f6c38c4bb3",
       "name": "Handle Update Review Error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6dddf460-8441-45c2-900f-43c3b2996498",
+              "leftValue": "={{ ['assign_lead', 'nurture_lead'].includes($('Match Lead By ID').first().json.action_id) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        0
+      ],
+      "id": "c93f417b-a2ad-4053-a57c-cb971860d645",
+      "name": "Should Trigger CRM?"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_main"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3740,
+        -80
+      ],
+      "id": "6c38f5b8-f1fb-45b3-88ae-571338b7599d",
+      "name": "Read config_main For CRM",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3960,
+        -120
+      ],
+      "id": "d88af25b-ae07-4b4e-aaaf-0d27bf01c20f",
+      "name": "Normalize config_main For CRM"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "config_notifications"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3960,
+        -40
+      ],
+      "id": "c4a32498-8cc0-4956-9efa-ce0a1be705d7",
+      "name": "Read config_notifications For CRM",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_notifications',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4180,
+        -40
+      ],
+      "id": "81dc5258-854b-4644-b258-5cef47554008",
+      "name": "Normalize config_notifications For CRM"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction rowsFrom(name) {\n  const wrap = safeNodeJson(name) || {};\n  return (wrap.rows || []).filter(Boolean);\n}\n\nconst matched = safeNodeJson('Match Lead By ID') || {};\nlet leadRows = [];\ntry {\n  leadRows = $('Read All Leads For Slack').all().map((row) => row.json).filter((row) => row.lead_id);\n} catch {\n  leadRows = [];\n}\nconst lead = leadRows.find((row) => String(row.lead_id || '').trim() === String(matched.lead_id || '').trim()) || matched;\n\nconst mainRows = rowsFrom('Normalize config_main For CRM');\nconst notificationRows = rowsFrom('Normalize config_notifications For CRM');\n\nconst configMap = {};\nfor (const row of mainRows) {\n  if (row.key) configMap[row.key] = row.value;\n}\n\nconst actionId = matched.action_id || '';\nconst reviewStatus = matched.review_status || lead.review_status || '';\nconst recommendedAction = matched.recommended_action || lead.recommended_action || '';\n\n// Must mirror Enrichment's global_config shape enough for CRM Gate + First Touch\n// (mode alone \u2192 first_touch_email rule missing \u2192 phase=skip / disabled).\nconst global_config = {\n  mode: String(configMap.mode || 'test').toLowerCase(),\n  first_touch_min_score: parseInt(\n    configMap.first_touch_min_score || configMap.sales_memo_min_score || configMap.score_threshold_high || '80',\n    10,\n  ),\n  first_touch_sender_name: configMap.first_touch_sender_name || 'Your Team',\n  calendly_url: configMap.calendly_url || '',\n  notification_rules: notificationRows.filter((r) => r.event_type),\n};\n\nreturn {\n  lead_id: lead.lead_id,\n  correlation_id: matched.correlation_id || lead.correlation_id || '',\n  contact_email: (lead.contact_email || '').toLowerCase().trim(),\n  contact_name: lead.contact_name || '',\n  contact_role: lead.contact_role || '',\n  company_name: lead.company_name || '',\n  company_domain: lead.company_domain || '',\n  domain_type: lead.domain_type || '',\n  score: lead.score,\n  score_reasoning: lead.score_reasoning || '',\n  outbound_email_subject: lead.outbound_email_subject || '',\n  outbound_email_body: lead.outbound_email_body || '',\n  first_touch_status: lead.first_touch_status || '',\n  notification_status: lead.notification_status || '',\n  crm_status: lead.crm_status != null && lead.crm_status !== '' ? String(lead.crm_status) : '',\n  crm_contact_id:\n    lead.crm_contact_id != null && lead.crm_contact_id !== ''\n      ? String(lead.crm_contact_id)\n      : '',\n  review_status: reviewStatus,\n  recommended_action: recommendedAction,\n  routing_decision: lead.routing_decision || `slack_action_${actionId}`,\n  processing_status:\n    matched.lead_stage === 'sql' ? 'completed' : (lead.processing_status || 'review_pending'),\n  global_config,\n  confidence: lead.confidence,\n  industry: lead.industry || '',\n  company_size: lead.company_size || '',\n  content_summary: lead.content_summary || '',\n  intent_signals: lead.intent_signals || '',\n  enrichment_summary: lead.enrichment_summary || '',\n  enrichment_status: lead.enrichment_status || '',\n  sales_memo: lead.sales_memo || '',\n  sales_memo_status: lead.sales_memo_status || '',\n  source_type: lead.source_type || '',\n  source_name: lead.source_name || '',\n  company_region: lead.company_region || '',\n  skip_notification: true,\n  trigger_source: 'slack_action',\n  slack_action_id: actionId,\n  _metadata: { processing_stage: 'slack_crm_payload_ready' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        -80
+      ],
+      "id": "9a980a63-a32a-4bdf-b19b-22c3589fd3ab",
+      "name": "Prepare Slack CRM Payload"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "B2B Lead CRM Sync Notification"
+        },
+        "options": {},
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "correlation_id": "={{ $json.correlation_id }}",
+            "contact_email": "={{ $json.contact_email }}",
+            "contact_name": "={{ $json.contact_name }}",
+            "contact_role": "={{ $json.contact_role }}",
+            "company_name": "={{ $json.company_name }}",
+            "score": "={{ $json.score }}",
+            "review_status": "={{ $json.review_status }}",
+            "recommended_action": "={{ $json.recommended_action }}",
+            "processing_status": "={{ $json.processing_status }}",
+            "global_config": "={{ $json.global_config }}",
+            "company_domain": "={{ $json.company_domain }}",
+            "confidence": "={{ $json.confidence }}",
+            "routing_decision": "={{ $json.routing_decision }}",
+            "dedup_skipped": "={{ $json.dedup_skipped ?? false }}",
+            "sheets_write_failed": "={{ $json.sheets_write_failed ?? false }}",
+            "sheets_error_message": "={{ $json.sheets_error_message ?? \"\" }}",
+            "sheets_update_failed": "={{ $json.sheets_update_failed ?? false }}",
+            "read_error_message": "={{ $json.read_error_message ?? \"\" }}",
+            "audit_log_failed": "={{ $json.audit_log_failed ?? false }}",
+            "audit_log_error_message": "={{ $json.audit_log_error_message ?? \"\" }}",
+            "config_load_error_message": "={{ $json.config_load_error_message ?? \"\" }}",
+            "enrichment_error_message": "={{ $json.enrichment_error_message ?? \"\" }}",
+            "scoring_error_message": "={{ $json.scoring_error_message ?? \"\" }}",
+            "industry": "={{ $json.industry ?? \"\" }}",
+            "company_size": "={{ $json.company_size ?? \"\" }}",
+            "content_summary": "={{ $json.content_summary ?? \"\" }}",
+            "intent_signals": "={{ $json.intent_signals ?? \"\" }}",
+            "enrichment_summary": "={{ $json.enrichment_summary ?? \"\" }}",
+            "enrichment_status": "={{ $json.enrichment_status ?? \"\" }}",
+            "sales_memo": "={{ $json.sales_memo ?? \"\" }}",
+            "sales_memo_status": "={{ $json.sales_memo_status ?? \"\" }}",
+            "domain_type": "={{ $json.domain_type ?? \"\" }}",
+            "score_reasoning": "={{ $json.score_reasoning ?? \"\" }}",
+            "first_touch_status": "={{ $json.first_touch_status ?? \"\" }}",
+            "crm_status": "={{ $json.crm_status != null && $json.crm_status !== '' ? String($json.crm_status) : \"\" }}",
+            "crm_contact_id": "={{ $json.crm_contact_id != null && $json.crm_contact_id !== '' ? String($json.crm_contact_id) : \"\" }}",
+            "source_type": "={{ $json.source_type ?? \"\" }}",
+            "source_name": "={{ $json.source_name ?? \"\" }}",
+            "company_region": "={{ $json.company_region ?? \"\" }}",
+            "skip_notification": "={{ $json.skip_notification ?? false }}",
+            "trigger_source": "={{ $json.trigger_source ?? \"\" }}",
+            "outbound_email_subject": "={{ $json.outbound_email_subject ?? \"\" }}",
+            "outbound_email_body": "={{ $json.outbound_email_body ?? \"\" }}",
+            "notification_status": "={{ $json.notification_status ?? \"\" }}"
+          },
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        4620,
+        -80
+      ],
+      "id": "7e10f905-0ff9-4db8-904b-5ce98d82ed24",
+      "name": "Execute Post-Assign CRM Sync",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -1114,6 +1045,7 @@
             "execution_id": "={{ $execution.id }}",
             "node": "Update Lead Review",
             "message": "={{ $json.sheets_error_message }}",
+            "stack": "",
             "correlation_id": "={{ $json.correlation_id }}",
             "retry_suggestion": "retry_sheets_update",
             "timestamp": "={{ new Date().toISOString() }}"
@@ -1127,7 +1059,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "execution_id",
@@ -1136,7 +1069,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "node",
@@ -1145,7 +1079,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "message",
@@ -1154,7 +1089,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "stack",
@@ -1163,7 +1099,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -1172,7 +1109,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "retry_suggestion",
@@ -1181,7 +1119,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -1190,7 +1129,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -1201,61 +1141,152 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        2240,
-        -176
+        3520,
+        200
       ],
-      "id": "bd39d9b0-3f07-4466-bf1d-1e4d174c91b7",
+      "id": "093ebe95-171f-467b-bbb9-4b6378a45a2c",
       "name": "Write Slack Update Error Log",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction mergeSlackContext(incoming) {\n  const context =\n    safeNodeJson('Match Lead By ID') ??\n    safeNodeJson('Handle Update Review Error') ??\n    safeNodeJson('Handle Slack Read Error') ??\n    safeNodeJson('Resolve Lead Action') ??\n    safeNodeJson('Set Unauthorized Reply') ??\n    safeNodeJson('Parse Slack Payload') ??\n    {};\n\n  return {\n    ...context,\n    ...incoming,\n    response_url: incoming.response_url || context.response_url || '',\n    channel_id: incoming.channel_id || context.channel_id || '',\n    message_ts: incoming.message_ts || context.message_ts || '',\n    slack_user_id: incoming.slack_user_id || context.slack_user_id || '',\n    slack_user_name: incoming.slack_user_name || context.slack_user_name || '',\n    lead_id: incoming.lead_id || context.lead_id || '',\n    correlation_id: incoming.correlation_id || context.correlation_id || '',\n    action_id: incoming.action_id || context.action_id || '',\n    audit_event: incoming.audit_event || context.audit_event || 'slack_action',\n    contact_name: incoming.contact_name || context.contact_name || '',\n    contact_email: incoming.contact_email || context.contact_email || '',\n    company_name: incoming.company_name || context.company_name || '',\n    score: incoming.score ?? context.score ?? '',\n    previous_review_status:\n      context.previous_review_status || incoming.previous_review_status || '',\n    previous_lead_stage: context.previous_lead_stage || incoming.previous_lead_stage || '',\n    previous_owner_id: context.previous_owner_id || incoming.previous_owner_id || '',\n    review_status: incoming.review_status || context.review_status || '',\n    lead_stage: incoming.lead_stage || context.lead_stage || '',\n    already_assigned: incoming.already_assigned ?? context.already_assigned ?? false,\n    lead_found: incoming.lead_found ?? context.lead_found,\n    sheets_update_failed:\n      incoming.sheets_update_failed ?? context.sheets_update_failed ?? false,\n    sheets_error_message:\n      incoming.sheets_error_message || context.sheets_error_message || '',\n    read_error_message: incoming.read_error_message || context.read_error_message || '',\n  };\n}\n\nfunction escapeMrkdwn(value) {\n  return String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction leadHeadline(ctx) {\n  const name = escapeMrkdwn(ctx.contact_name || 'Unknown lead');\n  const company = escapeMrkdwn(ctx.company_name || 'N/A');\n  const email = escapeMrkdwn(ctx.contact_email || 'N/A');\n  const score =\n    ctx.score !== undefined && ctx.score !== null && ctx.score !== ''\n      ? ` \u00b7 Score ${ctx.score}`\n      : '';\n  return `*${name}* @ ${company}${score}\\n\ud83d\udce7 ${email}`;\n}\n\nfunction leadFooter(ctx) {\n  const leadRef = ctx.lead_id ? `\\`${String(ctx.lead_id).slice(0, 8)}\u2026\\`` : 'N/A';\n  const corr = ctx.correlation_id ? `\\`${ctx.correlation_id}\\`` : 'N/A';\n  return `Lead ${leadRef} \u00b7 Correlation ${corr}`;\n}\n\nconst ACTION_META = {\n  assign_lead: {\n    processing: 'Assigning',\n    success: 'Assigned',\n    done: 'Already assigned',\n    fail: 'Assign failed',\n  },\n  mark_junk: {\n    processing: 'Marking as junk',\n    success: 'Marked as junk',\n    done: 'Already marked junk',\n    fail: 'Junk update failed',\n  },\n  nurture_lead: {\n    processing: 'Moving to nurture',\n    success: 'Moved to nurture',\n    done: 'Already in nurture',\n    fail: 'Nurture update failed',\n  },\n};\n\nfunction metaFor(actionId) {\n  return (\n    ACTION_META[actionId] || {\n      processing: 'Processing',\n      success: 'Completed',\n      done: 'Already updated',\n      fail: 'Action failed',\n    }\n  );\n}\n\nfunction buildProcessingBlocks(ctx) {\n  const meta = metaFor(ctx.action_id);\n  return [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text:\n          `\u23f3 *${meta.processing}* \u2014 ${leadHeadline(ctx)}\\n` +\n          `\ud83d\udc64 by <@${ctx.slack_user_id}> \u00b7 please wait\u2026`,\n      },\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: leadFooter(ctx) }],\n    },\n  ];\n}\n\nfunction buildFinalBlocks(ctx) {\n  const meta = metaFor(ctx.action_id);\n  const unauthorized = ctx.audit_event === 'slack_action_unauthorized';\n  const notFound =\n    ctx.audit_event === 'slack_action_lead_not_found' || ctx.lead_found === false;\n  const unknown = ctx.audit_event === 'slack_action_unknown';\n  const failure = ctx.sheets_update_failed || !!ctx.read_error_message;\n\n  if (unauthorized) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: '\ud83d\udeab *Not authorized*\\nYou cannot perform this action.',\n        },\n      },\n    ];\n  }\n\n  if (notFound) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *Lead not found*\\n${leadFooter(ctx)}`,\n        },\n      },\n    ];\n  }\n\n  if (unknown) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *Unknown action*\\n\\`${escapeMrkdwn(ctx.action_id || 'missing')}\\``,\n        },\n      },\n    ];\n  }\n\n  if (failure) {\n    const detail = escapeMrkdwn(\n      ctx.sheets_error_message || ctx.read_error_message || 'Please retry or check Sheets.',\n    );\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *${meta.fail}*\\n${leadHeadline(ctx)}\\n_${detail}_`,\n        },\n      },\n      {\n        type: 'context',\n        elements: [{ type: 'mrkdwn', text: leadFooter(ctx) }],\n      },\n    ];\n  }\n\n  if (ctx.already_assigned && ctx.action_id === 'assign_lead') {\n    const owner = ctx.previous_owner_id ? `<@${ctx.previous_owner_id}>` : 'someone';\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u2139\ufe0f *${meta.done}*\\n${leadHeadline(ctx)}\\n\ud83d\udc64 Owner: ${owner}`,\n        },\n      },\n      {\n        type: 'context',\n        elements: [\n          {\n            type: 'mrkdwn',\n            text: `${leadFooter(ctx)} \u00b7 buttons removed \u00b7 no duplicate update`,\n          },\n        ],\n      },\n    ];\n  }\n\n  let detail = '';\n  if (ctx.action_id === 'assign_lead') {\n    detail = `\\n\ud83d\udc64 Owner: <@${ctx.slack_user_id}>`;\n  } else if (ctx.action_id === 'mark_junk') {\n    detail = '\\n\ud83d\udccb Stage: `junk` \u00b7 Review: `rejected`';\n  } else if (ctx.action_id === 'nurture_lead') {\n    detail = '\\n\ud83d\udccb Stage: `nurture` \u00b7 Review: `review_later`';\n  }\n\n  return [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: `\u2705 *${meta.success}*\\n${leadHeadline(ctx)}${detail}`,\n      },\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: `${leadFooter(ctx)} \u00b7 updated \u00b7 buttons removed` }],\n    },\n  ];\n}\n\nfunction buildSlackMessageBody(ctx, blocks, fallbackText) {\n  return {\n    replace_original: true,\n    blocks,\n    text: fallbackText,\n  };\n}\n\nconst merged = mergeSlackContext($input.item.json || {});\nconst blocks = buildFinalBlocks(merged);\nconst meta = metaFor(merged.action_id);\nconst isFailure =\n  merged.audit_event === 'slack_action_unauthorized' ||\n  merged.audit_event === 'slack_action_lead_not_found' ||\n  merged.audit_event === 'slack_action_unknown' ||\n  merged.sheets_update_failed ||\n  !!merged.read_error_message;\nconst fallbackPrefix = isFailure ? meta.fail : merged.already_assigned ? meta.done : meta.success;\n\nreturn {\n  ...merged,\n  has_slack_message_target: !!(merged.channel_id && merged.message_ts),\n  has_response_url: !!merged.response_url,\n  slack_message_body: buildSlackMessageBody(\n    merged,\n    blocks,\n    `${fallbackPrefix}: ${merged.contact_name || 'lead'} @ ${merged.company_name || 'N/A'}`,\n  ),\n  _metadata: { processing_stage: 'slack_final_response_prepared' },\n};\n"
       },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4840,
+        200
+      ],
+      "id": "84eb8c8c-dd75-4417-9b89-0632072cc7b0",
+      "name": "Prepare Slack Response Body"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "339fbefe-9266-4609-a549-28c8381f62ae",
+              "leftValue": "={{ $json.has_slack_message_target }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5060,
+        200
+      ],
+      "id": "a12afb85-e6e2-486f-aede-40d1a3ef07e8",
+      "name": "Can Update Slack Message?"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "update",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.channel_id || $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "ts": "={{ $json.message_ts }}",
+        "messageType": "block",
+        "blocksUi": "={{ JSON.stringify({ blocks: $json.slack_message_body.blocks }) }}",
+        "text": "={{ $json.slack_message_body.text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        5280,
+        120
+      ],
+      "id": "7e753619-df0e-4253-a0e8-d3a9c0ea49a1",
+      "name": "Slack Update Final",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.response_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.slack_message_body }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5280,
+        320
+      ],
+      "id": "ea36598e-e8f4-4210-b51e-a4c2bb5a98d3",
+      "name": "Post Slack Final Fallback",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "function safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction mergeSlackContext(incoming) {\n  const context =\n    safeNodeJson('Match Lead By ID') ??\n    safeNodeJson('Handle Update Review Error') ??\n    safeNodeJson('Handle Slack Read Error') ??\n    safeNodeJson('Resolve Lead Action') ??\n    safeNodeJson('Set Unauthorized Reply') ??\n    safeNodeJson('Parse Slack Payload') ??\n    {};\n\n  return {\n    ...context,\n    ...incoming,\n    response_url: incoming.response_url || context.response_url || '',\n    channel_id: incoming.channel_id || context.channel_id || '',\n    message_ts: incoming.message_ts || context.message_ts || '',\n    slack_user_id: incoming.slack_user_id || context.slack_user_id || '',\n    slack_user_name: incoming.slack_user_name || context.slack_user_name || '',\n    lead_id: incoming.lead_id || context.lead_id || '',\n    correlation_id: incoming.correlation_id || context.correlation_id || '',\n    action_id: incoming.action_id || context.action_id || '',\n    audit_event: incoming.audit_event || context.audit_event || 'slack_action',\n    contact_name: incoming.contact_name || context.contact_name || '',\n    contact_email: incoming.contact_email || context.contact_email || '',\n    company_name: incoming.company_name || context.company_name || '',\n    score: incoming.score ?? context.score ?? '',\n    previous_review_status:\n      context.previous_review_status || incoming.previous_review_status || '',\n    previous_lead_stage: context.previous_lead_stage || incoming.previous_lead_stage || '',\n    previous_owner_id: context.previous_owner_id || incoming.previous_owner_id || '',\n    review_status: incoming.review_status || context.review_status || '',\n    lead_stage: incoming.lead_stage || context.lead_stage || '',\n    already_assigned: incoming.already_assigned ?? context.already_assigned ?? false,\n    lead_found: incoming.lead_found ?? context.lead_found,\n    sheets_update_failed:\n      incoming.sheets_update_failed ?? context.sheets_update_failed ?? false,\n    sheets_error_message:\n      incoming.sheets_error_message || context.sheets_error_message || '',\n    read_error_message: incoming.read_error_message || context.read_error_message || '',\n  };\n}\n\nfunction escapeMrkdwn(value) {\n  return String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction leadHeadline(ctx) {\n  const name = escapeMrkdwn(ctx.contact_name || 'Unknown lead');\n  const company = escapeMrkdwn(ctx.company_name || 'N/A');\n  const email = escapeMrkdwn(ctx.contact_email || 'N/A');\n  const score =\n    ctx.score !== undefined && ctx.score !== null && ctx.score !== ''\n      ? ` \u00b7 Score ${ctx.score}`\n      : '';\n  return `*${name}* @ ${company}${score}\\n\ud83d\udce7 ${email}`;\n}\n\nfunction leadFooter(ctx) {\n  const leadRef = ctx.lead_id ? `\\`${String(ctx.lead_id).slice(0, 8)}\u2026\\`` : 'N/A';\n  const corr = ctx.correlation_id ? `\\`${ctx.correlation_id}\\`` : 'N/A';\n  return `Lead ${leadRef} \u00b7 Correlation ${corr}`;\n}\n\nconst ACTION_META = {\n  assign_lead: {\n    processing: 'Assigning',\n    success: 'Assigned',\n    done: 'Already assigned',\n    fail: 'Assign failed',\n  },\n  mark_junk: {\n    processing: 'Marking as junk',\n    success: 'Marked as junk',\n    done: 'Already marked junk',\n    fail: 'Junk update failed',\n  },\n  nurture_lead: {\n    processing: 'Moving to nurture',\n    success: 'Moved to nurture',\n    done: 'Already in nurture',\n    fail: 'Nurture update failed',\n  },\n};\n\nfunction metaFor(actionId) {\n  return (\n    ACTION_META[actionId] || {\n      processing: 'Processing',\n      success: 'Completed',\n      done: 'Already updated',\n      fail: 'Action failed',\n    }\n  );\n}\n\nfunction buildFinalBlocks(ctx) {\n  const meta = metaFor(ctx.action_id);\n  const unauthorized = ctx.audit_event === 'slack_action_unauthorized';\n  const notFound =\n    ctx.audit_event === 'slack_action_lead_not_found' || ctx.lead_found === false;\n  const unknown = ctx.audit_event === 'slack_action_unknown';\n  const failure = ctx.sheets_update_failed || !!ctx.read_error_message;\n\n  if (unauthorized) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: '\ud83d\udeab *Not authorized*\\nYou cannot perform this action.',\n        },\n      },\n    ];\n  }\n\n  if (notFound) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *Lead not found*\\n${leadFooter(ctx)}`,\n        },\n      },\n    ];\n  }\n\n  if (unknown) {\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *Unknown action*\\n\\`${escapeMrkdwn(ctx.action_id || 'missing')}\\``,\n        },\n      },\n    ];\n  }\n\n  if (failure) {\n    const detail = escapeMrkdwn(\n      ctx.sheets_error_message || ctx.read_error_message || 'Please retry or check Sheets.',\n    );\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u274c *${meta.fail}*\\n${leadHeadline(ctx)}\\n_${detail}_`,\n        },\n      },\n      {\n        type: 'context',\n        elements: [{ type: 'mrkdwn', text: leadFooter(ctx) }],\n      },\n    ];\n  }\n\n  if (ctx.already_assigned && ctx.action_id === 'assign_lead') {\n    const owner = ctx.previous_owner_id ? `<@${ctx.previous_owner_id}>` : 'someone';\n    return [\n      {\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: `\u2139\ufe0f *${meta.done}*\\n${leadHeadline(ctx)}\\n\ud83d\udc64 Owner: ${owner}`,\n        },\n      },\n      {\n        type: 'context',\n        elements: [\n          {\n            type: 'mrkdwn',\n            text: `${leadFooter(ctx)} \u00b7 buttons removed \u00b7 no duplicate update`,\n          },\n        ],\n      },\n    ];\n  }\n\n  let detail = '';\n  if (ctx.action_id === 'assign_lead') {\n    detail = `\\n\ud83d\udc64 Owner: <@${ctx.slack_user_id}>`;\n  } else if (ctx.action_id === 'mark_junk') {\n    detail = '\\n\ud83d\udccb Stage: `junk` \u00b7 Review: `rejected`';\n  } else if (ctx.action_id === 'nurture_lead') {\n    detail = '\\n\ud83d\udccb Stage: `nurture` \u00b7 Review: `review_later`';\n  }\n\n  return [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: `\u2705 *${meta.success}*\\n${leadHeadline(ctx)}${detail}`,\n      },\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: `${leadFooter(ctx)} \u00b7 updated \u00b7 buttons removed` }],\n    },\n  ];\n}\n\nfunction buildSlackMessageBody(ctx, blocks, fallbackText) {\n  return {\n    replace_original: true,\n    blocks,\n    text: fallbackText,\n  };\n}\n\nconst merged = mergeSlackContext($input.item.json || {});\nconst blocks = buildFinalBlocks(merged);\nconst meta = metaFor(merged.action_id);\nconst isFailure =\n  merged.audit_event === 'slack_action_unauthorized' ||\n  merged.audit_event === 'slack_action_lead_not_found' ||\n  merged.audit_event === 'slack_action_unknown' ||\n  merged.sheets_update_failed ||\n  !!merged.read_error_message;\nconst fallbackPrefix = isFailure ? meta.fail : merged.already_assigned ? meta.done : meta.success;\n\nreturn {\n  ...merged,\n  has_slack_message_target: !!(merged.channel_id && merged.message_ts),\n  has_response_url: !!merged.response_url,\n  slack_message_body: buildSlackMessageBody(\n    merged,\n    blocks,\n    `${fallbackPrefix}: ${merged.contact_name || 'lead'} @ ${merged.company_name || 'N/A'}`,\n  ),\n  _metadata: { processing_stage: 'slack_final_response_prepared' },\n};"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Post Slack Response error';\n\nconst lead =\n  $('Prepare Slack Response Body').first()?.json ??\n  $('Match Lead By ID').first()?.json ??\n  $('Resolve Lead Action').first()?.json ??\n  {};\n\nreturn {\n  ...lead,\n  slack_response_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'slack_response_error_handled',\n    severity: 'low',\n    error_message: errorMessage,\n    failed_node: 'Slack Update Final',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2464,
-        352
+        5500,
+        320
       ],
-      "id": "47688560-5277-4317-b2f1-e9714d1236ae",
-      "name": "Prepare Slack Response Body"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Post Slack Response error';\n\nconst lead =\n  $('Prepare Slack Response Body').first()?.json ??\n  $('Match Lead By ID').first()?.json ??\n  $('Resolve Lead Action').first()?.json ??\n  {};\n\nreturn {\n  ...lead,\n  slack_response_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'slack_response_error_handled',\n    severity: 'low',\n    error_message: errorMessage,\n    failed_node: 'Post Slack Response',\n  },\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        3136,
-        192
-      ],
-      "id": "6251d210-683e-48fb-944d-fff9f7df9ebe",
+      "id": "d4e7e439-b137-498b-856e-14536df50318",
       "name": "Log Slack Response Error"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst matched =\n  safeNodeJson('Match Lead By ID') ??\n  safeNodeJson('Set Unauthorized Reply') ??\n  safeNodeJson('Resolve Lead Action') ??\n  {};\nconst updateError = safeNodeJson('Handle Update Review Error');\n\nlet auditEvent = matched.audit_event || 'slack_action';\nif (updateError?.sheets_update_failed) {\n  auditEvent = updateError.audit_event || 'slack_action_update_failed';\n}\n\nreturn {\n  lead_id: matched.lead_id || '',\n  correlation_id: matched.correlation_id || '',\n  audit_event: auditEvent,\n  previous_review_status: matched.previous_review_status || '',\n  new_review_status: matched.review_status || '',\n  previous_lead_stage: matched.previous_lead_stage || '',\n  new_lead_stage: matched.lead_stage || '',\n  slack_user_id: matched.slack_user_id || '',\n  updated_at: matched.updated_at || new Date().toISOString(),\n  _metadata: { processing_stage: 'slack_action_audit_prepared' },\n};\n"
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst responseContext = safeNodeJson('Prepare Slack Response Body') ?? {};\nconst matched =\n  safeNodeJson('Match Lead By ID') ??\n  safeNodeJson('Handle Update Review Error') ??\n  safeNodeJson('Handle Slack Read Error') ??\n  safeNodeJson('Set Unauthorized Reply') ??\n  safeNodeJson('Resolve Lead Action') ??\n  {};\nconst updateError = safeNodeJson('Handle Update Review Error');\n\nlet auditEvent =\n  responseContext.audit_event || matched.audit_event || 'slack_action';\nif (updateError?.sheets_update_failed) {\n  auditEvent = updateError.audit_event || 'slack_action_update_failed';\n}\n\nreturn {\n  lead_id: responseContext.lead_id || matched.lead_id || '',\n  correlation_id: responseContext.correlation_id || matched.correlation_id || '',\n  audit_event: auditEvent,\n  previous_review_status:\n    responseContext.previous_review_status || matched.previous_review_status || '',\n  new_review_status: responseContext.review_status || matched.review_status || '',\n  previous_lead_stage:\n    responseContext.previous_lead_stage || matched.previous_lead_stage || '',\n  new_lead_stage: responseContext.lead_stage || matched.lead_stage || '',\n  slack_user_id: responseContext.slack_user_id || matched.slack_user_id || '',\n  updated_at:\n    responseContext.updated_at || matched.updated_at || new Date().toISOString(),\n  _metadata: { processing_stage: 'slack_action_audit_prepared' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3360,
-        352
+        5500,
+        200
       ],
-      "id": "66b9a72e-129d-42f4-a17d-f4ee9f38d7c5",
+      "id": "389a0887-b788-4970-98b3-0eb6aea390d1",
       "name": "Prepare Slack Action Audit"
     },
     {
@@ -1263,8 +1294,8 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -1291,7 +1322,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -1300,7 +1332,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "event",
@@ -1309,7 +1342,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "old_value",
@@ -1318,7 +1352,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "new_value",
@@ -1327,7 +1362,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "workflow",
@@ -1336,7 +1372,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -1345,7 +1382,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -1356,779 +1394,31 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        3584,
-        352
+        5720,
+        200
       ],
-      "id": "3dc383af-7d72-4aee-901a-cfb4f3b1abdc",
+      "id": "e0f5aa54-07b3-49fb-98ff-83ac0d886444",
       "name": "Write Slack Action Audit Log",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueErrorOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        3808,
-        352
+        5940,
+        200
       ],
-      "id": "89af8475-2338-40fb-b5b5-6970d050a13c",
+      "id": "db95c21c-5db7-4185-985e-7cc09d22778f",
       "name": "Slack Actions End"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "{}",
-        "options": {
-          "responseCode": 200
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -1120,
-        352
-      ],
-      "id": "3385d71d-e2f1-4c90-a3e6-1f891ffcdca9",
-      "name": "Respond 200 Ack"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "579bafb5-631c-4012-a85c-8443e9b443cd",
-              "leftValue": "={{ $json.action_id }}",
-              "rightValue": "assign_lead",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
-            },
-            {
-              "id": "bee2e7ce-2a45-41cc-a9aa-c5bfbbcc6bd4",
-              "leftValue": "={{ $json.already_assigned }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        448,
-        64
-      ],
-      "id": "f4bd04f7-18bc-4a1e-858f-e50cf5f6b2f5",
-      "name": "Already Assigned?"
-    },
-    {
-      "parameters": {
-        "jsCode": "function safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nfunction mergeSlackContext(incoming) {\n  const context =\n    safeNodeJson('Match Lead By ID') ??\n    safeNodeJson('Handle Update Review Error') ??\n    safeNodeJson('Handle Slack Read Error') ??\n    safeNodeJson('Resolve Lead Action') ??\n    safeNodeJson('Set Unauthorized Reply') ??\n    safeNodeJson('Parse Slack Payload') ??\n    {};\n\n  return {\n    ...context,\n    ...incoming,\n    response_url: incoming.response_url || context.response_url || '',\n    channel_id: incoming.channel_id || context.channel_id || '',\n    message_ts: incoming.message_ts || context.message_ts || '',\n    slack_user_id: incoming.slack_user_id || context.slack_user_id || '',\n    slack_user_name: incoming.slack_user_name || context.slack_user_name || '',\n    lead_id: incoming.lead_id || context.lead_id || '',\n    correlation_id: incoming.correlation_id || context.correlation_id || '',\n    action_id: incoming.action_id || context.action_id || '',\n    audit_event: incoming.audit_event || context.audit_event || 'slack_action',\n    contact_name: incoming.contact_name || context.contact_name || '',\n    contact_email: incoming.contact_email || context.contact_email || '',\n    company_name: incoming.company_name || context.company_name || '',\n    score: incoming.score ?? context.score ?? '',\n    previous_review_status:\n      context.previous_review_status || incoming.previous_review_status || '',\n    previous_lead_stage: context.previous_lead_stage || incoming.previous_lead_stage || '',\n    previous_owner_id: context.previous_owner_id || incoming.previous_owner_id || '',\n    review_status: incoming.review_status || context.review_status || '',\n    lead_stage: incoming.lead_stage || context.lead_stage || '',\n    already_assigned: incoming.already_assigned ?? context.already_assigned ?? false,\n    lead_found: incoming.lead_found ?? context.lead_found,\n    sheets_update_failed:\n      incoming.sheets_update_failed ?? context.sheets_update_failed ?? false,\n    sheets_error_message:\n      incoming.sheets_error_message || context.sheets_error_message || '',\n    read_error_message: incoming.read_error_message || context.read_error_message || '',\n  };\n}\n\nfunction escapeMrkdwn(value) {\n  return String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction leadHeadline(ctx) {\n  const name = escapeMrkdwn(ctx.contact_name || 'Unknown lead');\n  const company = escapeMrkdwn(ctx.company_name || 'N/A');\n  const email = escapeMrkdwn(ctx.contact_email || 'N/A');\n  const score =\n    ctx.score !== undefined && ctx.score !== null && ctx.score !== ''\n      ? ` \u00b7 Score ${ctx.score}`\n      : '';\n  return `*${name}* @ ${company}${score}\\n\ud83d\udce7 ${email}`;\n}\n\nfunction leadFooter(ctx) {\n  const leadRef = ctx.lead_id ? `\\`${String(ctx.lead_id).slice(0, 8)}\u2026\\`` : 'N/A';\n  const corr = ctx.correlation_id ? `\\`${ctx.correlation_id}\\`` : 'N/A';\n  return `Lead ${leadRef} \u00b7 Correlation ${corr}`;\n}\n\nconst ACTION_META = {\n  assign_lead: {\n    processing: 'Assigning',\n    success: 'Assigned',\n    done: 'Already assigned',\n    fail: 'Assign failed',\n  },\n  mark_junk: {\n    processing: 'Marking as junk',\n    success: 'Marked as junk',\n    done: 'Already marked junk',\n    fail: 'Junk update failed',\n  },\n  nurture_lead: {\n    processing: 'Moving to nurture',\n    success: 'Moved to nurture',\n    done: 'Already in nurture',\n    fail: 'Nurture update failed',\n  },\n};\n\nfunction metaFor(actionId) {\n  return (\n    ACTION_META[actionId] || {\n      processing: 'Processing',\n      success: 'Completed',\n      done: 'Already updated',\n      fail: 'Action failed',\n    }\n  );\n}\n\nfunction buildProcessingBlocks(ctx) {\n  const meta = metaFor(ctx.action_id);\n  return [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text:\n          `\u23f3 *${meta.processing}* \u2014 ${leadHeadline(ctx)}\\n` +\n          `\ud83d\udc64 by <@${ctx.slack_user_id}> \u00b7 please wait\u2026`,\n      },\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: leadFooter(ctx) }],\n    },\n  ];\n}\n\nfunction buildSlackMessageBody(ctx, blocks, fallbackText) {\n  return {\n    replace_original: true,\n    blocks,\n    text: fallbackText,\n  };\n}\n\nconst merged = mergeSlackContext($input.item.json || {});\nconst blocks = buildProcessingBlocks(merged);\nconst meta = metaFor(merged.action_id);\n\nreturn {\n  ...merged,\n  has_slack_message_target: !!(merged.channel_id && merged.message_ts),\n  has_response_url: !!merged.response_url,\n  slack_message_body: buildSlackMessageBody(\n    merged,\n    blocks,\n    `${meta.processing} ${merged.contact_name || 'lead'}\u2026`,\n  ),\n  _metadata: { processing_stage: 'slack_ack_prepared' },\n};",
-        "mode": "runOnceForEachItem"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        672,
-        0
-      ],
-      "id": "9b41a8e4-faad-49ca-8d5c-a5583f523b29",
-      "name": "Prepare Slack Ack"
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $json.channel_id }}",
-          "mode": "id"
-        },
-        "ts": "={{ $json.message_ts }}",
-        "messageType": "block",
-        "blocksUi": "={{ JSON.stringify({ blocks: $json.slack_message_body.blocks }) }}",
-        "text": "={{ $json.slack_message_body.text }}",
-        "updateFields": {},
-        "otherOptions": {}
-      },
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.5,
-      "position": [
-        896,
-        0
-      ],
-      "id": "ea774509-ec28-40cd-9d59-171e3cf3bf4e",
-      "name": "Slack Update Ack",
-      "webhookId": "a430b308-1e17-40db-b7c5-fc813f476c03",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "SLACK_CREDENTIAL_ID",
-          "name": "Slack account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $json.channel_id }}",
-          "mode": "id"
-        },
-        "ts": "={{ $json.message_ts }}",
-        "messageType": "block",
-        "blocksUi": "={{ JSON.stringify({ blocks: $json.slack_message_body.blocks }) }}",
-        "text": "={{ $json.slack_message_body.text }}",
-        "updateFields": {},
-        "otherOptions": {}
-      },
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.5,
-      "position": [
-        2912,
-        256
-      ],
-      "id": "425a6956-8437-4e9c-b150-97853b50c8f3",
-      "name": "Slack Update Final",
-      "webhookId": "a430b308-1e17-40db-b7c5-fc813f476c03",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "SLACK_CREDENTIAL_ID",
-          "name": "Slack account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "e0fd6e3b-e0c1-42e2-bce6-1db7261759d3",
-              "leftValue": "={{ $json.has_slack_message_target }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        2688,
-        352
-      ],
-      "id": "e6948b61-e081-45a9-9e6c-1ef7af1f6170",
-      "name": "Can Update Slack Message?"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $json.response_url }}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.slack_message_body }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        2912,
-        480
-      ],
-      "id": "69fc8240-6cce-4d86-aaae-4bf5c7b9786b",
-      "name": "Post Slack Final Fallback",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "25ff98db-3ba2-4c86-95d8-a28aa5e6d176",
-              "leftValue": "={{ ['assign_lead', 'nurture_lead'] }}",
-              "rightValue": "={{ $('Match Lead By ID').first().json.action_id }}",
-              "operator": {
-                "type": "array",
-                "operation": "contains",
-                "rightType": "any"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1344,
-        96
-      ],
-      "id": "74ff3115-8b30-466b-957f-3d433f551877",
-      "name": "Should Trigger CRM?"
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "config_main",
-          "mode": "name"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        1568,
-        16
-      ],
-      "id": "f73c2916-ac80-4181-af6f-ea2dc1bc9040",
-      "name": "Read config_main For CRM",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && !r.config_table);\nreturn {\n  config_table: 'config_main',\n  rows,\n  load_failed: false,\n  load_error_message: '',\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1792,
-        16
-      ],
-      "id": "f120adac-4b2e-441e-b3cd-3ecd99c4dbbd",
-      "name": "Normalize config_main For CRM"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "function safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst matched = safeNodeJson('Match Lead By ID') || {};\nconst leadRows = $('Read All Leads For Slack').all().map((row) => row.json).filter((row) => row.lead_id);\nconst lead = leadRows.find((row) => row.lead_id === matched.lead_id) || matched;\n\nconst configWrap = safeNodeJson('Normalize config_main For CRM') || {};\nconst configRows = configWrap.rows || [];\nconst configMap = {};\nfor (const row of configRows) {\n  if (row.key) configMap[row.key] = row.value;\n}\n\nconst actionId = matched.action_id || '';\nconst reviewStatus = matched.review_status || lead.review_status || '';\nconst recommendedAction = matched.recommended_action || lead.recommended_action || '';\n\nreturn {\n  lead_id: lead.lead_id,\n  correlation_id: matched.correlation_id || lead.correlation_id || '',\n  contact_email: (lead.contact_email || '').toLowerCase().trim(),\n  contact_name: lead.contact_name || '',\n  contact_role: lead.contact_role || '',\n  company_name: lead.company_name || '',\n  company_domain: lead.company_domain || '',\n  domain_type: lead.domain_type || '',\n  score: lead.score,\n  score_reasoning: lead.score_reasoning || '',\n  outbound_email_subject: lead.outbound_email_subject || '',\n  outbound_email_body: lead.outbound_email_body || '',\n  first_touch_status: lead.first_touch_status || '',\n  review_status: reviewStatus,\n  recommended_action: recommendedAction,\n  routing_decision: lead.routing_decision || `slack_action_${actionId}`,\n  processing_status:\n    matched.lead_stage === 'sql' ? 'completed' : (lead.processing_status || 'review_pending'),\n  global_config: { mode: configMap.mode || 'test' },\n  confidence: lead.confidence,\n  industry: lead.industry || '',\n  company_size: lead.company_size || '',\n  content_summary: lead.content_summary || '',\n  intent_signals: lead.intent_signals || '',\n  enrichment_summary: lead.enrichment_summary || '',\n  enrichment_status: lead.enrichment_status || '',\n  sales_memo: lead.sales_memo || '',\n  sales_memo_status: lead.sales_memo_status || '',\n  source_type: lead.source_type || '',\n  source_name: lead.source_name || '',\n  company_region: lead.company_region || '',\n  skip_notification: true,\n  trigger_source: 'slack_action',\n  slack_action_id: actionId,\n  _metadata: { processing_stage: 'slack_crm_payload_ready' },\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2016,
-        16
-      ],
-      "id": "567c48ba-be0a-419a-ab02-739fb6411035",
-      "name": "Prepare Slack CRM Payload"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "mode": "name",
-          "value": "B2B Lead CRM Sync Notification"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "dedup_skipped": "={{ $json.dedup_skipped ?? false }}",
-            "sheets_write_failed": "={{ $json.sheets_write_failed ?? false }}",
-            "sheets_update_failed": "={{ $json.sheets_update_failed ?? false }}",
-            "audit_log_failed": "={{ $json.audit_log_failed ?? false }}",
-            "score": "={{ $json.score }}",
-            "lead_id": "={{ $json.lead_id }}",
-            "correlation_id": "={{ $json.correlation_id }}",
-            "contact_email": "={{ $json.contact_email }}",
-            "contact_name": "={{ $json.contact_name }}",
-            "contact_role": "={{ $json.contact_role }}",
-            "company_name": "={{ $json.company_name }}",
-            "review_status": "={{ $json.review_status }}",
-            "recommended_action": "={{ $json.recommended_action }}",
-            "processing_status": "={{ $json.processing_status }}",
-            "global_config": "={{ $json.global_config }}",
-            "company_domain": "={{ $json.company_domain }}",
-            "routing_decision": "={{ $json.routing_decision }}",
-            "confidence": "={{ $json.confidence }}",
-            "industry": "={{ $json.industry ?? \"\" }}",
-            "company_size": "={{ $json.company_size ?? \"\" }}",
-            "content_summary": "={{ $json.content_summary ?? \"\" }}",
-            "intent_signals": "={{ $json.intent_signals ?? \"\" }}",
-            "enrichment_summary": "={{ $json.enrichment_summary ?? \"\" }}",
-            "enrichment_status": "={{ $json.enrichment_status ?? \"\" }}",
-            "sales_memo": "={{ $json.sales_memo ?? \"\" }}",
-            "sales_memo_status": "={{ $json.sales_memo_status ?? \"\" }}",
-            "source_type": "={{ $json.source_type ?? \"\" }}",
-            "source_name": "={{ $json.source_name ?? \"\" }}",
-            "company_region": "={{ $json.company_region ?? \"\" }}",
-            "skip_notification": "={{ $json.skip_notification ?? false }}",
-            "trigger_source": "={{ $json.trigger_source ?? \"\" }}",
-            "sheets_error_message": "={{ $json.sheets_error_message ?? \"\" }}",
-            "read_error_message": "={{ $json.read_error_message ?? \"\" }}",
-            "audit_log_error_message": "={{ $json.audit_log_error_message ?? \"\" }}",
-            "config_load_error_message": "={{ $json.config_load_error_message ?? \"\" }}",
-            "enrichment_error_message": "={{ $json.enrichment_error_message ?? \"\" }}",
-            "scoring_error_message": "={{ $json.scoring_error_message ?? \"\" }}",
-            "domain_type": "={{ $json.domain_type ?? \"\" }}",
-            "first_touch_status": "={{ $json.first_touch_status ?? \"\" }}",
-            "score_reasoning": "={{ $json.score_reasoning ?? \"\" }}",
-            "outbound_email_subject": "={{ $json.outbound_email_subject ?? \"\" }}",
-            "outbound_email_body": "={{ $json.outbound_email_body ?? \"\" }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "lead_id",
-              "displayName": "lead_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "correlation_id",
-              "displayName": "correlation_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "contact_email",
-              "displayName": "contact_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "contact_name",
-              "displayName": "contact_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "contact_role",
-              "displayName": "contact_role",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "company_name",
-              "displayName": "company_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "score",
-              "displayName": "score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "number"
-            },
-            {
-              "id": "review_status",
-              "displayName": "review_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "recommended_action",
-              "displayName": "recommended_action",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "processing_status",
-              "displayName": "processing_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "global_config",
-              "displayName": "global_config",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "object"
-            },
-            {
-              "id": "company_domain",
-              "displayName": "company_domain",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "confidence",
-              "displayName": "confidence",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "routing_decision",
-              "displayName": "routing_decision",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "dedup_skipped",
-              "displayName": "dedup_skipped",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "sheets_write_failed",
-              "displayName": "sheets_write_failed",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "sheets_error_message",
-              "displayName": "sheets_error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "sheets_update_failed",
-              "displayName": "sheets_update_failed",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "read_error_message",
-              "displayName": "read_error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "audit_log_failed",
-              "displayName": "audit_log_failed",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "audit_log_error_message",
-              "displayName": "audit_log_error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "config_load_error_message",
-              "displayName": "config_load_error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "enrichment_error_message",
-              "displayName": "enrichment_error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "scoring_error_message",
-              "displayName": "scoring_error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "industry",
-              "displayName": "industry",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "company_size",
-              "displayName": "company_size",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "content_summary",
-              "displayName": "content_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "intent_signals",
-              "displayName": "intent_signals",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "enrichment_summary",
-              "displayName": "enrichment_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "enrichment_status",
-              "displayName": "enrichment_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "sales_memo",
-              "displayName": "sales_memo",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "sales_memo_status",
-              "displayName": "sales_memo_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "source_type",
-              "displayName": "source_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "source_name",
-              "displayName": "source_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "company_region",
-              "displayName": "company_region",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "skip_notification",
-              "displayName": "skip_notification",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean",
-              "removed": false
-            },
-            {
-              "id": "trigger_source",
-              "displayName": "trigger_source",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "domain_type",
-              "displayName": "domain_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "score_reasoning",
-              "displayName": "score_reasoning",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "first_touch_status",
-              "displayName": "first_touch_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "outbound_email_subject",
-              "displayName": "outbound_email_subject",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "outbound_email_body",
-              "displayName": "outbound_email_body",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        2240,
-        16
-      ],
-      "id": "59608c6e-6c6f-4446-b275-0dc1a3682a28",
-      "name": "Execute Post-Assign CRM Sync",
-      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -2206,6 +1496,17 @@
         [
           {
             "node": "Write Parse Error Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200 Ack": {
+      "main": [
+        [
+          {
+            "node": "Admin Allowed?",
             "type": "main",
             "index": 0
           }
@@ -2339,101 +1640,6 @@
         ]
       ]
     },
-    "Update Lead Review": {
-      "main": [
-        [
-          {
-            "node": "Should Trigger CRM?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Handle Update Review Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Handle Update Review Error": {
-      "main": [
-        [
-          {
-            "node": "Write Slack Update Error Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Write Slack Update Error Log": {
-      "main": [
-        [
-          {
-            "node": "Prepare Slack Response Body",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Slack Response Body": {
-      "main": [
-        [
-          {
-            "node": "Can Update Slack Message?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log Slack Response Error": {
-      "main": [
-        [
-          {
-            "node": "Prepare Slack Action Audit",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Slack Action Audit": {
-      "main": [
-        [
-          {
-            "node": "Write Slack Action Audit Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Write Slack Action Audit Log": {
-      "main": [
-        [
-          {
-            "node": "Slack Actions End",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Respond 200 Ack": {
-      "main": [
-        [
-          {
-            "node": "Admin Allowed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Already Assigned?": {
       "main": [
         [
@@ -2468,6 +1674,169 @@
         [
           {
             "node": "Update Lead Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Lead Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Review": {
+      "main": [
+        [
+          {
+            "node": "Should Trigger CRM?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Update Review Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Trigger CRM?": {
+      "main": [
+        [
+          {
+            "node": "Read config_main For CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Slack Response Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_main For CRM": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_main For CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize config_main For CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_main For CRM": {
+      "main": [
+        [
+          {
+            "node": "Read config_notifications For CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read config_notifications For CRM": {
+      "main": [
+        [
+          {
+            "node": "Normalize config_notifications For CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize config_notifications For CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize config_notifications For CRM": {
+      "main": [
+        [
+          {
+            "node": "Prepare Slack CRM Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Slack CRM Payload": {
+      "main": [
+        [
+          {
+            "node": "Execute Post-Assign CRM Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Post-Assign CRM Sync": {
+      "main": [
+        [
+          {
+            "node": "Prepare Slack Response Body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Slack Response Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Update Review Error": {
+      "main": [
+        [
+          {
+            "node": "Write Slack Update Error Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Slack Update Error Log": {
+      "main": [
+        [
+          {
+            "node": "Prepare Slack Response Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Slack Response Body": {
+      "main": [
+        [
+          {
+            "node": "Can Update Slack Message?",
             "type": "main",
             "index": 0
           }
@@ -2528,62 +1897,33 @@
         ]
       ]
     },
-    "Should Trigger CRM?": {
+    "Log Slack Response Error": {
       "main": [
         [
           {
-            "node": "Read config_main For CRM",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Prepare Slack Response Body",
+            "node": "Prepare Slack Action Audit",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Read config_main For CRM": {
+    "Prepare Slack Action Audit": {
       "main": [
         [
           {
-            "node": "Normalize config_main For CRM",
+            "node": "Write Slack Action Audit Log",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Normalize config_main For CRM": {
+    "Write Slack Action Audit Log": {
       "main": [
         [
           {
-            "node": "Prepare Slack CRM Payload",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Slack CRM Payload": {
-      "main": [
-        [
-          {
-            "node": "Execute Post-Assign CRM Sync",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Post-Assign CRM Sync": {
-      "main": [
-        [
-          {
-            "node": "Prepare Slack Response Body",
+            "node": "Slack Actions End",
             "type": "main",
             "index": 0
           }
@@ -2594,21 +1934,15 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "B2B Lead Error Handler",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
   },
-  "versionId": "6a331329-1598-418d-bd1a-d19e40560065",
+  "versionId": "6e72aca4-f20b-45a1-8df3-c10fc6defeeb",
   "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+    "templateCredsSetupCompleted": false
   },
-  "nodeGroups": [],
-  "id": "pwocnx32LMZ5oLYD",
   "tags": [
     {
-      "updatedAt": "2026-07-01T02:31:24.969Z",
-      "createdAt": "2026-07-01T02:31:24.969Z",
-      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]

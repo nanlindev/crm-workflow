@@ -53,5 +53,6 @@ Calendly webhook 需要 **付费** Calendly 套餐。
 | 401 / 签名无效 | Key 不匹配；raw body 已启用；key 不是 PAT |
 | 200 但未匹配 | Email 与 Sheets 不一致；线索缺失 |
 | 未投递 | 工作流未激活；URL 错误；免费 Calendly 套餐 |
+| **一条预约刷出多条 Slack booked** | `Match Lead By Email` 必须是 `runOnceForAllItems`（Sheets 有 N 行时 `EachItem` 会扇出 N 次）。重新导入修复后的 `B2B Lead Calendly Webhook.json` |
 
 凭证总览：[CREDENTIALS.md](CREDENTIALS.md)。字段列表：[SHEETS_SETUP.md](SHEETS_SETUP.md)。

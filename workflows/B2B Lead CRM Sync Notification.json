@@ -108,6 +108,21 @@
               "name": "sales_memo_status"
             },
             {
+              "name": "domain_type"
+            },
+            {
+              "name": "score_reasoning"
+            },
+            {
+              "name": "first_touch_status"
+            },
+            {
+              "name": "crm_status"
+            },
+            {
+              "name": "crm_contact_id"
+            },
+            {
               "name": "source_type"
             },
             {
@@ -124,19 +139,13 @@
               "name": "trigger_source"
             },
             {
-              "name": "domain_type"
-            },
-            {
-              "name": "score_reasoning"
-            },
-            {
-              "name": "first_touch_status"
-            },
-            {
               "name": "outbound_email_subject"
             },
             {
               "name": "outbound_email_body"
+            },
+            {
+              "name": "notification_status"
             }
           ]
         }
@@ -144,24 +153,24 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        1488,
-        240
+        0,
+        200
       ],
-      "id": "2b28e4f8-c296-4a34-b1a9-3d494897b2c2",
+      "id": "f091385b-1ac5-4954-b15a-16bef088dd07",
       "name": "When Executed by Another Workflow"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst canSync = mode === 'production'\n  && item.review_status !== 'pending_review'\n  && ['crm_sync', 'notify_only'].includes(item.recommended_action);\nconst skipNotification = item.skip_notification === true || item.trigger_source === 'slack_action';\nreturn {\n  ...item,\n  crm_gate_passed: canSync,\n  crm_status: canSync ? 'pending' : (mode === 'production' ? 'skipped_gate' : 'skipped_test_mode'),\n  skip_notification: skipNotification,\n  _metadata: { processing_stage: 'crm_gate' },\n};"
+        "jsCode": "\nconst item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst canSync = mode === 'production'\n  && item.review_status !== 'pending_review'\n  && ['crm_sync', 'notify_only'].includes(item.recommended_action);\nconst skipNotification = item.skip_notification === true || item.trigger_source === 'slack_action';\nreturn {\n  ...item,\n  crm_gate_passed: canSync,\n  crm_status: canSync ? 'pending' : (mode === 'production' ? 'skipped_gate' : 'skipped_test_mode'),\n  skip_notification: skipNotification,\n  _metadata: { processing_stage: 'crm_gate' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1712,
-        240
+        220,
+        200
       ],
-      "id": "1fea7d1e-dd72-4066-8d73-f569364035e4",
+      "id": "cfa1a250-7131-453d-a964-71c9cd2e0c3b",
       "name": "CRM Gate"
     },
     {
@@ -175,7 +184,7 @@
           },
           "conditions": [
             {
-              "id": "3a64fc7f-c5e0-48a9-bf5a-6c1868ed9ced",
+              "id": "1ca2f466-7484-4c96-93e7-ff703f217333",
               "leftValue": "={{ $json.crm_gate_passed }}",
               "rightValue": "true",
               "operator": {
@@ -192,44 +201,42 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1936,
-        240
+        440,
+        200
       ],
-      "id": "3761280c-d324-482b-8440-90ad0b98d770",
+      "id": "23676368-ff67-497c-aa28-f5ed92c3fc44",
       "name": "Should Sync CRM?"
     },
     {
       "parameters": {
-        "authentication": "appToken",
+        "resource": "contact",
+        "operation": "upsert",
         "email": "={{ $json.contact_email }}",
         "additionalFields": {
-          "companyName": "={{ $json.company_name }}",
-          "firstName": "={{ ($json.contact_name || '').split(' ')[0] }}",
-          "jobTitle": "={{ $json.contact_role }}",
-          "lastName": "={{ ($json.contact_name || '').split(' ').slice(1).join(' ') }}"
-        },
-        "options": {},
-        "resource": "contact",
-        "operation": "upsert"
+          "firstName": "={{ ($json.contact_name || '').trim().split(/\\s+/)[0] || '' }}",
+          "lastName": "={{ ($json.contact_name || '').trim().split(/\\s+/).slice(1).join(' ') || '' }}",
+          "companyName": "={{ ($json.company_name || '').trim() }}",
+          "jobTitle": "={{ $json.contact_role || '' }}"
+        }
       },
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2.1,
       "position": [
-        2160,
-        144
+        660,
+        100
       ],
-      "id": "e1f20d17-b1bc-415e-b209-87cdad42cec5",
+      "id": "dff28dd9-df1b-4833-965d-e4ce99f801ca",
       "name": "HubSpot Upsert Contact",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "hubspotOAuth2Api": {
           "id": "HUBSPOT_CREDENTIAL_ID",
           "name": "HubSpot account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
@@ -239,24 +246,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2384,
-        240
+        880,
+        260
       ],
-      "id": "9c113a0c-a914-4477-8bee-094838f8b378",
+      "id": "2bc0ab24-72f5-45e0-aed0-92050d8fd8f0",
       "name": "Handle HubSpot Failure"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $('CRM Gate').item.json;\nconst hs = $input.item.json || {};\n\n// OAuth upsert \u8fd4\u56de id\uff1bPrivate App / \u65e7 API \u8fd4\u56de vid\nconst contactId =\n  hs.id ||\n  hs.vid ||\n  hs['canonical-vid'] ||\n  (hs.properties && hs.properties.hs_object_id && hs.properties.hs_object_id.value) ||\n  '';\n\nreturn {\n  ...lead,\n  crm_status: 'synced',\n  crm_contact_id: String(contactId || ''),\n  processing_status: 'completed',\n  _metadata: { processing_stage: 'crm_synced' },\n};"
+        "jsCode": "\nconst lead = $('CRM Gate').item.json;\nconst hs = $input.item.json || {};\n// OAuth upsert (CRM v3) returns `id`; Private App / legacy API returns `vid`\nconst contactId =\n  hs.id ||\n  hs.vid ||\n  hs['canonical-vid'] ||\n  (hs.properties && hs.properties.hs_object_id && hs.properties.hs_object_id.value) ||\n  lead.crm_contact_id ||\n  '';\nreturn {\n  ...lead,\n  crm_status: 'synced',\n  crm_contact_id: String(contactId || ''),\n  processing_status: 'completed',\n  _metadata: { processing_stage: 'crm_synced' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2384,
-        48
+        880,
+        100
       ],
-      "id": "d9e0119e-b684-4d0f-988b-7b56f75ff144",
+      "id": "f3730b25-df43-4dae-8398-610e80c8659c",
       "name": "Mark CRM Synced"
     },
     {
@@ -267,10 +274,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2384,
-        432
+        660,
+        300
       ],
-      "id": "3b9aa421-734b-4a95-ad68-c96930de509b",
+      "id": "8aa5baf7-05fe-4808-b9ca-406f856e3592",
       "name": "Skip CRM Test Mode"
     },
     {
@@ -281,850 +288,24 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2608,
-        240
+        1100,
+        200
       ],
-      "id": "f1fe5916-9731-4446-9895-8bed766a34f9",
+      "id": "65738af8-a5e0-43af-80b6-bbefcea2b147",
       "name": "Normalize CRM Result"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst score = Number(item.score || 0);\n\nfunction displayValue(value) {\n  if (value == null || value === '') return 'N/A';\n  return String(value);\n}\n\nfunction escapeMrkdwn(text) {\n  return String(text || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction truncate(text, maxLen) {\n  const value = String(text || '');\n  if (value.length <= maxLen) return value;\n  return value.slice(0, maxLen - 1) + '\u2026';\n}\n\nfunction formatIntentSignals(raw) {\n  try {\n    const signals = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || []);\n    if (Array.isArray(signals) && signals.length) return signals.join(', ');\n  } catch {}\n  return 'N/A';\n}\n\nfunction formatSalesMemo(raw, status) {\n  if (status === 'skipped_low_score') return 'Skipped (score below threshold)';\n  if (!raw || raw === '') return 'N/A';\n  try {\n    const memo = typeof raw === 'string' ? JSON.parse(raw) : raw;\n    const lines = ['--- AI Sales Memo ---'];\n    if (Array.isArray(memo.company_background) && memo.company_background.length) {\n      lines.push('Background: ' + memo.company_background.join('; '));\n    }\n    if (Array.isArray(memo.talking_points) && memo.talking_points.length) {\n      lines.push('Talking points: ' + memo.talking_points.join('; '));\n    }\n    if (Array.isArray(memo.pain_hypotheses) && memo.pain_hypotheses.length) {\n      lines.push('Pain hypotheses: ' + memo.pain_hypotheses.join('; '));\n    }\n    if (memo.recommended_opener) {\n      lines.push('Opener: ' + memo.recommended_opener);\n    }\n    if (lines.length > 1) return lines.join('\\n');\n  } catch {}\n  return displayValue(raw);\n}\n\nfunction quoteMrkdwn(text, maxLen) {\n  const body = truncate(text, maxLen);\n  return body.split('\\n').map((line) => '>' + line).join('\\n');\n}\n\nfunction headerEmoji(eventType, score) {\n  if (eventType === 'review_required') return '\u26a0\ufe0f';\n  if (eventType === 'low_score') return '\ud83d\udd34';\n  if (score >= 80) return '\ud83d\udfe2';\n  return '\ud83d\udd35';\n}\n\nfunction buildSalesMemoBlocks(raw, status) {\n  const blocks = [];\n  if (status === 'skipped_low_score') {\n    blocks.push({\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\ud83e\udd16 *AI Sales Memo*\\n_Skipped (score below threshold)_' },\n    });\n    return blocks;\n  }\n  if (!raw || raw === '') {\n    blocks.push({\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\ud83e\udd16 *AI Sales Memo*\\n_N/A_' },\n    });\n    return blocks;\n  }\n\n  try {\n    const memo = typeof raw === 'string' ? JSON.parse(raw) : raw;\n    blocks.push({\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\ud83e\udd16 *AI Sales Memo*' },\n    });\n\n    function bulletSection(title, items, maxItems = 2) {\n      if (!Array.isArray(items) || !items.length) return;\n      const shown = items.slice(0, maxItems);\n      const lines = shown.map((bullet) => '\u2022 ' + escapeMrkdwn(bullet));\n      if (items.length > maxItems) {\n        lines.push('_\u2026+' + (items.length - maxItems) + ' more_');\n      }\n      blocks.push({\n        type: 'section',\n        text: { type: 'mrkdwn', text: '*' + title + '*\\n' + lines.join('\\n') },\n      });\n    }\n\n    bulletSection('Background', memo.company_background);\n    bulletSection('Talking points', memo.talking_points);\n    bulletSection('Pain hypotheses', memo.pain_hypotheses);\n\n    if (memo.recommended_opener) {\n      blocks.push({\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: '*\ud83d\udcac Recommended opener*\\n' + quoteMrkdwn(escapeMrkdwn(memo.recommended_opener), 350),\n        },\n      });\n    }\n  } catch {\n    blocks.push({\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: '\ud83e\udd16 *AI Sales Memo*\\n' + escapeMrkdwn(truncate(displayValue(raw), 300)),\n      },\n    });\n  }\n  return blocks;\n}\n\nfunction buildSlackBlocks(ctx) {\n  const actionValue = truncate(JSON.stringify({\n    lead_id: ctx.lead_id,\n    correlation_id: ctx.correlation_id,\n  }), 2000);\n\n  const blocks = [\n    {\n      type: 'header',\n      text: {\n        type: 'plain_text',\n        text: truncate(\n          `${headerEmoji(ctx.event_type, ctx.score)} Score ${ctx.score} \u00b7 ${ctx.headerLabel}`,\n          150,\n        ),\n        emoji: true,\n      },\n    },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '\ud83d\udc64 *Name*\\n' + escapeMrkdwn(ctx.contactName) },\n        { type: 'mrkdwn', text: '\ud83d\udce7 *Email*\\n' + escapeMrkdwn(ctx.contactEmail) },\n        { type: 'mrkdwn', text: '\ud83c\udfe2 *Company*\\n' + escapeMrkdwn(ctx.companyName) },\n        { type: 'mrkdwn', text: '\ud83d\udcca *Source*\\n' + escapeMrkdwn(ctx.sourceDisplay) },\n      ],\n    },\n    { type: 'divider' },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '\ud83c\udfed *Industry*\\n' + escapeMrkdwn(ctx.industry) },\n        { type: 'mrkdwn', text: '\ud83d\udccf *Size*\\n' + escapeMrkdwn(ctx.companySize) },\n        { type: 'mrkdwn', text: '\ud83c\udf0d *Region*\\n' + escapeMrkdwn(ctx.companyRegion) },\n        { type: 'mrkdwn', text: '\ud83c\udfaf *Signals*\\n' + escapeMrkdwn(truncate(ctx.intentSignalsDisplay, 120)) },\n      ],\n    },\n  ];\n\n  if (ctx.contentSummary && ctx.contentSummary !== 'N/A') {\n    blocks.push({\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: '\ud83d\udcdd *Intent summary*\\n' + quoteMrkdwn(escapeMrkdwn(ctx.contentSummary), 380),\n      },\n    });\n  }\n\n  if (ctx.enrichmentSummary && ctx.enrichmentSummary !== 'N/A') {\n    blocks.push({\n      type: 'context',\n      elements: [{\n        type: 'mrkdwn',\n        text: '\ud83d\udd0d _' + escapeMrkdwn(truncate(ctx.enrichmentSummary, 200)) + '_',\n      }],\n    });\n  }\n\n  blocks.push({ type: 'divider' });\n  blocks.push(...buildSalesMemoBlocks(ctx.salesMemoRaw, ctx.salesMemoStatus));\n\n  blocks.push({\n    type: 'actions',\n    block_id: 'lead_actions_' + String(ctx.lead_id || 'unknown').slice(0, 20),\n    elements: [\n      {\n        type: 'button',\n        text: { type: 'plain_text', text: 'Assign', emoji: true },\n        action_id: 'assign_lead',\n        value: actionValue,\n        style: 'primary',\n      },\n      {\n        type: 'button',\n        text: { type: 'plain_text', text: 'Mark Junk', emoji: true },\n        action_id: 'mark_junk',\n        value: actionValue,\n        style: 'danger',\n      },\n      {\n        type: 'button',\n        text: { type: 'plain_text', text: 'Nurture', emoji: true },\n        action_id: 'nurture_lead',\n        value: actionValue,\n      },\n    ],\n  });\n\n  if (ctx.calendlyUrl) {\n    blocks.push({\n      type: 'context',\n      elements: [{\n        type: 'mrkdwn',\n        text: '\ud83d\udcc5 <' + ctx.calendlyUrl + '|Book a meeting>',\n      }],\n    });\n  }\n\n  blocks.push({\n    type: 'context',\n    elements: [{\n      type: 'mrkdwn',\n      text: 'Correlation: `' + escapeMrkdwn(ctx.correlationId) + '` \u00b7 Action: `' + escapeMrkdwn(ctx.recommendedAction) + '`',\n    }],\n  });\n\n  return { blocks };\n}\n\nconst industry = displayValue(item.industry);\nconst companySize = displayValue(item.company_size);\nconst companyRegion = displayValue(item.company_region);\nconst contentSummary = displayValue(item.content_summary);\nconst intentSignalsDisplay = formatIntentSignals(item.intent_signals);\nconst enrichmentSummary = displayValue(item.enrichment_summary);\nconst salesMemoBlock = formatSalesMemo(item.sales_memo, item.sales_memo_status);\nconst sourceDisplay = [displayValue(item.source_type), displayValue(item.source_name)]\n  .filter((value) => value !== 'N/A')\n  .join(' / ') || 'N/A';\nconst calendlyUrl = (item.global_config || {}).calendly_url || '';\n\nlet event_type = 'high_score_lead';\nif (item.review_status === 'pending_review') event_type = 'review_required';\nif (item.recommended_action === 'reject') event_type = 'low_score';\n\nlet headerLabel = 'New high-score lead';\nif (event_type === 'review_required') headerLabel = 'Review required';\nif (event_type === 'low_score') headerLabel = 'Low-score lead';\n\nconst headline = `${item.company_name || 'Unknown'} \u2014 ${item.contact_name || ''} (${item.contact_email}) \u2014 Score: ${score}`;\nconst profileBlock = [\n  '--- Lead Profile ---',\n  `Industry: ${industry}`,\n  `Size: ${companySize}`,\n  `Region: ${companyRegion}`,\n  `Summary: ${contentSummary}`,\n  `Signals: ${intentSignalsDisplay}`,\n  `Enrichment: ${enrichmentSummary}`,\n  salesMemoBlock,\n].join('\\n');\n\nconst fallbackMessage = [\n  event_type === 'review_required' ? 'Lead needs manual review' : 'New high-score B2B lead',\n  headline,\n  profileBlock,\n  `Action: ${displayValue(item.recommended_action)}`,\n  `Correlation: ${displayValue(item.correlation_id)}`,\n  calendlyUrl ? `Book: ${calendlyUrl}` : '',\n].filter(Boolean).join('\\n');\n\nlet slack_blocks = { blocks: [] };\nlet slack_blocks_valid = false;\nlet slack_blocks_degraded = false;\n\ntry {\n  slack_blocks = buildSlackBlocks({\n    lead_id: item.lead_id,\n    correlation_id: item.correlation_id,\n    correlationId: displayValue(item.correlation_id),\n    recommendedAction: displayValue(item.recommended_action),\n    contactName: displayValue(item.contact_name),\n    contactEmail: displayValue(item.contact_email),\n    companyName: displayValue(item.company_name),\n    sourceDisplay,\n    score,\n    event_type,\n    headerLabel,\n    industry,\n    companySize,\n    companyRegion,\n    contentSummary,\n    intentSignalsDisplay,\n    enrichmentSummary,\n    salesMemoRaw: item.sales_memo,\n    salesMemoStatus: item.sales_memo_status,\n    calendlyUrl,\n  });\n  slack_blocks_valid = Array.isArray(slack_blocks.blocks) && slack_blocks.blocks.length > 0;\n} catch (error) {\n  slack_blocks_degraded = true;\n  slack_blocks_valid = false;\n}\n\nconst payload = {\n  event_type,\n  severity: event_type === 'review_required' ? 'warning' : 'info',\n  title: event_type === 'review_required' ? 'Lead needs manual review' : 'New high-score B2B lead',\n  message: fallbackMessage,\n  lead_id: item.lead_id,\n  correlation_id: item.correlation_id,\n  channels: ['slack'],\n  slack_blocks,\n  slack_blocks_valid,\n  slack_blocks_degraded,\n  metadata: {\n    score,\n    company_name: item.company_name,\n    recommended_action: item.recommended_action,\n    calendly_url: calendlyUrl,\n    industry,\n    company_size: companySize,\n    company_region: companyRegion,\n    content_summary: contentSummary,\n    intent_signals: intentSignalsDisplay,\n    enrichment_summary: enrichmentSummary,\n    sales_memo_status: item.sales_memo_status || '',\n    source_type: displayValue(item.source_type),\n    source_name: displayValue(item.source_name),\n  },\n  notification_mode: mode,\n  _metadata: { processing_stage: 'notification_enrichment_attached' },\n};\nconst skipNotification = item.skip_notification === true;\n\nconst rules = (item.global_config || {}).notification_rules || [];\nconst eventType =\n  item.review_status === 'pending_review' ? 'review_required' : 'high_score_lead';\nconst rule = rules.find((r) => r.event_type === eventType);\nconst ruleEnabled = rule && (rule.enabled === true || rule.enabled === 'true');\n\nconst shouldSendSlack =\n  mode === 'production' &&\n  !skipNotification &&\n  item.recommended_action !== 'reject' &&\n  ruleEnabled;\n\nreturn {\n  ...item,\n  skip_notification: skipNotification,\n  should_send_slack: shouldSendSlack,\n  notification: payload,\n};"
+        "jsCode": "\nconst item = $input.item.json;\nconst config = item.global_config || {};\nconst mode = String(config.mode || 'test').toLowerCase();\nconst minScore = Number(config.first_touch_min_score ?? config.sales_memo_min_score ?? 80);\nconst score = Number(item.score || 0);\nconst action = item.recommended_action || '';\nconst domainType = item.domain_type || '';\nconst existingStatus = item.first_touch_status || '';\nconst crmStatus = item.crm_status || '';\nconst reviewStatus = item.review_status || '';\nconst triggerSource = item.trigger_source || '';\n\nconst notificationRules = config.notification_rules || [];\nconst firstTouchRule = notificationRules.find((r) => r.event_type === 'first_touch_email');\nconst enabled = firstTouchRule && (firstTouchRule.enabled === true || firstTouchRule.enabled === 'true');\nconst channels = String((firstTouchRule && firstTouchRule.channels) || 'email').split(',').map(s => s.trim()).filter(Boolean);\nconst emailChannelEnabled = channels.includes('email');\n\nconst baseEligible =\n  mode === 'production' &&\n  enabled && emailChannelEnabled &&\n  crmStatus === 'synced' &&\n  action === 'crm_sync' &&\n  score >= minScore &&\n  domainType !== 'personal' &&\n  !!item.crm_contact_id;\n\nconst shouldDraft =\n  baseEligible &&\n  !['draft_pending_review', 'approved_to_send', 'sent'].includes(existingStatus);\n\nconst shouldSendAfterApproval =\n  baseEligible &&\n  triggerSource === 'slack_action' &&\n  reviewStatus === 'approved' &&\n  existingStatus === 'draft_pending_review';\n\nlet first_touch_phase = 'skip';\nlet skipReason = '';\n\nif (mode !== 'production') skipReason = 'test_mode';\nelse if (!enabled || !emailChannelEnabled) skipReason = 'disabled';\nelse if (crmStatus !== 'synced') skipReason = 'crm_not_synced';\nelse if (action !== 'crm_sync') skipReason = 'action_not_crm_sync';\nelse if (score < minScore) skipReason = 'low_score';\nelse if (domainType === 'personal') skipReason = 'personal_email';\nelse if (existingStatus === 'sent') skipReason = 'already_sent';\nelse if (!item.crm_contact_id) skipReason = 'no_contact_id';\nelse if (shouldSendAfterApproval) first_touch_phase = 'send';\nelse if (shouldDraft) first_touch_phase = 'draft';\nelse if (existingStatus === 'draft_pending_review') skipReason = 'awaiting_human_review';\nelse skipReason = 'not_eligible';\n\nreturn {\n  ...item,\n  first_touch_phase,\n  first_touch_eligible: first_touch_phase !== 'skip',\n  first_touch_skip_reason: skipReason,\n  first_touch_min_score: minScore,\n  first_touch_sender_name: config.first_touch_sender_name || 'Your Team',\n  _metadata: { processing_stage: first_touch_phase === 'skip' ? 'first_touch_gate_skip' : `first_touch_${first_touch_phase}` },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4848,
-        144
+        1320,
+        200
       ],
-      "id": "491e7069-f512-4c32-b61c-e5d591267ee5",
-      "name": "Build Notification Payload"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "f1863848-f7cf-4107-bc63-57fb10a4c741",
-              "leftValue": "={{ $json.should_send_slack }}",
-              "rightValue": "production",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        5072,
-        144
-      ],
-      "id": "39f4de11-e55e-4e66-b912-db6819516481",
-      "name": "Should Notify?"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "return { ...($('Build Notification Payload').item.json), notification_status: 'sent', _metadata: { processing_stage: 'notification_sent' } };"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        5744,
-        48
-      ],
-      "id": "80d3822d-7605-47c8-ab50-8fb9afdbc3a0",
-      "name": "Mark Notification Sent"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst isReject = item.recommended_action === 'reject';\n\nlet notification_status = 'skipped_test_mode';\nlet processing_stage = 'notification_skipped_test';\n\nif (mode === 'production' && isReject) {\n  notification_status = 'skipped';\n  processing_stage = 'notification_skipped_reject';\n}\n\nreturn {\n  ...item,\n  notification_status,\n  _metadata: { processing_stage },\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        5744,
-        480
-      ],
-      "id": "570b3c55-3719-4a3d-bd67-a938ba268b90",
-      "name": "Skip Notification Test"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Notify error';\n\nconst lead = $('Build Notification Payload').item.json;\nreturn {\n  ...lead,\n  notification_status: 'failed',\n  slack_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'notification_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'Slack Notify',\n  },\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        5744,
-        240
-      ],
-      "id": "95aed76b-7115-45fc-a5de-88124359f903",
-      "name": "Log Slack Notify Error"
-    },
-    {
-      "parameters": {
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        5968,
-        144
-      ],
-      "id": "822722ee-127d-4d2e-af54-ee2fc60bd589",
-      "name": "Normalize Notification Result"
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "leads",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "row_number": 0,
-            "lead_id": "={{ $json.lead_id }}",
-            "crm_status": "={{ $json.crm_status }}",
-            "crm_contact_id": "={{ $json.crm_contact_id || '' }}",
-            "notification_status": "={{ $json.notification_status || 'pending' }}",
-            "processing_status": "={{ $json.processing_status || 'completed' }}",
-            "updated_at": "={{ new Date().toISOString() }}",
-            "first_touch_status": "={{ $json.first_touch_status || '' }}",
-            "first_touch_channel": "={{ $json.first_touch_channel || '' }}",
-            "first_touch_at": "={{ $json.first_touch_at || '' }}",
-            "first_touch_error": "={{ $json.first_touch_error || '' }}",
-            "outbound_email_subject": "={{ $json.outbound_email_subject || '' }}",
-            "outbound_email_body": "={{ $json.outbound_email_body || '' }}"
-          },
-          "matchingColumns": [
-            "lead_id"
-          ],
-          "schema": [
-            {
-              "id": "lead_id",
-              "displayName": "lead_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "correlation_id",
-              "displayName": "correlation_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "lead_hash",
-              "displayName": "lead_hash",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_type",
-              "displayName": "source_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_name",
-              "displayName": "source_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_url",
-              "displayName": "source_url",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_trust_level",
-              "displayName": "source_trust_level",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_name",
-              "displayName": "company_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_domain",
-              "displayName": "company_domain",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "domain_type",
-              "displayName": "domain_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_name",
-              "displayName": "contact_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_role",
-              "displayName": "contact_role",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "contact_email",
-              "displayName": "contact_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "content_summary",
-              "displayName": "content_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "raw_content",
-              "displayName": "raw_content",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_size",
-              "displayName": "company_size",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "industry",
-              "displayName": "industry",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "intent_signals",
-              "displayName": "intent_signals",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "enrichment_status",
-              "displayName": "enrichment_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "enrichment_summary",
-              "displayName": "enrichment_summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "score",
-              "displayName": "score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "score_reasoning",
-              "displayName": "score_reasoning",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "confidence",
-              "displayName": "confidence",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "recommended_action",
-              "displayName": "recommended_action",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "routing_decision",
-              "displayName": "routing_decision",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "fallback_used",
-              "displayName": "fallback_used",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sales_memo",
-              "displayName": "sales_memo",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sales_memo_status",
-              "displayName": "sales_memo_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_status",
-              "displayName": "crm_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_contact_id",
-              "displayName": "crm_contact_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "crm_company_id",
-              "displayName": "crm_company_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "notification_status",
-              "displayName": "notification_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "review_status",
-              "displayName": "review_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "review_notes",
-              "displayName": "review_notes",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "reviewer",
-              "displayName": "reviewer",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "reviewed_at",
-              "displayName": "reviewed_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "owner_id",
-              "displayName": "owner_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "lead_stage",
-              "displayName": "lead_stage",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "meeting_status",
-              "displayName": "meeting_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "meeting_time",
-              "displayName": "meeting_time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "calendly_invitee_email",
-              "displayName": "calendly_invitee_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "booking_reminder_sent",
-              "displayName": "booking_reminder_sent",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "booking_reminder_at",
-              "displayName": "booking_reminder_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "first_touch_status",
-              "displayName": "first_touch_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "first_touch_channel",
-              "displayName": "first_touch_channel",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "first_touch_at",
-              "displayName": "first_touch_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "first_touch_error",
-              "displayName": "first_touch_error",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "company_region",
-              "displayName": "company_region",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "outbound_email_subject",
-              "displayName": "outbound_email_subject",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "outbound_email_body",
-              "displayName": "outbound_email_body",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "processing_status",
-              "displayName": "processing_status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "created_at",
-              "displayName": "created_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "updated_at",
-              "displayName": "updated_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true,
-              "readOnly": true,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        6192,
-        144
-      ],
-      "id": "2e2b5e56-9af5-4778-af4c-ae51c5ddf482",
-      "name": "Update Final Status",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Update Final Status error';\n\n\nconst lead =\n  $('Normalize Notification Result').first()?.json ??\n  $('Normalize CRM Result').first()?.json ??\n  $('Build Notification Payload').first()?.json;\n\nreturn {\n  ...lead,\n  sheets_write_failed: true,\n  sheets_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'final_status_write_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Update Final Status',\n  },\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        6640,
-        336
-      ],
-      "id": "58ced7d8-5e3e-47f5-9cea-06b9abff0743",
-      "name": "Handle Final Status Error"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        6864,
-        144
-      ],
-      "id": "e6498587-a85a-4099-9be0-6179f8763a0a",
-      "name": "Final Status Write Failed End"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "15b22e32-dc11-4fcb-b099-660782468e91",
-              "leftValue": "={{ $json.notification.slack_blocks_valid }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        5296,
-        48
-      ],
-      "id": "4f580f2b-d697-45dd-8240-8fee4ce838e6",
-      "name": "Use Slack Blocks?"
-    },
-    {
-      "parameters": {
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}",
-          "mode": "id"
-        },
-        "text": "=\ud83d\udccb {{ $json.notification.title }}\n{{ $json.notification.message }}\nAction: {{ $json.notification.metadata.recommended_action }}\nScore: {{ $json.notification.metadata.score }}\nCorrelation: {{ $json.correlation_id }}\n{{ $json.notification.metadata.calendly_url ? 'Book: ' + $json.notification.metadata.calendly_url : '' }}",
-        "otherOptions": {}
-      },
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        5520,
-        288
-      ],
-      "id": "145c109c-5c4e-4d45-869c-e3b478bbffa9",
-      "name": "Slack Notify Text",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000,
-      "webhookId": "361c2449-d98c-4723-994a-e80b7e5fc6c6",
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "SLACK_CREDENTIAL_ID",
-          "name": "Slack account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}",
-          "mode": "id"
-        },
-        "messageType": "block",
-        "blocksUi": "={{ JSON.stringify($json.notification.slack_blocks) }}",
-        "text": "={{ $json.notification.message }}",
-        "otherOptions": {}
-      },
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        5520,
-        0
-      ],
-      "id": "65cb779e-9ffb-4306-8213-6e92fb6b8c2f",
-      "name": "Slack Notify",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000,
-      "webhookId": "361c2449-d98c-4723-994a-e80b7e5fc6c6",
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "SLACK_CREDENTIAL_ID",
-          "name": "Slack account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\nconst config = item.global_config || {};\nconst mode = String(config.mode || 'test').toLowerCase();\nconst minScore = Number(config.first_touch_min_score ?? config.sales_memo_min_score ?? 80);\nconst score = Number(item.score || 0);\nconst action = item.recommended_action || '';\nconst domainType = item.domain_type || '';\nconst existingStatus = item.first_touch_status || '';\nconst crmStatus = item.crm_status || '';\nconst reviewStatus = item.review_status || '';\nconst triggerSource = item.trigger_source || '';\n\nconst notificationRules = config.notification_rules || [];\nconst firstTouchRule = notificationRules.find((r) => r.event_type === 'first_touch_email');\nconst enabled = firstTouchRule && (firstTouchRule.enabled === true || firstTouchRule.enabled === 'true');\nconst channels = String((firstTouchRule && firstTouchRule.channels) || 'email').split(',').map(s => s.trim()).filter(Boolean);\nconst emailChannelEnabled = channels.includes('email');\n\nconst baseEligible =\n  mode === 'production' &&\n  enabled && emailChannelEnabled &&\n  crmStatus === 'synced' &&\n  action === 'crm_sync' &&\n  score >= minScore &&\n  domainType !== 'personal' &&\n  !!item.crm_contact_id;\n\n// \u751f\u6210 AI \u8349\u7a3f\uff1a\u9996\u6b21\u3001\u5c1a\u65e0\u8349\u7a3f\nconst shouldDraft =\n  baseEligible &&\n  !['draft_pending_review', 'approved_to_send', 'sent'].includes(existingStatus);\n\n// \u4eba\u5de5 Assign \u540e\u5199\u5165 HubSpot\uff08DRAFT\uff0c\u975e SENT\uff09\nconst shouldSendAfterApproval =\n  baseEligible &&\n  triggerSource === 'slack_action' &&\n  reviewStatus === 'approved' &&\n  existingStatus === 'draft_pending_review';\n\nlet first_touch_phase = 'skip';\nlet skipReason = '';\n\nif (mode !== 'production') skipReason = 'test_mode';\nelse if (!enabled || !emailChannelEnabled) skipReason = 'disabled';\nelse if (crmStatus !== 'synced') skipReason = 'crm_not_synced';\nelse if (action !== 'crm_sync') skipReason = 'action_not_crm_sync';\nelse if (score < minScore) skipReason = 'low_score';\nelse if (domainType === 'personal') skipReason = 'personal_email';\nelse if (existingStatus === 'sent') skipReason = 'already_sent';\nelse if (!item.crm_contact_id) skipReason = 'no_contact_id';\nelse if (shouldSendAfterApproval) first_touch_phase = 'send';\nelse if (shouldDraft) first_touch_phase = 'draft';\nelse if (existingStatus === 'draft_pending_review') skipReason = 'awaiting_human_review';\nelse skipReason = 'not_eligible';\n\nreturn {\n  ...item,\n  first_touch_phase,\n  first_touch_eligible: first_touch_phase !== 'skip',\n  first_touch_skip_reason: skipReason,\n  first_touch_min_score: minScore,\n  first_touch_sender_name: config.first_touch_sender_name || 'Your Team',\n  _metadata: { processing_stage: first_touch_phase === 'skip' ? 'first_touch_gate_skip' : `first_touch_${first_touch_phase}` },\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2832,
-        240
-      ],
-      "id": "d01fc423-fad6-4a0d-ba39-b09498fc2a7a",
+      "id": "f32e48a7-7af3-422a-8e9b-7c90a4ae2600",
       "name": "Check First Touch Eligible"
     },
     {
@@ -1138,16 +319,17 @@
           },
           "conditions": [
             {
-              "id": "6572181c-47c2-4e24-ad74-93d0a0354091",
+              "id": "2b5963e7-3f8c-4d71-839e-8f691a1eb681",
               "leftValue": "={{ $json.first_touch_phase }}",
               "rightValue": "draft",
               "operator": {
                 "type": "string",
-                "operation": "equals"
+                "operation": "equals",
+                "name": "filter.operator.equals"
               }
             },
             {
-              "id": "3bc67d24-46f8-47d2-9525-5864ecb91e2d",
+              "id": "54f2e26d-557f-4b50-9132-413921dcc255",
               "leftValue": "={{ $json.first_touch_phase }}",
               "rightValue": "send",
               "operator": {
@@ -1164,25 +346,49 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3056,
-        240
+        1540,
+        200
       ],
-      "id": "1c74cebf-a037-4045-881d-88c189cfdcb3",
+      "id": "e48a67af-b05d-441e-befa-c92617552cda",
       "name": "First Touch Eligible?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bd58cfc2-3272-48a7-bf2b-4f8d876b71d7",
+              "leftValue": "={{ $json.first_touch_phase }}",
+              "rightValue": "draft",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        80
+      ],
+      "id": "cdfef17d-8c28-4f3c-a116-3d22d9249ac2",
+      "name": "Draft or Send?"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://crm_python_ai:8001/outbound-email",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Correlation-Id",
-              "value": "={{ $json.correlation_id }}"
-            }
-          ]
-        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -1268,105 +474,152 @@
             }
           ]
         },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
         "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
           "timeout": 45000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        4176,
-        432
+        1980,
+        80
       ],
-      "id": "104eb628-1f8f-4c97-9264-acb442d41fb2",
+      "id": "f4684105-5aba-4eba-a5c9-7420b4561f60",
       "name": "HTTP Outbound Email",
       "retryOnFail": true,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $('Check First Touch Eligible').item.json;\nconst ai = $input.item.json;\nreturn {\n  ...lead,\n  outbound_email_subject: ai.subject || '',\n  outbound_email_body: ai.body || '',\n  outbound_email_personalization_notes: ai.personalization_notes || '',\n  outbound_email_fallback_used: ai.fallback_used === true,\n  _metadata: { processing_stage: 'outbound_email_drafted' },\n};"
+        "jsCode": "\nconst lead = $('Check First Touch Eligible').item.json;\nconst ai = $input.item.json;\nreturn {\n  ...lead,\n  outbound_email_subject: ai.subject || '',\n  outbound_email_body: ai.body || '',\n  outbound_email_personalization_notes: ai.personalization_notes || '',\n  outbound_email_fallback_used: ai.fallback_used === true,\n  _metadata: { processing_stage: 'outbound_email_drafted' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4400,
-        336
+        2200,
+        80
       ],
-      "id": "dbc3a992-3859-41ba-9edd-21b28e1b446e",
+      "id": "e069b34c-d694-4f73-9cb6-519b0098ac99",
       "name": "Merge Outbound Email"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Outbound Email LLM error';\n\nconst lead = $('Check First Touch Eligible').item.json;\nconst config = lead.global_config || {};\nconst company = lead.company_name || 'your team';\nconst firstName = (lead.contact_name || '').split(' ')[0] || 'there';\nlet opener = lead.content_summary || 'I noticed your recent inquiry and wanted to reach out.';\n\ntry {\n  const memo = typeof lead.sales_memo === 'string' ? JSON.parse(lead.sales_memo || '{}') : (lead.sales_memo || {});\n  if (memo.recommended_opener) opener = memo.recommended_opener;\n} catch {}\n\nconst calendlyUrl = config.calendly_url || '';\nconst cta = calendlyUrl\n  ? `\\n\\nWould you be open to a quick chat? ${calendlyUrl}`\n  : '\\n\\nWould you be open to a quick reply?';\nconst body = `Hi ${firstName},\\n\\n${opener}\\n\\nI'd love to learn more about what ${company} is working on and share how we might help.${cta}\\n\\nBest regards`;\n\nreturn {\n  ...lead,\n  outbound_email_subject: `Quick note for ${company}`.slice(0, 60),\n  outbound_email_body: body,\n  outbound_email_personalization_notes: 'Fallback draft after LLM failure',\n  outbound_email_fallback_used: true,\n  outbound_email_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'outbound_email_fallback',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'HTTP Outbound Email',\n  },\n};"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Outbound Email LLM error';\n\nconst lead = $('Check First Touch Eligible').item.json;\nconst config = lead.global_config || {};\nconst company = lead.company_name || 'your team';\nconst firstName = (lead.contact_name || '').split(' ')[0] || 'there';\nlet opener = lead.content_summary || 'I noticed your recent inquiry and wanted to reach out.';\n\ntry {\n  const memo = typeof lead.sales_memo === 'string' ? JSON.parse(lead.sales_memo || '{}') : (lead.sales_memo || {});\n  if (memo.recommended_opener) opener = memo.recommended_opener;\n} catch {}\n\nconst calendlyUrl = config.calendly_url || '';\nconst cta = calendlyUrl\n  ? `\\n\\nWould you be open to a quick chat? ${calendlyUrl}`\n  : '\\n\\nWould you be open to a quick reply?';\nconst body = `Hi ${firstName},\\n\\n${opener}\\n\\nI'd love to learn more about what ${company} is working on and share how we might help.${cta}\\n\\nBest regards`;\n\nreturn {\n  ...lead,\n  outbound_email_subject: `Quick note for ${company}`.slice(0, 60),\n  outbound_email_body: body,\n  outbound_email_personalization_notes: 'Fallback draft after LLM failure',\n  outbound_email_fallback_used: true,\n  outbound_email_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'outbound_email_fallback',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'HTTP Outbound Email',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4400,
-        528
+        1980,
+        280
       ],
-      "id": "ae8adcf7-72b3-44fb-b76b-772f83e4ba5c",
+      "id": "36275965-70bc-449e-942f-8ec7c00cf72e",
       "name": "Handle Outbound Email Failure"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst lead = $input.item.json;\nconst now = new Date().toISOString();\nreturn {\n  ...lead,\n  first_touch_status: 'draft_pending_review',\n  first_touch_channel: 'email',\n  first_touch_at: now,\n  first_touch_error: '',\n  outbound_email_subject: lead.outbound_email_subject || '',\n  outbound_email_body: lead.outbound_email_body || '',\n  _metadata: { processing_stage: 'first_touch_draft_pending_review' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        80
+      ],
+      "id": "43d88752-e2fd-4576-83ab-3a2c3314a91a",
+      "name": "Mark Draft Pending Review"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nreturn {\n  ...item,\n  outbound_email_subject: item.outbound_email_subject || '',\n  outbound_email_body: item.outbound_email_body || '',\n  _metadata: { processing_stage: 'first_touch_send_loaded_draft' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        480
+      ],
+      "id": "46767f2a-6936-458f-8029-a8f8b2050720",
+      "name": "Load Draft From Lead"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.hubapi.com/crm/v3/objects/emails",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "hubspotAppToken",
+        "nodeCredentialType": "hubspotOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ properties: { hs_timestamp: new Date().toISOString(), hs_email_direction: 'EMAIL', hs_email_status: 'DRAFT', hs_email_subject: $json.outbound_email_subject || 'Following up', hs_email_text: $json.outbound_email_body || '' }, associations: [{ to: { id: String($json.crm_contact_id) }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 198 }] }] }) }}",
-        "options": {}
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3728,
-        -32
+        2200,
+        480
       ],
-      "id": "ed445f29-aa77-476f-92e3-586a033a499e",
+      "id": "eb408b55-485c-409e-b823-71008b81b14d",
       "name": "HubSpot Log Outbound Email",
       "retryOnFail": true,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "hubspotOAuth2Api": {
           "id": "HUBSPOT_CREDENTIAL_ID",
           "name": "HubSpot account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $input.item.json;\nconst now = new Date().toISOString();\nreturn {\n  ...lead,\n  first_touch_status: 'approved_to_send',\n  first_touch_channel: 'email',\n  first_touch_at: now,\n  first_touch_error: '',\n  _metadata: { processing_stage: 'first_touch_approved_to_send' },\n};"
+        "jsCode": "\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\n// HubSpot Log Outbound Email returns the engagement object \u2014 do NOT spread it as the lead.\nconst hs = $input.item.json || {};\nconst lead =\n  safeNodeJson('Load Draft From Lead') ||\n  safeNodeJson('Check First Touch Eligible') ||\n  {};\nconst now = new Date().toISOString();\nconst engagementId =\n  hs.id ||\n  (hs.properties && (hs.properties.hs_object_id || hs.properties.hs_object_id?.value)) ||\n  '';\n\nreturn {\n  ...lead,\n  first_touch_status: 'approved_to_send',\n  first_touch_channel: 'email',\n  first_touch_at: now,\n  first_touch_error: '',\n  hubspot_email_engagement_id: engagementId != null && engagementId !== '' ? String(engagementId) : '',\n  _metadata: { processing_stage: 'first_touch_approved_to_send' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4624,
-        -272
+        2420,
+        480
       ],
-      "id": "48bbd00c-5191-40c0-8b74-991279cf1bd7",
+      "id": "1253f768-38c6-4430-ba33-3312930c0e65",
       "name": "Mark First Touch Sent"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown HubSpot Outbound Email error'\n\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst lead =\n  safeNodeJson('Merge Outbound Email') ||\n  safeNodeJson('Handle Outbound Email Failure') ||\n  safeNodeJson('Check First Touch Eligible') ||\n  {};\nreturn {\n  ...lead,\n  first_touch_status: 'failed',\n  first_touch_channel: 'email',\n  first_touch_at: new Date().toISOString(),\n  first_touch_error: errorMessage,\n  _metadata: {\n    processing_stage: 'first_touch_failed',\n    severity: 'high',\n    error_message: errorMessage,\n    failed_node: 'HubSpot Log Outbound Email',\n  },\n};"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown HubSpot Outbound Email error';\n\nfunction safeNodeJson(name) {\n  try {\n    return $(name).first()?.json;\n  } catch {\n    return undefined;\n  }\n}\n\nconst lead =\n  safeNodeJson('Merge Outbound Email') ||\n  safeNodeJson('Handle Outbound Email Failure') ||\n  safeNodeJson('Check First Touch Eligible') ||\n  {};\nreturn {\n  ...lead,\n  first_touch_status: 'failed',\n  first_touch_channel: 'email',\n  first_touch_at: new Date().toISOString(),\n  first_touch_error: errorMessage,\n  _metadata: {\n    processing_stage: 'first_touch_failed',\n    severity: 'high',\n    error_message: errorMessage,\n    failed_node: 'HubSpot Log Outbound Email',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3952,
-        64
+        2200,
+        280
       ],
-      "id": "e8e16f7d-84ef-4475-b708-2ba6eb74e281",
+      "id": "05810642-94c6-477a-a258-ec17c9824a11",
       "name": "Handle First Touch Send Failure"
     },
     {
@@ -1376,13 +629,13 @@
             "caseSensitive": true,
             "leftValue": "",
             "typeValidation": "strict",
-            "version": 3
+            "version": 2
           },
           "conditions": [
             {
-              "id": "75f69ef9-7e14-4671-9bfb-369e8b20e9ea",
+              "id": "42a6f286-3e8f-4284-8a1d-7487a3de467a",
               "leftValue": "={{ $json.first_touch_status === 'failed' && (($json.global_config || {}).mode === 'production') }}",
-              "rightValue": "failed",
+              "rightValue": "true",
               "operator": {
                 "type": "boolean",
                 "operation": "true",
@@ -1395,12 +648,12 @@
         "options": {}
       },
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "typeVersion": 2.2,
       "position": [
-        4176,
-        64
+        2420,
+        280
       ],
-      "id": "be63cfc9-c8b5-426b-bd79-c8e1766e9005",
+      "id": "ddc63dce-c991-4e61-87a7-d077b622b5bb",
       "name": "Should Alert First Touch?"
     },
     {
@@ -1408,71 +661,273 @@
         "select": "channel",
         "channelId": {
           "__rl": true,
-          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
         },
-        "text": "=\ud83d\udea8 First-touch email failed\nLead: {{ $json.contact_name }} ({{ $json.contact_email }})\nScore: {{ $json.score }}\nError: {{ $json.first_touch_error }}\nCorrelation: {{ $json.correlation_id }}",
-        "otherOptions": {}
+        "text": "=\ud83d\udea8 First-touch email failed\nLead: {{ $json.contact_name }} ({{ $json.contact_email }})\nScore: {{ $json.score }}\nError: {{ $json.first_touch_error }}\nCorrelation: {{ $json.correlation_id }}"
       },
       "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.5,
+      "typeVersion": 2.2,
       "position": [
-        4416,
-        -16
+        2640,
+        280
       ],
-      "id": "bec72044-20c9-48ab-9dce-5a7d38776325",
+      "id": "25ec0fc6-f7a7-4b41-a8b7-77760853ef43",
       "name": "Slack First Touch Alert",
-      "webhookId": "78a0c35a-038b-4768-ba1e-220b6d260e72",
       "retryOnFail": true,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "slackOAuth2Api": {
           "id": "SLACK_CREDENTIAL_ID",
           "name": "Slack account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown First Touch Slack Alert error';\n\nconst lead = $('Handle First Touch Send Failure').item.json;\nreturn {\n  ...lead,\n  first_touch_slack_alert_failed: true,\n  first_touch_slack_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'first_touch_slack_alert_failed',\n    severity: 'low',\n    error_message: errorMessage,\n    failed_node: 'Slack First Touch Alert',\n  },\n};"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown First Touch Slack Alert error';\n\nconst lead = $('Handle First Touch Send Failure').item.json;\nreturn {\n  ...lead,\n  first_touch_slack_alert_failed: true,\n  first_touch_slack_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'first_touch_slack_alert_failed',\n    severity: 'low',\n    error_message: errorMessage,\n    failed_node: 'Slack First Touch Alert',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4624,
-        -96
+        2860,
+        280
       ],
-      "id": "93d44d2c-b2a9-4e2a-9ac6-b62b4138af7e",
+      "id": "eeeae6ff-e2e5-40f9-a301-c7d5d99c9d7e",
       "name": "Log First Touch Slack Alert Error"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $('Check First Touch Eligible').item.json;\nconst skipReason = lead.first_touch_skip_reason || 'unknown';\nconst statusMap = {\n  test_mode: 'skipped_test_mode',\n  disabled: 'skipped_disabled',\n  crm_not_synced: 'skipped_no_crm',\n  pending_review: 'skipped_pending_review',\n  action_not_crm_sync: 'skipped_action',\n  low_score: 'skipped_low_score',\n  personal_email: 'skipped_personal',\n  already_sent: 'skipped_already_sent',\n  no_contact_id: 'skipped_no_crm',\n  awaiting_human_review: 'draft_pending_review',\n};\nreturn {\n  ...lead,\n  first_touch_status: statusMap[skipReason] || 'skipped',\n  first_touch_channel: '',\n  first_touch_at: '',\n  first_touch_error: '',\n  _metadata: { processing_stage: 'first_touch_skipped' },\n};"
+        "jsCode": "\nconst lead = $('Check First Touch Eligible').item.json;\nconst skipReason = lead.first_touch_skip_reason || 'unknown';\nconst statusMap = {\n  test_mode: 'skipped_test_mode',\n  disabled: 'skipped_disabled',\n  crm_not_synced: 'skipped_no_crm',\n  pending_review: 'skipped_pending_review',\n  action_not_crm_sync: 'skipped_action',\n  low_score: 'skipped_low_score',\n  personal_email: 'skipped_personal',\n  already_sent: 'skipped_already_sent',\n  no_contact_id: 'skipped_no_crm',\n  awaiting_human_review: 'draft_pending_review',\n};\nreturn {\n  ...lead,\n  first_touch_status: statusMap[skipReason] || 'skipped',\n  first_touch_channel: '',\n  first_touch_at: '',\n  first_touch_error: '',\n  _metadata: { processing_stage: 'first_touch_skipped' },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4624,
-        688
+        1760,
+        400
       ],
-      "id": "bc0b770d-02ec-4102-8be9-e0b11c57cbbc",
+      "id": "5e2fda4b-ca36-47ef-997c-1ed0ad737886",
       "name": "Skip First Touch"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\nconst status = item.first_touch_status || 'unknown';\nconst auditByStatus = {\n  sent: 'first_touch_email_sent',\n  failed: 'first_touch_email_failed',\n  skipped_test_mode: 'first_touch_email_skipped_test',\n  skipped_disabled: 'first_touch_email_disabled',\n  skipped_no_crm: 'first_touch_email_skipped_no_crm',\n  skipped_pending_review: 'first_touch_email_skipped_review',\n  skipped_action: 'first_touch_email_skipped_action',\n  skipped_low_score: 'first_touch_email_skipped_low_score',\n  skipped_personal: 'first_touch_email_skipped_personal',\n  skipped_already_sent: 'first_touch_email_skipped_duplicate',\n  skipped: 'first_touch_email_skipped',\n  draft_pending_review: 'first_touch_email_draft_pending',\n  approved_to_send: 'first_touch_email_approved',\n};\nreturn {\n  ...item,\n  audit_event: auditByStatus[status] || 'first_touch_email_unknown',\n  first_touch_status: status,\n  first_touch_channel: item.first_touch_channel || '',\n  first_touch_at: item.first_touch_at || '',\n  first_touch_error: item.first_touch_error || '',\n  outbound_email_subject: item.outbound_email_subject || '',\n  updated_at: item.updated_at || item.first_touch_at || new Date().toISOString(),\n  _metadata: { processing_stage: 'first_touch_audit_prepared' },\n};"
+        "jsCode": "\nconst item = $input.item.json;\nconst mode = (item.global_config || {}).mode || 'test';\nconst score = Number(item.score || 0);\n\nfunction displayValue(value) {\n  if (value == null || value === '') return 'N/A';\n  return String(value);\n}\n\nfunction escapeMrkdwn(text) {\n  return String(text || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction truncate(text, maxLen) {\n  const value = String(text || '');\n  if (value.length <= maxLen) return value;\n  return value.slice(0, maxLen - 1) + '\u2026';\n}\n\nfunction formatIntentSignals(raw) {\n  try {\n    const signals = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || []);\n    if (Array.isArray(signals) && signals.length) return signals.join(', ');\n  } catch {}\n  return 'N/A';\n}\n\nfunction formatSalesMemo(raw, status) {\n  if (status === 'skipped_low_score') return 'Skipped (score below threshold)';\n  if (!raw || raw === '') return 'N/A';\n  try {\n    const memo = typeof raw === 'string' ? JSON.parse(raw) : raw;\n    const lines = ['--- AI Sales Memo ---'];\n    if (Array.isArray(memo.company_background) && memo.company_background.length) {\n      lines.push('Background: ' + memo.company_background.join('; '));\n    }\n    if (Array.isArray(memo.talking_points) && memo.talking_points.length) {\n      lines.push('Talking points: ' + memo.talking_points.join('; '));\n    }\n    if (Array.isArray(memo.pain_hypotheses) && memo.pain_hypotheses.length) {\n      lines.push('Pain hypotheses: ' + memo.pain_hypotheses.join('; '));\n    }\n    if (memo.recommended_opener) {\n      lines.push('Opener: ' + memo.recommended_opener);\n    }\n    if (lines.length > 1) return lines.join('\\n');\n  } catch {}\n  return displayValue(raw);\n}\n\nfunction quoteMrkdwn(text, maxLen) {\n  const body = truncate(text, maxLen);\n  return body.split('\\n').map((line) => '>' + line).join('\\n');\n}\n\nfunction headerEmoji(eventType, score) {\n  if (eventType === 'review_required') return '\u26a0\ufe0f';\n  if (eventType === 'low_score') return '\ud83d\udd34';\n  if (score >= 80) return '\ud83d\udfe2';\n  return '\ud83d\udd35';\n}\n\nfunction buildSalesMemoBlocks(raw, status) {\n  const blocks = [];\n  if (status === 'skipped_low_score') {\n    blocks.push({\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\ud83e\udd16 *AI Sales Memo*\\n_Skipped (score below threshold)_' },\n    });\n    return blocks;\n  }\n  if (!raw || raw === '') {\n    blocks.push({\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\ud83e\udd16 *AI Sales Memo*\\n_N/A_' },\n    });\n    return blocks;\n  }\n\n  try {\n    const memo = typeof raw === 'string' ? JSON.parse(raw) : raw;\n    blocks.push({\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\ud83e\udd16 *AI Sales Memo*' },\n    });\n\n    function bulletSection(title, items, maxItems = 2) {\n      if (!Array.isArray(items) || !items.length) return;\n      const shown = items.slice(0, maxItems);\n      const lines = shown.map((bullet) => '\u2022 ' + escapeMrkdwn(bullet));\n      if (items.length > maxItems) {\n        lines.push('_\u2026+' + (items.length - maxItems) + ' more_');\n      }\n      blocks.push({\n        type: 'section',\n        text: { type: 'mrkdwn', text: '*' + title + '*\\n' + lines.join('\\n') },\n      });\n    }\n\n    bulletSection('Background', memo.company_background);\n    bulletSection('Talking points', memo.talking_points);\n    bulletSection('Pain hypotheses', memo.pain_hypotheses);\n\n    if (memo.recommended_opener) {\n      blocks.push({\n        type: 'section',\n        text: {\n          type: 'mrkdwn',\n          text: '*\ud83d\udcac Recommended opener*\\n' + quoteMrkdwn(escapeMrkdwn(memo.recommended_opener), 350),\n        },\n      });\n    }\n  } catch {\n    blocks.push({\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: '\ud83e\udd16 *AI Sales Memo*\\n' + escapeMrkdwn(truncate(displayValue(raw), 300)),\n      },\n    });\n  }\n  return blocks;\n}\n\nfunction buildSlackBlocks(ctx) {\n  const actionValue = truncate(JSON.stringify({\n    lead_id: ctx.lead_id,\n    correlation_id: ctx.correlation_id,\n  }), 2000);\n\n  const blocks = [\n    {\n      type: 'header',\n      text: {\n        type: 'plain_text',\n        text: truncate(\n          `${headerEmoji(ctx.event_type, ctx.score)} Score ${ctx.score} \u00b7 ${ctx.headerLabel}`,\n          150,\n        ),\n        emoji: true,\n      },\n    },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '\ud83d\udc64 *Name*\\n' + escapeMrkdwn(ctx.contactName) },\n        { type: 'mrkdwn', text: '\ud83d\udce7 *Email*\\n' + escapeMrkdwn(ctx.contactEmail) },\n        { type: 'mrkdwn', text: '\ud83c\udfe2 *Company*\\n' + escapeMrkdwn(ctx.companyName) },\n        { type: 'mrkdwn', text: '\ud83d\udcca *Source*\\n' + escapeMrkdwn(ctx.sourceDisplay) },\n      ],\n    },\n    { type: 'divider' },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '\ud83c\udfed *Industry*\\n' + escapeMrkdwn(ctx.industry) },\n        { type: 'mrkdwn', text: '\ud83d\udccf *Size*\\n' + escapeMrkdwn(ctx.companySize) },\n        { type: 'mrkdwn', text: '\ud83c\udf0d *Region*\\n' + escapeMrkdwn(ctx.companyRegion) },\n        { type: 'mrkdwn', text: '\ud83c\udfaf *Signals*\\n' + escapeMrkdwn(truncate(ctx.intentSignalsDisplay, 120)) },\n      ],\n    },\n  ];\n\n  if (ctx.contentSummary && ctx.contentSummary !== 'N/A') {\n    blocks.push({\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: '\ud83d\udcdd *Intent summary*\\n' + quoteMrkdwn(escapeMrkdwn(ctx.contentSummary), 380),\n      },\n    });\n  }\n\n  if (ctx.enrichmentSummary && ctx.enrichmentSummary !== 'N/A') {\n    blocks.push({\n      type: 'context',\n      elements: [{\n        type: 'mrkdwn',\n        text: '\ud83d\udd0d _' + escapeMrkdwn(truncate(ctx.enrichmentSummary, 200)) + '_',\n      }],\n    });\n  }\n\n  blocks.push({ type: 'divider' });\n  blocks.push(...buildSalesMemoBlocks(ctx.salesMemoRaw, ctx.salesMemoStatus));\n\n  blocks.push({\n    type: 'actions',\n    block_id: 'lead_actions_' + String(ctx.lead_id || 'unknown').slice(0, 20),\n    elements: [\n      {\n        type: 'button',\n        text: { type: 'plain_text', text: 'Assign', emoji: true },\n        action_id: 'assign_lead',\n        value: actionValue,\n        style: 'primary',\n      },\n      {\n        type: 'button',\n        text: { type: 'plain_text', text: 'Mark Junk', emoji: true },\n        action_id: 'mark_junk',\n        value: actionValue,\n        style: 'danger',\n      },\n      {\n        type: 'button',\n        text: { type: 'plain_text', text: 'Nurture', emoji: true },\n        action_id: 'nurture_lead',\n        value: actionValue,\n      },\n    ],\n  });\n\n  if (ctx.calendlyUrl) {\n    blocks.push({\n      type: 'context',\n      elements: [{\n        type: 'mrkdwn',\n        text: '\ud83d\udcc5 <' + ctx.calendlyUrl + '|Book a meeting>',\n      }],\n    });\n  }\n\n  blocks.push({\n    type: 'context',\n    elements: [{\n      type: 'mrkdwn',\n      text: 'Correlation: `' + escapeMrkdwn(ctx.correlationId) + '` \u00b7 Action: `' + escapeMrkdwn(ctx.recommendedAction) + '`',\n    }],\n  });\n\n  return { blocks };\n}\n\nconst industry = displayValue(item.industry);\nconst companySize = displayValue(item.company_size);\nconst companyRegion = displayValue(item.company_region);\nconst contentSummary = displayValue(item.content_summary);\nconst intentSignalsDisplay = formatIntentSignals(item.intent_signals);\nconst enrichmentSummary = displayValue(item.enrichment_summary);\nconst salesMemoBlock = formatSalesMemo(item.sales_memo, item.sales_memo_status);\nconst sourceDisplay = [displayValue(item.source_type), displayValue(item.source_name)]\n  .filter((value) => value !== 'N/A')\n  .join(' / ') || 'N/A';\nconst calendlyUrl = (item.global_config || {}).calendly_url || '';\n\nlet event_type = 'high_score_lead';\nif (item.review_status === 'pending_review') event_type = 'review_required';\nif (item.recommended_action === 'reject') event_type = 'low_score';\n\nlet headerLabel = 'New high-score lead';\nif (event_type === 'review_required') headerLabel = 'Review required';\nif (event_type === 'low_score') headerLabel = 'Low-score lead';\n\nconst headline = `${item.company_name || 'Unknown'} \u2014 ${item.contact_name || ''} (${item.contact_email}) \u2014 Score: ${score}`;\nconst profileBlock = [\n  '--- Lead Profile ---',\n  `Industry: ${industry}`,\n  `Size: ${companySize}`,\n  `Region: ${companyRegion}`,\n  `Summary: ${contentSummary}`,\n  `Signals: ${intentSignalsDisplay}`,\n  `Enrichment: ${enrichmentSummary}`,\n  salesMemoBlock,\n].join('\\n');\n\nconst fallbackMessage = [\n  event_type === 'review_required' ? 'Lead needs manual review' : 'New high-score B2B lead',\n  headline,\n  profileBlock,\n  `Action: ${displayValue(item.recommended_action)}`,\n  `Correlation: ${displayValue(item.correlation_id)}`,\n  calendlyUrl ? `Book: ${calendlyUrl}` : '',\n].filter(Boolean).join('\\n');\n\nlet slack_blocks = { blocks: [] };\nlet slack_blocks_valid = false;\nlet slack_blocks_degraded = false;\n\ntry {\n  slack_blocks = buildSlackBlocks({\n    lead_id: item.lead_id,\n    correlation_id: item.correlation_id,\n    correlationId: displayValue(item.correlation_id),\n    recommendedAction: displayValue(item.recommended_action),\n    contactName: displayValue(item.contact_name),\n    contactEmail: displayValue(item.contact_email),\n    companyName: displayValue(item.company_name),\n    sourceDisplay,\n    score,\n    event_type,\n    headerLabel,\n    industry,\n    companySize,\n    companyRegion,\n    contentSummary,\n    intentSignalsDisplay,\n    enrichmentSummary,\n    salesMemoRaw: item.sales_memo,\n    salesMemoStatus: item.sales_memo_status,\n    calendlyUrl,\n  });\n  slack_blocks_valid = Array.isArray(slack_blocks.blocks) && slack_blocks.blocks.length > 0;\n} catch (error) {\n  slack_blocks_degraded = true;\n  slack_blocks_valid = false;\n}\n\nconst payload = {\n  event_type,\n  severity: event_type === 'review_required' ? 'warning' : 'info',\n  title: event_type === 'review_required' ? 'Lead needs manual review' : 'New high-score B2B lead',\n  message: fallbackMessage,\n  lead_id: item.lead_id,\n  correlation_id: item.correlation_id,\n  channels: ['slack'],\n  slack_blocks,\n  slack_blocks_valid,\n  slack_blocks_degraded,\n  metadata: {\n    score,\n    company_name: item.company_name,\n    recommended_action: item.recommended_action,\n    calendly_url: calendlyUrl,\n    industry,\n    company_size: companySize,\n    company_region: companyRegion,\n    content_summary: contentSummary,\n    intent_signals: intentSignalsDisplay,\n    enrichment_summary: enrichmentSummary,\n    sales_memo_status: item.sales_memo_status || '',\n    source_type: displayValue(item.source_type),\n    source_name: displayValue(item.source_name),\n  },\n  notification_mode: mode,\n  _metadata: { processing_stage: 'notification_enrichment_attached' },\n};\nconst skipNotification = item.skip_notification === true;\n\nconst rules = (item.global_config || {}).notification_rules || [];\nconst eventType =\n  item.review_status === 'pending_review' ? 'review_required' : 'high_score_lead';\nconst rule = rules.find((r) => r.event_type === eventType);\nconst ruleEnabled = rule && (rule.enabled === true || rule.enabled === 'true');\n\nconst shouldSendSlack =\n  mode === 'production' &&\n  !skipNotification &&\n  item.recommended_action !== 'reject' &&\n  ruleEnabled;\nreturn {\n  ...item,\n  skip_notification: skipNotification,\n  should_send_slack: shouldSendSlack,\n  notification: payload,\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6416,
-        144
+        2860,
+        200
       ],
-      "id": "c2825e6d-2451-4cf6-b0a2-960d95735c69",
+      "id": "16738e5d-8434-4c97-88dd-79bc79a095de",
+      "name": "Build Notification Payload"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "af5dcf97-076f-4bee-8015-ca2431767c54",
+              "leftValue": "={{ $json.should_send_slack }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3080,
+        200
+      ],
+      "id": "23cc8d8d-2fca-462d-85e8-bcc796b5ff56",
+      "name": "Should Notify?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ec397edc-563a-4fec-b367-354c906a71ee",
+              "leftValue": "={{ $json.notification.slack_blocks_valid }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3300,
+        100
+      ],
+      "id": "112df5f8-6234-46dc-a510-458a907aa205",
+      "name": "Use Slack Blocks?"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "messageType": "block",
+        "blocksUi": "={{ JSON.stringify($json.notification.slack_blocks) }}",
+        "text": "={{ $json.notification.message }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        0
+      ],
+      "id": "a74245b4-925d-4cb4-817e-6aa4341c8976",
+      "name": "Slack Notify",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "text": "=\ud83d\udccb {{ $json.notification.title }}\n{{ $json.notification.message }}\nAction: {{ $json.notification.metadata.recommended_action }}\nScore: {{ $json.notification.metadata.score }}\nCorrelation: {{ $json.correlation_id }}\n{{ $json.notification.metadata.calendly_url ? 'Book: ' + $json.notification.metadata.calendly_url : '' }}"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        200
+      ],
+      "id": "1c82d5f7-c655-406c-922d-b25f0f5ea0de",
+      "name": "Slack Notify Text",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { ...($('Build Notification Payload').item.json), notification_status: 'sent', _metadata: { processing_stage: 'notification_sent' } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        100
+      ],
+      "id": "d2ae9900-e4e7-48ba-bf45-aafff748c02a",
+      "name": "Mark Notification Sent"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst mode = String((item.global_config || {}).mode || 'test').toLowerCase();\nconst isReject = item.recommended_action === 'reject';\nconst skipResend = item.skip_notification === true;\nconst prior = item.notification_status || '';\n\nlet notification_status;\nlet processing_stage;\n\n// Assign / post-assign re-entry: do not pretend we are in test mode, and keep prior \"sent\".\nif (skipResend) {\n  notification_status = prior === 'sent' ? 'sent' : (prior || 'skipped_no_resend');\n  processing_stage = 'notification_skipped_slack_action';\n} else if (mode !== 'production') {\n  notification_status = 'skipped_test_mode';\n  processing_stage = 'notification_skipped_test';\n} else if (isReject) {\n  notification_status = 'skipped';\n  processing_stage = 'notification_skipped_reject';\n} else {\n  notification_status = 'skipped';\n  processing_stage = 'notification_skipped';\n}\n\nreturn {\n  ...item,\n  notification_status,\n  _metadata: { processing_stage },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        300
+      ],
+      "id": "077184f4-22ef-4046-b99d-b2201c5a379e",
+      "name": "Skip Notification Test"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Notify error';\n\nconst lead = $('Build Notification Payload').item.json;\nreturn {\n  ...lead,\n  notification_status: 'failed',\n  slack_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'notification_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    failed_node: 'Slack Notify',\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        260
+      ],
+      "id": "e8433674-8d5e-43dc-9515-c3d1dfac2b93",
+      "name": "Log Slack Notify Error"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3960,
+        200
+      ],
+      "id": "c6e2d033-e4b1-4363-918b-324596451a4d",
+      "name": "Normalize Notification Result"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json;\nconst status = item.first_touch_status || 'unknown';\nconst auditByStatus = {\n  sent: 'first_touch_email_sent',\n  failed: 'first_touch_email_failed',\n  skipped_test_mode: 'first_touch_email_skipped_test',\n  skipped_disabled: 'first_touch_email_disabled',\n  skipped_no_crm: 'first_touch_email_skipped_no_crm',\n  skipped_pending_review: 'first_touch_email_skipped_review',\n  skipped_action: 'first_touch_email_skipped_action',\n  skipped_low_score: 'first_touch_email_skipped_low_score',\n  skipped_personal: 'first_touch_email_skipped_personal',\n  skipped_already_sent: 'first_touch_email_skipped_duplicate',\n  skipped: 'first_touch_email_skipped',\n  draft_pending_review: 'first_touch_email_draft_pending',\n  approved_to_send: 'first_touch_email_approved',\n};\nreturn {\n  ...item,\n  audit_event: auditByStatus[status] || 'first_touch_email_unknown',\n  first_touch_status: status,\n  first_touch_channel: item.first_touch_channel || '',\n  first_touch_at: item.first_touch_at || '',\n  first_touch_error: item.first_touch_error || '',\n  outbound_email_subject: item.outbound_email_subject || '',\n  updated_at: item.updated_at || item.first_touch_at || new Date().toISOString(),\n  _metadata: { processing_stage: 'first_touch_audit_prepared' },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4180,
+        200
+      ],
+      "id": "9beff6a6-4da5-4ac5-8c27-3b267f8ab7de",
       "name": "Prepare First Touch Audit"
     },
     {
@@ -1480,15 +935,13 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "audit_logs",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ctYQxdFPeRgo6mC8T3ru_O0GP9dXgocpUZi2yPOBokw/edit#gid=0"
+          "mode": "name",
+          "value": "audit_logs"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -1509,7 +962,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -1518,7 +972,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "event",
@@ -1527,16 +982,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "old_value",
-              "displayName": "old_value",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "new_value",
@@ -1545,7 +992,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "workflow",
@@ -1554,7 +1002,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -1563,7 +1012,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -1572,84 +1022,224 @@
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "typeVersion": 4.5,
       "position": [
-        6640,
-        144
+        4400,
+        200
       ],
-      "id": "2b571a99-126f-469c-83d4-c801613967a6",
+      "id": "e9e2523f-46bc-41a9-b79d-c9c497f0780d",
       "name": "Write First Touch Audit",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueRegularOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "crm_status": "={{ $json.crm_status }}",
+            "crm_contact_id": "={{ $json.crm_contact_id || '' }}",
+            "notification_status": "={{ $json.notification_status || 'pending' }}",
+            "first_touch_status": "={{ $json.first_touch_status || '' }}",
+            "first_touch_channel": "={{ $json.first_touch_channel || '' }}",
+            "first_touch_at": "={{ $json.first_touch_at || '' }}",
+            "first_touch_error": "={{ $json.first_touch_error || '' }}",
+            "outbound_email_subject": "={{ $json.outbound_email_subject || '' }}",
+            "outbound_email_body": "={{ $json.outbound_email_body || '' }}",
+            "processing_status": "={{ $json.processing_status || 'completed' }}",
+            "updated_at": "={{ new Date().toISOString() }}"
           },
-          "conditions": [
+          "matchingColumns": [
+            "lead_id"
+          ],
+          "schema": [
             {
-              "id": "66968c06-d994-4b5c-b0ca-ca3e1ad1c00b",
-              "leftValue": "={{ $json.first_touch_phase }}",
-              "rightValue": "draft",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_status",
+              "displayName": "crm_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crm_contact_id",
+              "displayName": "crm_contact_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_status",
+              "displayName": "first_touch_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_channel",
+              "displayName": "first_touch_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_at",
+              "displayName": "first_touch_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_touch_error",
+              "displayName": "first_touch_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "outbound_email_subject",
+              "displayName": "outbound_email_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "outbound_email_body",
+              "displayName": "outbound_email_body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
-          "combinator": "and"
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
       "position": [
-        3280,
-        144
+        4620,
+        200
       ],
-      "id": "a14f435c-8394-4c3e-87de-527570a7604f",
-      "name": "Draft or Send?"
+      "id": "78179eef-6f73-429f-863c-732bbc45cfab",
+      "name": "Update Final Status",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $input.item.json;\nconst now = new Date().toISOString();\nreturn {\n  ...lead,\n  first_touch_status: 'draft_pending_review',\n  first_touch_channel: 'email',\n  first_touch_at: now,\n  first_touch_error: '',\n  outbound_email_subject: lead.outbound_email_subject || '',\n  outbound_email_body: lead.outbound_email_body || '',\n  _metadata: { processing_stage: 'first_touch_draft_pending_review' },\n};"
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Update Final Status error';\n\n\nconst lead =\n  $('Normalize Notification Result').first()?.json ??\n  $('Normalize CRM Result').first()?.json ??\n  $('Build Notification Payload').first()?.json;\n\nreturn {\n  ...lead,\n  sheets_write_failed: true,\n  sheets_error_message: errorMessage,\n  _metadata: {\n    processing_stage: 'final_status_write_failed',\n    severity: 'medium',\n    error_message: errorMessage,\n    error_description: errorObj.description || '',\n    failed_node: 'Update Final Status',\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4624,
-        432
+        4620,
+        400
       ],
-      "id": "a1a0158d-cc56-4fb2-970b-51d3dca7b5b7",
-      "name": "Mark Draft Pending Review"
+      "id": "aed9934e-5f47-4589-84cb-25b7d0471bdf",
+      "name": "Handle Final Status Error"
     },
     {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\nreturn {\n  ...item,\n  outbound_email_subject: item.outbound_email_subject || '',\n  outbound_email_body: item.outbound_email_body || '',\n  _metadata: { processing_stage: 'first_touch_send_loaded_draft' },\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
       "position": [
-        3504,
-        -32
+        4840,
+        400
       ],
-      "id": "2c14b75f-f69f-4b55-8437-9834f1cde64a",
-      "name": "Load Draft From Lead"
+      "id": "9e1223c6-90a0-4506-b5af-b6971be3088a",
+      "name": "Final Status Write Failed End"
     }
   ],
   "connections": {
@@ -1755,162 +1345,6 @@
         ]
       ]
     },
-    "Build Notification Payload": {
-      "main": [
-        [
-          {
-            "node": "Should Notify?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Should Notify?": {
-      "main": [
-        [
-          {
-            "node": "Use Slack Blocks?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Skip Notification Test",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mark Notification Sent": {
-      "main": [
-        [
-          {
-            "node": "Normalize Notification Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Skip Notification Test": {
-      "main": [
-        [
-          {
-            "node": "Normalize Notification Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log Slack Notify Error": {
-      "main": [
-        [
-          {
-            "node": "Normalize Notification Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize Notification Result": {
-      "main": [
-        [
-          {
-            "node": "Update Final Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Final Status": {
-      "main": [
-        [
-          {
-            "node": "Prepare First Touch Audit",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Handle Final Status Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Handle Final Status Error": {
-      "main": [
-        [
-          {
-            "node": "Final Status Write Failed End",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack Notify Text": {
-      "main": [
-        [
-          {
-            "node": "Mark Notification Sent",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Log Slack Notify Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Use Slack Blocks?": {
-      "main": [
-        [
-          {
-            "node": "Slack Notify",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Slack Notify Text",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack Notify": {
-      "main": [
-        [
-          {
-            "node": "Mark Notification Sent",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Log Slack Notify Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Check First Touch Eligible": {
       "main": [
         [
@@ -1940,6 +1374,24 @@
         ]
       ]
     },
+    "Draft or Send?": {
+      "main": [
+        [
+          {
+            "node": "HTTP Outbound Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Draft From Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "HTTP Outbound Email": {
       "main": [
         [
@@ -1958,11 +1410,44 @@
         ]
       ]
     },
+    "Merge Outbound Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Draft Pending Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Handle Outbound Email Failure": {
       "main": [
         [
           {
             "node": "Mark Draft Pending Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Draft Pending Review": {
+      "main": [
+        [
+          {
+            "node": "Build Notification Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Draft From Lead": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Log Outbound Email",
             "type": "main",
             "index": 0
           }
@@ -1981,17 +1466,6 @@
         [
           {
             "node": "Handle First Touch Send Failure",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge Outbound Email": {
-      "main": [
-        [
-          {
-            "node": "Mark Draft Pending Review",
             "type": "main",
             "index": 0
           }
@@ -2078,6 +1552,151 @@
         ]
       ]
     },
+    "Build Notification Payload": {
+      "main": [
+        [
+          {
+            "node": "Should Notify?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Notify?": {
+      "main": [
+        [
+          {
+            "node": "Use Slack Blocks?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Notification Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Slack Blocks?": {
+      "main": [
+        [
+          {
+            "node": "Slack Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Notify Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify": {
+      "main": [
+        [
+          {
+            "node": "Mark Notification Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Slack Notify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify Text": {
+      "main": [
+        [
+          {
+            "node": "Mark Notification Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Slack Notify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Notification Sent": {
+      "main": [
+        [
+          {
+            "node": "Normalize Notification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Notification Test": {
+      "main": [
+        [
+          {
+            "node": "Normalize Notification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Slack Notify Error": {
+      "main": [
+        [
+          {
+            "node": "Normalize Notification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Notification Result": {
+      "main": [
+        [
+          {
+            "node": "Update Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Final Status": {
+      "main": [
+        [
+          {
+            "node": "Prepare First Touch Audit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Final Status Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Prepare First Touch Audit": {
       "main": [
         [
@@ -2089,51 +1708,11 @@
         ]
       ]
     },
-    "Write First Touch Audit": {
+    "Handle Final Status Error": {
       "main": [
         [
           {
             "node": "Final Status Write Failed End",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Draft or Send?": {
-      "main": [
-        [
-          {
-            "node": "HTTP Outbound Email",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Load Draft From Lead",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Load Draft From Lead": {
-      "main": [
-        [
-          {
-            "node": "HubSpot Log Outbound Email",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mark Draft Pending Review": {
-      "main": [
-        [
-          {
-            "node": "Build Notification Payload",
             "type": "main",
             "index": 0
           }
@@ -2144,21 +1723,15 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "B2B Lead Error Handler",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "B2B Lead Error Handler"
   },
-  "versionId": "e909ce36-783f-4929-be38-106041fdd369",
+  "versionId": "88b24c6b-97fc-401d-b1cd-bd06b85f5e7b",
   "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+    "templateCredsSetupCompleted": false
   },
-  "nodeGroups": [],
-  "id": "9aS9GcUTgYa7HuVA",
   "tags": [
     {
-      "updatedAt": "2026-07-01T02:31:24.969Z",
-      "createdAt": "2026-07-01T02:31:24.969Z",
-      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]

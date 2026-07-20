@@ -20,6 +20,8 @@ n8n Code 节点 v2 有两种执行模式：
 | `Load Daily Config` / `Build Daily Summary` | Daily Summary | 配置 + 聚合昨天 UTC |
 | `Load Weekly Config` / `Build Weekly Metrics` / `Merge Weekly Report` | Weekly Summary | 配置 + 周聚合 |
 | `Check Error Alert Enabled` | Error Handler | 读 config 行 |
+| `Match Lead By ID` | Slack Actions | Sheets 读多行后收成 1 条 |
+| `Match Lead By Email` / `Build Calendly Slack Text` | Calendly Webhook | 同上，否则 Slack Notify 会按 lead 行数扇出 |
 
 ### 必须用 `runOnceForEachItem`
 

@@ -47,7 +47,8 @@ Execute 节点使用 `mappingMode: defineBelow` + `??` 默认值；下游 trigge
 
 | 节点 | On Error | Retry | Error branch / output fields |
 |------|----------|-------|------------------------------|
-| Tally / Google Forms Webhook | Stop | OFF | — |
+| Tally Webhook | Stop | OFF | `responseMode=responseNode`：签名通过 → **Respond 200** → Normalize；失败 → **Respond 401**（勿在「立即响应」模式下单独留 Respond 节点，否则报 *Unused Respond to Webhook*） |
+| Google Forms Webhook | Stop | OFF | 默认立即响应（无 Respond 节点） |
 | Normalize * / Generate IDs | Stop | OFF | —（无 Merge Sources，双 webhook 直连 Generate） |
 | Validate Lead / Validation Passed? | Stop | OFF | false → Validation Failed End |
 | **Read All Leads** | Continue (error output) | ON, 5s | → Handle Read Leads Error → `read_error_message` |

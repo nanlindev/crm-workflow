@@ -64,6 +64,23 @@ def sheets_read(
     return node
 
 
+def sheets_column_schema(columns: dict) -> list[dict]:
+    """n8n Google Sheets v4+ requires columns.schema when mappingMode=defineBelow."""
+    return [
+        {
+            "id": key,
+            "displayName": key,
+            "required": False,
+            "defaultMatch": False,
+            "display": True,
+            "type": "string",
+            "canBeUsedToMatch": True,
+            "removed": False,
+        }
+        for key in columns
+    ]
+
+
 def sheets_append(name: str, position: list[int], sheet_name: str, columns_expr: str, *, retry: bool = False) -> dict:
     node = {
         "parameters": {
@@ -77,6 +94,10 @@ def sheets_append(name: str, position: list[int], sheet_name: str, columns_expr:
             "columns": {
                 "mappingMode": "defineBelow",
                 "value": columns_expr,
+                "matchingColumns": [],
+                "schema": sheets_column_schema(columns_expr),
+                "attemptToConvertTypes": False,
+                "convertFieldsToString": False,
             },
             "options": {},
         },
@@ -118,6 +139,9 @@ def sheets_update(
                 "mappingMode": "defineBelow",
                 "value": columns,
                 "matchingColumns": [match_column],
+                "schema": sheets_column_schema(columns),
+                "attemptToConvertTypes": False,
+                "convertFieldsToString": False,
             },
             "options": {},
         },
@@ -564,10 +588,12 @@ def hubspot_upsert_node(name: str, position: list[int]) -> dict:
             "operation": "upsert",
             "email": "={{ $json.contact_email }}",
             "additionalFields": {
-                "firstName": "={{ ($json.contact_name || '').split(' ')[0] }}",
-                "lastName": "={{ ($json.contact_name || '').split(' ').slice(1).join(' ') }}",
-                "companyName": "={{ $json.company_name }}",
-                "jobTitle": "={{ $json.contact_role }}",
+                "firstName": "={{ ($json.contact_name || '').trim().split(/\\s+/)[0] || '' }}",
+                "lastName": "={{ ($json.contact_name || '').trim().split(/\\s+/).slice(1).join(' ') || '' }}",
+                # HubSpot contact property is `company` (n8n maps companyName → company).
+                # Always send a non-empty string when known — empty string can clear the UI to "--".
+                "companyName": "={{ ($json.company_name || '').trim() }}",
+                "jobTitle": "={{ $json.contact_role || '' }}",
             },
         },
         "type": "n8n-nodes-base.hubspot",
@@ -853,6 +879,8 @@ ENRICHMENT_TO_CRM_INPUTS = {
     "domain_type": "={{ $json.domain_type ?? \"\" }}",
     "score_reasoning": "={{ $json.score_reasoning ?? \"\" }}",
     "first_touch_status": "={{ $json.first_touch_status ?? \"\" }}",
+    "crm_status": "={{ $json.crm_status != null && $json.crm_status !== '' ? String($json.crm_status) : \"\" }}",
+    "crm_contact_id": "={{ $json.crm_contact_id != null && $json.crm_contact_id !== '' ? String($json.crm_contact_id) : \"\" }}",
     "source_type": "={{ $json.source_type ?? \"\" }}",
     "source_name": "={{ $json.source_name ?? \"\" }}",
     "company_region": "={{ $json.company_region ?? \"\" }}",
@@ -860,6 +888,7 @@ ENRICHMENT_TO_CRM_INPUTS = {
     "trigger_source": "={{ $json.trigger_source ?? \"\" }}",
     "outbound_email_subject": "={{ $json.outbound_email_subject ?? \"\" }}",
     "outbound_email_body": "={{ $json.outbound_email_body ?? \"\" }}",
+    "notification_status": "={{ $json.notification_status ?? \"\" }}",
 }
 
 SLACK_TO_CRM_INPUTS = dict(ENRICHMENT_TO_CRM_INPUTS)
@@ -900,6 +929,8 @@ CRM_WORKFLOW_INPUTS = [
     {"name": "domain_type"},
     {"name": "score_reasoning"},
     {"name": "first_touch_status"},
+    {"name": "crm_status"},
+    {"name": "crm_contact_id"},
     {"name": "source_type"},
     {"name": "source_name"},
     {"name": "company_region"},
@@ -907,6 +938,7 @@ CRM_WORKFLOW_INPUTS = [
     {"name": "trigger_source"},
     {"name": "outbound_email_subject"},
     {"name": "outbound_email_body"},
+    {"name": "notification_status"},
 ]
 
 HOLD_LEAD_JS = r"""return $input.item.json;"""
@@ -1139,6 +1171,7 @@ const contactId =
   hs.vid ||
   hs['canonical-vid'] ||
   (hs.properties && hs.properties.hs_object_id && hs.properties.hs_object_id.value) ||
+  lead.crm_contact_id ||
   '';
 return {
   ...lead,
@@ -1555,11 +1588,32 @@ return {
 """
 
 MATCH_LEAD_BY_EMAIL_JS = r"""
-const normalized = $('Normalize Calendly Payload').first()?.json ?? $input.item.json;
-const existingRows = $('Read All Leads').all().map(r => r.json).filter(r => r.lead_id);
-const email = (normalized.invitee_email || '').toLowerCase();
+// Must runOnceForAllItems: Sheets returns one item per row; forEachItem would
+// fan-out Match → Update → Slack Notify (N booked messages for N leads).
+const normalized = $('Normalize Calendly Payload').first()?.json ?? {};
 
-const lead = existingRows.find(r => (r.contact_email || '').toLowerCase() === email);
+function rowsFrom(name) {
+  try {
+    return $(name).all().map((row) => row.json).filter((row) => row && row.lead_id);
+  } catch {
+    return [];
+  }
+}
+
+let existingRows = [];
+try {
+  existingRows = $input.all().map((row) => row.json).filter((row) => row && row.lead_id);
+} catch {
+  existingRows = [];
+}
+if (!existingRows.length) {
+  existingRows = rowsFrom('Read All Leads');
+}
+
+const email = (normalized.invitee_email || '').toLowerCase().trim();
+const lead = existingRows.find(
+  (row) => (row.contact_email || '').toLowerCase().trim() === email,
+);
 
 let meetingStatus = normalized.meeting_status;
 if (lead && normalized.calendly_event === 'invitee.created') {
@@ -1593,6 +1647,7 @@ return {
   meeting_status: meetingStatus,
   calendly_invitee_email: email,
   audit_event: lead ? (auditEventByStatus[meetingStatus] || 'calendly_updated') : 'calendly_unmatched',
+  sheets_row_count: existingRows.length,
   _metadata: {
     processing_stage: lead ? 'calendly_lead_matched' : 'calendly_lead_not_found',
   },
@@ -1954,10 +2009,32 @@ return {
 """
 
 MATCH_LEAD_BY_ID_JS = r"""
-const action = $('Resolve Lead Action').first()?.json ?? $input.item.json;
-const existingRows = $('Read All Leads For Slack').all().map((row) => row.json).filter((row) => row.lead_id);
-const leadId = action.lead_id || '';
-const lead = existingRows.find((row) => row.lead_id === leadId);
+// Must runOnceForAllItems: Sheets returns one item per row; forEachItem would
+// fan-out and can break $('Resolve Lead Action') / .all() pairing → false "Lead not found".
+const action = $('Resolve Lead Action').first()?.json || {};
+const leadId = String(action.lead_id || '').trim();
+
+function rowsFrom(name) {
+  try {
+    return $(name).all().map((row) => row.json).filter((row) => row && row.lead_id);
+  } catch {
+    return [];
+  }
+}
+
+let existingRows = [];
+try {
+  existingRows = $input.all().map((row) => row.json).filter((row) => row && row.lead_id);
+} catch {
+  existingRows = [];
+}
+if (!existingRows.length) {
+  existingRows = rowsFrom('Read All Leads For Slack');
+}
+
+const lead = existingRows.find(
+  (row) => String(row.lead_id || '').trim() === leadId,
+);
 
 if (!lead) {
   return {
@@ -1965,7 +2042,12 @@ if (!lead) {
     lead_found: false,
     skip_update: true,
     audit_event: 'slack_action_lead_not_found',
-    _metadata: { processing_stage: 'slack_lead_not_found' },
+    sheets_row_count: existingRows.length,
+    _metadata: {
+      processing_stage: 'slack_lead_not_found',
+      lookup_lead_id: leadId,
+      sheets_row_count: existingRows.length,
+    },
   };
 }
 
@@ -2710,7 +2792,8 @@ const rawBody =
   (typeof json.body === 'string' ? json.body : JSON.stringify(json.body ?? json));
 
 function verify(secret, header, payload) {
-  if (!secret) return { valid: false, skipped: false, reason: 'missing_secret' };
+  // Empty env key: skip verification (dev/demo only). Calendly Intake uses the same pattern.
+  if (!secret) return { valid: true, skipped: true, reason: 'verification_skipped' };
   if (!header) return { valid: false, reason: 'missing_signature' };
 
   const calc = crypto.createHmac('sha256', secret).update(payload).digest('base64');
@@ -2884,14 +2967,33 @@ return {
 """
 
 MARK_FIRST_TOUCH_SENT_JS = r"""
-const lead = $input.item.json;
+function safeNodeJson(name) {
+  try {
+    return $(name).first()?.json;
+  } catch {
+    return undefined;
+  }
+}
+
+// HubSpot Log Outbound Email returns the engagement object — do NOT spread it as the lead.
+const hs = $input.item.json || {};
+const lead =
+  safeNodeJson('Load Draft From Lead') ||
+  safeNodeJson('Check First Touch Eligible') ||
+  {};
 const now = new Date().toISOString();
+const engagementId =
+  hs.id ||
+  (hs.properties && (hs.properties.hs_object_id || hs.properties.hs_object_id?.value)) ||
+  '';
+
 return {
   ...lead,
   first_touch_status: 'approved_to_send',
   first_touch_channel: 'email',
   first_touch_at: now,
   first_touch_error: '',
+  hubspot_email_engagement_id: engagementId != null && engagementId !== '' ? String(engagementId) : '',
   _metadata: { processing_stage: 'first_touch_approved_to_send' },
 };
 """
@@ -3030,20 +3132,44 @@ function safeNodeJson(name) {
   }
 }
 
-const matched = safeNodeJson('Match Lead By ID') || {};
-const leadRows = $('Read All Leads For Slack').all().map((row) => row.json).filter((row) => row.lead_id);
-const lead = leadRows.find((row) => row.lead_id === matched.lead_id) || matched;
+function rowsFrom(name) {
+  const wrap = safeNodeJson(name) || {};
+  return (wrap.rows || []).filter(Boolean);
+}
 
-const configWrap = safeNodeJson('Normalize config_main For CRM') || {};
-const configRows = configWrap.rows || [];
+const matched = safeNodeJson('Match Lead By ID') || {};
+let leadRows = [];
+try {
+  leadRows = $('Read All Leads For Slack').all().map((row) => row.json).filter((row) => row.lead_id);
+} catch {
+  leadRows = [];
+}
+const lead = leadRows.find((row) => String(row.lead_id || '').trim() === String(matched.lead_id || '').trim()) || matched;
+
+const mainRows = rowsFrom('Normalize config_main For CRM');
+const notificationRows = rowsFrom('Normalize config_notifications For CRM');
+
 const configMap = {};
-for (const row of configRows) {
+for (const row of mainRows) {
   if (row.key) configMap[row.key] = row.value;
 }
 
 const actionId = matched.action_id || '';
 const reviewStatus = matched.review_status || lead.review_status || '';
 const recommendedAction = matched.recommended_action || lead.recommended_action || '';
+
+// Must mirror Enrichment's global_config shape enough for CRM Gate + First Touch
+// (mode alone → first_touch_email rule missing → phase=skip / disabled).
+const global_config = {
+  mode: String(configMap.mode || 'test').toLowerCase(),
+  first_touch_min_score: parseInt(
+    configMap.first_touch_min_score || configMap.sales_memo_min_score || configMap.score_threshold_high || '80',
+    10,
+  ),
+  first_touch_sender_name: configMap.first_touch_sender_name || 'Your Team',
+  calendly_url: configMap.calendly_url || '',
+  notification_rules: notificationRows.filter((r) => r.event_type),
+};
 
 return {
   lead_id: lead.lead_id,
@@ -3059,12 +3185,18 @@ return {
   outbound_email_subject: lead.outbound_email_subject || '',
   outbound_email_body: lead.outbound_email_body || '',
   first_touch_status: lead.first_touch_status || '',
+  notification_status: lead.notification_status || '',
+  crm_status: lead.crm_status != null && lead.crm_status !== '' ? String(lead.crm_status) : '',
+  crm_contact_id:
+    lead.crm_contact_id != null && lead.crm_contact_id !== ''
+      ? String(lead.crm_contact_id)
+      : '',
   review_status: reviewStatus,
   recommended_action: recommendedAction,
   routing_decision: lead.routing_decision || `slack_action_${actionId}`,
   processing_status:
     matched.lead_stage === 'sql' ? 'completed' : (lead.processing_status || 'review_pending'),
-  global_config: { mode: configMap.mode || 'test' },
+  global_config,
   confidence: lead.confidence,
   industry: lead.industry || '',
   company_size: lead.company_size || '',
@@ -3448,15 +3580,27 @@ return {
 
 SKIP_NOTIFICATION_TEST_JS = r"""
 const item = $input.item.json;
-const mode = (item.global_config || {}).mode || 'test';
+const mode = String((item.global_config || {}).mode || 'test').toLowerCase();
 const isReject = item.recommended_action === 'reject';
+const skipResend = item.skip_notification === true;
+const prior = item.notification_status || '';
 
-let notification_status = 'skipped_test_mode';
-let processing_stage = 'notification_skipped_test';
+let notification_status;
+let processing_stage;
 
-if (mode === 'production' && isReject) {
+// Assign / post-assign re-entry: do not pretend we are in test mode, and keep prior "sent".
+if (skipResend) {
+  notification_status = prior === 'sent' ? 'sent' : (prior || 'skipped_no_resend');
+  processing_stage = 'notification_skipped_slack_action';
+} else if (mode !== 'production') {
+  notification_status = 'skipped_test_mode';
+  processing_stage = 'notification_skipped_test';
+} else if (isReject) {
   notification_status = 'skipped';
   processing_stage = 'notification_skipped_reject';
+} else {
+  notification_status = 'skipped';
+  processing_stage = 'notification_skipped';
 }
 
 return {
@@ -4359,13 +4503,34 @@ def build_error_handler() -> None:
 
 
 def build_intake() -> None:
+    # Tally must use responseMode=responseNode whenever a Respond to Webhook node
+    # exists (same pattern as Calendly / Slack Actions). Success path responds 200
+    # immediately after signature check so the HTTP client is not held through Sheets/LLM.
     nodes = [
-        webhook_node("Tally Webhook", [0, 64], "tally-lead", http_method="POST", raw_body=True),
+        webhook_node(
+            "Tally Webhook",
+            [0, 64],
+            "tally-lead",
+            http_method="POST",
+            response_mode="responseNode",
+            raw_body=True,
+        ),
         webhook_node("Google Forms Webhook", [0, 256], "google-forms-lead"),
         code_node("Verify Tally Signature", VERIFY_TALLY_SIGNATURE_JS, [224, 64]),
         if_bool_node("Tally Validation Passed?", [448, 64], "={{ $json.tally_signature_valid }}"),
-        respond_to_webhook_node("Respond to Webhook", [672, -176], response_code=401, response_body='={{ { "ok": false, "error": "invalid_signature" } }}'),
-        code_node("Normalize Tally Payload", NORMALIZE_TALLY_JS, [672, 64]),
+        respond_to_webhook_node(
+            "Respond 401",
+            [672, -176],
+            response_code=401,
+            response_body='={{ { "ok": false, "error": "invalid_signature" } }}',
+        ),
+        respond_to_webhook_node(
+            "Respond 200",
+            [672, -32],
+            response_code=200,
+            response_body='={{ { "ok": true } }}',
+        ),
+        code_node("Normalize Tally Payload", NORMALIZE_TALLY_JS, [896, 64]),
         code_node("Normalize Google Forms Payload", NORMALIZE_GFORMS_JS, [224, 256]),
         code_node("Generate Lead IDs", GENERATE_IDS_JS, [448, 160]),
         code_node("Validate Lead", VALIDATE_LEAD_JS, [672, 160]),
@@ -4434,8 +4599,9 @@ def build_intake() -> None:
     conn = {}
     connect(conn, "Tally Webhook", "Verify Tally Signature")
     connect(conn, "Verify Tally Signature", "Tally Validation Passed?")
-    connect(conn, "Tally Validation Passed?", "Normalize Tally Payload", src_output=0)
-    connect(conn, "Tally Validation Passed?", "Respond to Webhook", src_output=1)
+    connect(conn, "Tally Validation Passed?", "Respond 200", src_output=0)
+    connect(conn, "Tally Validation Passed?", "Respond 401", src_output=1)
+    connect(conn, "Respond 200", "Normalize Tally Payload")
     connect(conn, "Google Forms Webhook", "Normalize Google Forms Payload")
     connect(conn, "Normalize Tally Payload", "Generate Lead IDs")
     connect(conn, "Normalize Google Forms Payload", "Generate Lead IDs")
@@ -5203,7 +5369,12 @@ def build_calendly_webhook() -> None:
         ),
         code_node("Normalize Calendly Payload", NORMALIZE_CALENDLY_JS, [660, 200]),
         sheets_read("Read All Leads", [880, 200], "leads", always_output_data=True, retry=True),
-        code_node("Match Lead By Email", MATCH_LEAD_BY_EMAIL_JS, [1100, 200]),
+        code_node(
+            "Match Lead By Email",
+            MATCH_LEAD_BY_EMAIL_JS,
+            [1100, 200],
+            mode="runOnceForAllItems",
+        ),
         code_node("Handle Calendly Read Error", HANDLE_CALENDLY_READ_ERROR_JS, [880, 400]),
         if_bool_node("Lead Found?", [1320, 200], "={{ $json.lead_found }}"),
         sheets_update("Update Lead Meeting", [1540, 120], "leads", "lead_id", {
@@ -5225,7 +5396,12 @@ def build_calendly_webhook() -> None:
             "retry_suggestion": "retry_sheets_update",
             "timestamp": "={{ new Date().toISOString() }}",
         }),
-        code_node("Build Calendly Slack Text", BUILD_CALENDLY_SLACK_TEXT_JS, [1760, 0]),
+        code_node(
+            "Build Calendly Slack Text",
+            BUILD_CALENDLY_SLACK_TEXT_JS,
+            [1760, 0],
+            mode="runOnceForAllItems",
+        ),
         slack_node(
             "Slack Calendly Notify",
             [1980, 0],
@@ -5335,7 +5511,12 @@ def build_slack_actions() -> None:
         code_node("Resolve Lead Action", RESOLVE_LEAD_ACTION_JS, [1320, 200]),
         if_bool_node("Known Action?", [1540, 200], "={{ !$json.unknown_action }}"),
         sheets_read("Read All Leads For Slack", [1760, 120], "leads", always_output_data=True, retry=True),
-        code_node("Match Lead By ID", MATCH_LEAD_BY_ID_JS, [1980, 120]),
+        code_node(
+            "Match Lead By ID",
+            MATCH_LEAD_BY_ID_JS,
+            [1980, 120],
+            mode="runOnceForAllItems",
+        ),
         code_node("Handle Slack Read Error", HANDLE_SLACK_READ_ERROR_JS, [1760, 320]),
         if_bool_node("Lead Found?", [2200, 120], "={{ $json.lead_found }}"),
         if_bool_node(
@@ -5366,13 +5547,20 @@ def build_slack_actions() -> None:
         code_node(
             "Normalize config_main For CRM",
             normalize_config_js("config_main"),
-            [3960, -80],
+            [3960, -120],
             mode="runOnceForAllItems",
         ),
-        code_node("Prepare Slack CRM Payload", PREPARE_SLACK_CRM_PAYLOAD_JS, [4180, -80]),
+        sheets_read("Read config_notifications For CRM", [3960, -40], "config_notifications", retry=True),
+        code_node(
+            "Normalize config_notifications For CRM",
+            normalize_config_js("config_notifications"),
+            [4180, -40],
+            mode="runOnceForAllItems",
+        ),
+        code_node("Prepare Slack CRM Payload", PREPARE_SLACK_CRM_PAYLOAD_JS, [4400, -80]),
         execute_workflow(
             "Execute Post-Assign CRM Sync",
-            [4400, -80],
+            [4620, -80],
             "B2B Lead CRM Sync Notification",
             inputs=SLACK_TO_CRM_INPUTS,
             on_error="continueRegularOutput",
@@ -5387,22 +5575,22 @@ def build_slack_actions() -> None:
             "retry_suggestion": "retry_sheets_update",
             "timestamp": "={{ new Date().toISOString() }}",
         }),
-        code_node("Prepare Slack Response Body", PREPARE_SLACK_RESPONSE_BODY_JS, [4620, 200]),
+        code_node("Prepare Slack Response Body", PREPARE_SLACK_RESPONSE_BODY_JS, [4840, 200]),
         if_bool_node(
             "Can Update Slack Message?",
-            [4840, 200],
+            [5060, 200],
             "={{ $json.has_slack_message_target }}",
         ),
-        slack_update_blocks_node("Slack Update Final", [5060, 120]),
+        slack_update_blocks_node("Slack Update Final", [5280, 120]),
         http_json_post_node(
             "Post Slack Final Fallback",
-            [5060, 320],
+            [5280, 320],
             "={{ $json.response_url }}",
             "={{ $json.slack_message_body }}",
         ),
-        code_node("Log Slack Response Error", LOG_SLACK_RESPONSE_ERROR_JS, [5280, 320]),
-        code_node("Prepare Slack Action Audit", PREPARE_SLACK_ACTION_AUDIT_JS, [5280, 200]),
-        sheets_append("Write Slack Action Audit Log", [5500, 200], "audit_logs", {
+        code_node("Log Slack Response Error", LOG_SLACK_RESPONSE_ERROR_JS, [5500, 320]),
+        code_node("Prepare Slack Action Audit", PREPARE_SLACK_ACTION_AUDIT_JS, [5500, 200]),
+        sheets_append("Write Slack Action Audit Log", [5720, 200], "audit_logs", {
             "lead_id": "={{ $json.lead_id }}",
             "correlation_id": "={{ $json.correlation_id }}",
             "event": "={{ $json.audit_event }}",
@@ -5411,7 +5599,7 @@ def build_slack_actions() -> None:
             "workflow": "B2B Lead Slack Actions",
             "timestamp": "={{ $json.updated_at || new Date().toISOString() }}",
         }, retry=True),
-        noop("Slack Actions End", [5720, 200]),
+        noop("Slack Actions End", [5940, 200]),
     ]
     conn = {}
     connect(conn, "Slack Interactions Webhook", "Verify Slack Signature")
@@ -5446,7 +5634,11 @@ def build_slack_actions() -> None:
     connect(conn, "Should Trigger CRM?", "Read config_main For CRM", src_output=0)
     connect(conn, "Should Trigger CRM?", "Prepare Slack Response Body", src_output=1)
     connect(conn, "Read config_main For CRM", "Normalize config_main For CRM")
-    connect(conn, "Normalize config_main For CRM", "Prepare Slack CRM Payload")
+    connect_error(conn, "Read config_main For CRM", "Normalize config_main For CRM")
+    connect(conn, "Normalize config_main For CRM", "Read config_notifications For CRM")
+    connect(conn, "Read config_notifications For CRM", "Normalize config_notifications For CRM")
+    connect_error(conn, "Read config_notifications For CRM", "Normalize config_notifications For CRM")
+    connect(conn, "Normalize config_notifications For CRM", "Prepare Slack CRM Payload")
     connect(conn, "Prepare Slack CRM Payload", "Execute Post-Assign CRM Sync")
     connect(conn, "Execute Post-Assign CRM Sync", "Prepare Slack Response Body")
     connect_error(conn, "Execute Post-Assign CRM Sync", "Prepare Slack Response Body")

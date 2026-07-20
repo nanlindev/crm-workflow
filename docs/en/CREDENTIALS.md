@@ -68,7 +68,7 @@ See [SLACK_ACTIONS_SETUP.md](SLACK_ACTIONS_SETUP.md).
 
 1. Tally form → Webhooks → enable signing secret
 2. `TALLY_WEBHOOK_SIGNING_KEY=<secret>` in n8n env
-3. Intake uses `rawBody`; verification is **fail-closed** when a key is configured incorrectly / missing while enforced
+3. Intake uses `rawBody`. Empty key **skips** verification (dev/demo only). When a key is set, verification is **fail-closed** on missing/invalid signatures.
 
 ### Hunter.io
 

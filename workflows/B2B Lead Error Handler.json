@@ -6,10 +6,10 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        608,
+        0,
         0
       ],
-      "id": "8e379676-53c2-4861-a5a9-6f5407c26d92",
+      "id": "592068f0-596d-4c00-a17b-d23bf4da578d",
       "name": "Error Trigger"
     },
     {
@@ -20,10 +20,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1728,
-        -80
+        220,
+        0
       ],
-      "id": "175eba0f-bda8-4395-bc77-384649489800",
+      "id": "02db750d-6ab4-4f46-b1f2-9e35cec7b1f8",
       "name": "Extract Error Details"
     },
     {
@@ -31,8 +31,8 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
@@ -60,7 +60,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "execution_id",
@@ -69,7 +70,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "node",
@@ -78,7 +80,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "message",
@@ -87,7 +90,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "stack",
@@ -96,7 +100,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "correlation_id",
@@ -105,7 +110,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "retry_suggestion",
@@ -114,7 +120,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "timestamp",
@@ -123,7 +130,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -134,20 +142,18 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1952,
-        -80
+        440,
+        0
       ],
-      "id": "afae6908-a97d-4c2d-9ee5-2bed5bb8c8d4",
+      "id": "51be5efd-a53c-47a8-b563-caf5f23ac29c",
       "name": "Write error_logs",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
-      },
-      "onError": "continueErrorOutput"
+      }
     },
     {
       "parameters": {
@@ -157,136 +163,88 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2176,
-        0
+        440,
+        200
       ],
-      "id": "1c1e887b-68ff-4423-acda-d514dd1cef1c",
+      "id": "ee06b91c-0294-4084-a671-65620f5609fa",
       "name": "Handle error_logs Write Failure"
     },
     {
       "parameters": {
-        "select": "channel",
-        "channelId": {
+        "documentId": {
           "__rl": true,
           "mode": "id",
-          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
-        },
-        "text": "=\ud83d\udea8 CRM Workflow Error\nWorkflow: {{ $('Extract Error Details').item.json.workflow }}\nNode: {{ $('Extract Error Details').item.json.node }}\nMessage: {{ $('Extract Error Details').item.json.message }}\nCorrelation: {{ $('Extract Error Details').item.json.correlation_id }}",
-        "otherOptions": {}
-      },
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        2400,
-        -80
-      ],
-      "id": "3c3d2229-8063-437f-920a-0dc0bb383ef8",
-      "name": "Slack Error Alert",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000,
-      "webhookId": "8d75b450-2169-47f9-b3b3-792e689a0482",
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "SLACK_CREDENTIAL_ID",
-          "name": "Slack account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Error Alert error';\n\nreturn {\n  error_type: 'slack_notification_failed',\n  slack_error_message: errorMessage,\n  _metadata: { processing_stage: 'slack_error_handled', severity: 'low', error_message: errorMessage },\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2624,
-        -80
-      ],
-      "id": "ebc283ea-67ad-4a26-940c-863da08c7e7a",
-      "name": "Log Slack Error"
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
-          "value": 1747941248,
-          "mode": "list",
-          "cachedResultName": "config_main",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ctYQxdFPeRgo6mC8T3ru_O0GP9dXgocpUZi2yPOBokw/edit#gid=1747941248"
+          "mode": "name",
+          "value": "config_main"
         },
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "typeVersion": 4.5,
       "position": [
-        832,
+        660,
         0
       ],
-      "id": "3296ddd1-af72-4652-a568-0002598bd7f6",
+      "id": "994d07f7-b8b9-4ee8-bd8c-e4d07a8a6a3e",
       "name": "Read config_main",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueRegularOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_DOCUMENT_ID || 'REPLACE_WITH_SHEET_ID' }}"
         },
         "sheetName": {
           "__rl": true,
-          "value": 207766743,
-          "mode": "list",
-          "cachedResultName": "config_notifications",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ctYQxdFPeRgo6mC8T3ru_O0GP9dXgocpUZi2yPOBokw/edit#gid=207766743"
+          "mode": "name",
+          "value": "config_notifications"
         },
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "typeVersion": 4.5,
       "position": [
-        1056,
+        880,
         0
       ],
-      "id": "e723cdfc-af98-4c2c-bef6-266058327329",
+      "id": "9f313373-6dce-41c6-819e-5617251df264",
       "name": "Read config_notifications",
-      "retryOnFail": true,
-      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
           "name": "Google Sheets account"
         }
       },
-      "onError": "continueRegularOutput"
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "jsCode": "const mode = ($('Read config_main').all().find(r => r.json.key === 'mode') || {}).json?.value || 'test';\nconst rules = $('Read config_notifications').all().map(r => r.json);\nconst rule = rules.find(r => r.event_type === 'error_alert');\nconst enabled = rule && (rule.enabled === true || rule.enabled === 'true');\nreturn {\n  ...$('Extract Error Details').item.json,\n  should_alert_slack: String(mode).toLowerCase() === 'production' && enabled,\n};"
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst mode = ($('Read config_main').all().find(r => r.json.key === 'mode') || {}).json?.value || 'test';\nconst rules = $('Read config_notifications').all().map(r => r.json);\nconst rule = rules.find(r => r.event_type === 'error_alert');\nconst enabled = rule && (rule.enabled === true || rule.enabled === 'true');\nreturn {\n  ...$('Extract Error Details').item.json,\n  should_alert_slack: String(mode).toLowerCase() === 'production' && enabled,\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1280,
+        1100,
         0
       ],
-      "id": "c1ce6232-a8eb-413f-aee8-a03e981b1b8c",
+      "id": "482bd7b4-c983-4373-b4e8-7ca8b643e831",
       "name": "Check Error Alert Enabled"
     },
     {
@@ -296,13 +254,13 @@
             "caseSensitive": true,
             "leftValue": "",
             "typeValidation": "strict",
-            "version": 3
+            "version": 2
           },
           "conditions": [
             {
-              "id": "82087e13-60d9-4df2-be8b-c39cc14abca3",
+              "id": "136913a1-e4b8-4680-9f7a-f11e648fac01",
               "leftValue": "={{ $json.should_alert_slack }}",
-              "rightValue": "",
+              "rightValue": "true",
               "operator": {
                 "type": "boolean",
                 "operation": "true",
@@ -315,23 +273,66 @@
         "options": {}
       },
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "typeVersion": 2.2,
       "position": [
-        1504,
+        1320,
         0
       ],
-      "id": "eafac93c-4517-410a-9880-e2627da63e7e",
+      "id": "cb3e82a3-0b41-47f4-80cf-e9e0ff0d42e3",
       "name": "Should Alert Slack?"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SLACK_CHANNEL_ID || 'SLACK_CHANNEL_ID' }}"
+        },
+        "text": "=\ud83d\udea8 CRM Workflow Error\nWorkflow: {{ $('Extract Error Details').item.json.workflow }}\nNode: {{ $('Extract Error Details').item.json.node }}\nMessage: {{ $('Extract Error Details').item.json.message }}\nCorrelation: {{ $('Extract Error Details').item.json.correlation_id }}"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        0
+      ],
+      "id": "9b08a940-124c-455d-a61d-c623e4d7725a",
+      "name": "Slack Error Alert",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst errJson = item.json || {};\nconst errorObj = item.error || errJson.error || {};\nconst errorMessage =\n  errorObj.message ||\n  errorObj.description ||\n  errJson.message ||\n  errJson.description ||\n  (typeof errJson.error === 'string' ? errJson.error : null) ||\n  'Unknown Slack Error Alert error';\n\nreturn {\n  error_type: 'slack_notification_failed',\n  slack_error_message: errorMessage,\n  _metadata: { processing_stage: 'slack_error_handled', severity: 'low', error_message: errorMessage },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        120
+      ],
+      "id": "e76155e3-c1d7-4394-bcb0-c175f87f4b1a",
+      "name": "Log Slack Error"
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        2864,
-        160
+        1540,
+        200
       ],
-      "id": "99208331-9b1c-4958-8351-809a1cb294dd",
+      "id": "39572ee7-fd23-4934-9635-3f6d7f3686a5",
       "name": "No Operation, do nothing"
     }
   ],
@@ -340,7 +341,7 @@
       "main": [
         [
           {
-            "node": "Read config_main",
+            "node": "Extract Error Details",
             "type": "main",
             "index": 0
           }
@@ -362,7 +363,7 @@
       "main": [
         [
           {
-            "node": "Slack Error Alert",
+            "node": "Read config_main",
             "type": "main",
             "index": 0
           }
@@ -380,19 +381,7 @@
       "main": [
         [
           {
-            "node": "Slack Error Alert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack Error Alert": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Log Slack Error",
+            "node": "Read config_main",
             "type": "main",
             "index": 0
           }
@@ -436,7 +425,7 @@
       "main": [
         [
           {
-            "node": "Extract Error Details",
+            "node": "Slack Error Alert",
             "type": "main",
             "index": 0
           }
@@ -450,11 +439,12 @@
         ]
       ]
     },
-    "Log Slack Error": {
+    "Slack Error Alert": {
       "main": [
+        [],
         [
           {
-            "node": "No Operation, do nothing",
+            "node": "Log Slack Error",
             "type": "main",
             "index": 0
           }
@@ -467,18 +457,12 @@
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "df65d490-a9bd-47ca-97ab-e1e1d1beaf0c",
+  "versionId": "f6300d85-b17b-4de8-a704-897ae65c0b24",
   "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0246fcb7b950ec568a04804ab3ef46da4265b1e24df662842521414c411e9d02"
+    "templateCredsSetupCompleted": false
   },
-  "nodeGroups": [],
-  "id": "iy78L8df5468a36U",
   "tags": [
     {
-      "updatedAt": "2026-07-01T02:31:24.969Z",
-      "createdAt": "2026-07-01T02:31:24.969Z",
-      "id": "tb551WiNlnAgjnHk",
       "name": "crm-workflow"
     }
   ]
