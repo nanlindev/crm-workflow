@@ -21,14 +21,14 @@ Track Phase 4 stills + video. Mark **Captured** when the file exists under the p
 
 | Asset | Status | Location |
 |-------|--------|----------|
-| 2–3 min English walkthrough | [ ] | `assets/demo-video.mp4` **or** Loom URL below |
+| 2–3 min English walkthrough | [x] | https://youtu.be/xr4y7ulGIV8 |
 | Fiverr Gallery short (≤75s, titles only) | [ ] | keep under 50MB |
 | Narration script | [x] | `assets/demo-video-script.md` |
 
-**Loom / video URL:** _(paste after recording)_
+**YouTube / video URL:**
 
 ```text
-
+https://youtu.be/xr4y7ulGIV8
 ```
 
 ## Capture session checklist

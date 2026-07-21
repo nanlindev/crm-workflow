@@ -1,8 +1,7 @@
-# Placeholder — replace with Loom URL or demo-video.mp4
+# Demo video
 
-After recording, either:
+Published walkthrough (not stored as `demo-video.mp4` in git):
 
-1. Save the file as `assets/demo-video.mp4`, or
-2. Paste the Loom (or other) URL into `assets/MANIFEST.md` under **Loom / video URL**.
+**https://youtu.be/xr4y7ulGIV8**
 
-Do not commit raw footage that contains real personal data.
+Also listed in [MANIFEST.md](MANIFEST.md). Prefer the YouTube link for LinkedIn Featured / portfolio embeds; do not commit raw footage that contains real personal data.

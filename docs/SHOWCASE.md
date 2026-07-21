@@ -27,12 +27,10 @@ Inbound B2B leads stall between form submit, scoring, CRM, and sales follow-up. 
 | Asset | Location |
 |-------|----------|
 | Narration script | [assets/demo-video-script.md](../assets/demo-video-script.md) |
-| Recording | `assets/demo-video.mp4` **or** Loom URL in [MANIFEST](../assets/MANIFEST.md) |
-
-Paste the public Loom / video URL here when published:
+| Recording | [YouTube — B2B Lead Automation Demo](https://youtu.be/xr4y7ulGIV8) |
 
 ```text
-(demo video URL)
+https://youtu.be/xr4y7ulGIV8
 ```
 
 ---

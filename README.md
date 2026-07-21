@@ -20,7 +20,7 @@ Buyer overview, case narrative, and demo stills:
 
 ![Architecture](assets/architecture.png)
 
-**Demo video:** Loom / `assets/demo-video.mp4` — see [MANIFEST](assets/MANIFEST.md) (narration: [demo-video-script.md](assets/demo-video-script.md)).
+**Demo video:** [YouTube](https://youtu.be/xr4y7ulGIV8) — see [MANIFEST](assets/MANIFEST.md) (narration: [demo-video-script.md](assets/demo-video-script.md)).
 
 **Selected stills** (from remote production demo):
 

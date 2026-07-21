@@ -3,7 +3,7 @@
 Short drafts for Upwork / Fiverr / LinkedIn. Pair with [SHOWCASE](SHOWCASE.md) stills and [CASE_STUDY](CASE_STUDY.md).
 
 **Public repo:** `https://github.com/nanlindev/crm-workflow`  
-Replace `(demo video URL)` after publishing Loom / MP4.
+Replace demo links with https://youtu.be/xr4y7ulGIV8 where needed (already filled below).
 
 ---
 
@@ -36,7 +36,7 @@ End-to-end B2B inbound pipeline on n8n (production mode): Tally form → DeepSee
 **Proof**
 
 - GitHub: https://github.com/nanlindev/crm-workflow
-- Demo video: `(demo video URL)`
+- Demo video: https://youtu.be/xr4y7ulGIV8
 - Architecture + screenshots: repo `docs/SHOWCASE.md` / `assets/`
 - Case narrative: `docs/CASE_STUDY.md`
 
@@ -59,7 +59,7 @@ I ran this stack in **production mode** on a remote host: form submit → score 
 Human control stays in Slack (Assign / Junk / Nurture). Clients can wire everything in `test`, then flip one config cell to go live.
 
 Open-source template + screenshots: https://github.com/nanlindev/crm-workflow  
-Demo: `(demo video URL)`
+Demo: https://youtu.be/xr4y7ulGIV8
 
 #n8n #HubSpot #B2B #observability #automation #LLMOps
 
