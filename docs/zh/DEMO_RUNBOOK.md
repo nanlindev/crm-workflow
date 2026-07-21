@@ -2,7 +2,7 @@
 
 远程 **production** 环境逐步操作清单。边跑边勾；需要出片的步骤用 **🎥 录像** / **📷 截图** 标出。
 
-**只采素材、要一页式勾选表：** [assets/CAPTURE_CHECKLIST.zh.md](../../assets/CAPTURE_CHECKLIST.zh.md)
+**素材勾选与文件名：** [assets/MANIFEST.md](../../assets/MANIFEST.md)
 
 英文版：[DEMO_RUNBOOK.md](../DEMO_RUNBOOK.md)  
 相关：[TEST_PRODUCTION](TEST_PRODUCTION.md) · [INSTALL](INSTALL.md) · [OBSERVABILITY](OBSERVABILITY.md) · [CALENDLY_SETUP](CALENDLY_SETUP.md)

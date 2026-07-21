@@ -86,7 +86,6 @@ Details: [docs/en/OBSERVABILITY.md](docs/en/OBSERVABILITY.md).
 | [SHOWCASE](docs/SHOWCASE.md) | Buyer-facing overview & screenshots |
 | [CASE_STUDY](docs/CASE_STUDY.md) | Production demo narrative |
 | [DEMO_RUNBOOK](docs/DEMO_RUNBOOK.md) | Production scenarios A–J |
-| [PORTFOLIO_COPY](docs/PORTFOLIO_COPY.md) | Upwork / Fiverr / LinkedIn drafts |
 | [ARCHITECTURE](docs/en/ARCHITECTURE.md) | System design |
 | [WORKFLOWS](docs/en/WORKFLOWS.md) | Nine workflows |
 | [INSTALL](docs/en/INSTALL.md) | Install & import |

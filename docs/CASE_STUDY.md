@@ -184,4 +184,4 @@ Chinese operator checklist: [zh/DEMO_RUNBOOK.md](zh/DEMO_RUNBOOK.md).
 | Observability | Every lead has `correlation_id`; Jaeger + Langfuse join the path |
 | HubSpot | Contact sync + human-approved email DRAFT |
 
-Longer copy for platforms: [PORTFOLIO_COPY.md](PORTFOLIO_COPY.md).
+Longer platform copy: use your Upwork / Fiverr / LinkedIn drafts locally; keep them out of this public repo.

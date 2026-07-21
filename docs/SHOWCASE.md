@@ -113,4 +113,3 @@ One still (`07`) shows both the Contact and the logged outbound **DRAFT** email 
 1. Skim [CASE_STUDY.md](CASE_STUDY.md) for the narrative and design choices.
 2. Reproduce locally or on a remote host with [INSTALL](en/INSTALL.md) + [DEMO_RUNBOOK.md](DEMO_RUNBOOK.md) (`mode=test` first).
 3. Flip `config_main.mode=production` only on an isolated demo spreadsheet / Slack channel / HubSpot sandbox.
-4. Platform copy drafts: [PORTFOLIO_COPY.md](PORTFOLIO_COPY.md).

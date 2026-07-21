@@ -31,3 +31,8 @@ Thumbs.db
 assets/raw/
 assets/**/*.mp4
 assets/.architecture_render.html
+
+# Local-only drafts (do not republish)
+docs/PORTFOLIO_COPY.md
+assets/CAPTURE_CHECKLIST.zh.md
+assets/RECORDING_SHOTLIST.zh.md
